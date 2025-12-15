@@ -1,0 +1,21 @@
+# Dependencies
+/node_modules
+
+# Environment files
+.env
+.env.local
+
+# Build artifacts and temporary files
+/dist
+/build
+*.log
+npm-debug.log*
+yarn-error.log
+test-results.xml
+coverage
+
+# IDE and OS files (optional, can be added to a global gitignore)
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
