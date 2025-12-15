@@ -1,7 +1,12 @@
+import { BrowserRouter } from 'react-router-dom';
 import './App.css'
 
 function App() {
-  return <div className="font-oscars font-normal text-5xl">OSCARS</div>;
+  return (
+    <BrowserRouter>
+        /* Your routes and components go here */
+    </BrowserRouter>
+  );
 }
 
 export default App;
