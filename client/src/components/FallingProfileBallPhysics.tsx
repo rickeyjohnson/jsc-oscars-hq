@@ -10,6 +10,7 @@ import {
     MouseConstraint,
     Events,
     Body,
+    Vector,
 } from "matter-js"
 
 const BALL_COUNT = 13
@@ -25,10 +26,10 @@ const FallingProfileBallsPhysics: React.FC = () => {
     useEffect(() => {
         if (!sceneRef.current) return
 
-        const engine = Engine.create()
+        const engine: any = Engine.create()
         engine.gravity.y = 1
 
-        const render = Render.create({
+        const render: any = Render.create({
             element: sceneRef.current,
             engine,
             options: {
@@ -37,7 +38,7 @@ const FallingProfileBallsPhysics: React.FC = () => {
                 wireframes: false,
                 background: "transparent",
                 pixelRatio: window.devicePixelRatio,
-            },
+            } as any,
         })
 
         /* ---------- Walls ---------- */
@@ -91,7 +92,20 @@ const FallingProfileBallsPhysics: React.FC = () => {
             mouse,
             constraint: {
                 stiffness: 0.25,
-                render: { visible: false },
+                render: {
+                    visible: false,
+                    lineWidth: 0,
+                    strokeStyle: ""
+                },
+                bodyA: new Body,
+                bodyB: new Body,
+                id: 0,
+                label: "",
+                length: 0,
+                pointA: new Vector,
+                pointB: new Vector,
+                damping: 0,
+                type: ""
             },
         })
 
