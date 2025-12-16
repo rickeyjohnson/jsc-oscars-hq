@@ -1,10 +1,11 @@
-type LogoSize = "xsmall" | "small" | "medium" | "large"
+type LogoSize = "xxsmall" | "xsmall" | "small" | "medium" | "large"
 
 interface LogoProps {
     size?: LogoSize
 }
 
 const SIZE_MAP: Record<LogoSize, number> = {
+    xxsmall: 2,
     xsmall: 2.5,
     small: 3.5,
     medium: 5,

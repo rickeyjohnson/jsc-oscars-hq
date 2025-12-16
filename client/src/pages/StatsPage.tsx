@@ -1,14 +1,16 @@
-import React from "react"
 import NavigationBar from "../components/NavigationBar"
 import NavigationTabs from "../components/NavigationTabs"
 
-const MainPage = () => {
-    return (
+const StatsPage = () => {
+  return (
+    <div>
         <div className="bg-zinc-900 min-h-screen text-amber-100 pb-24">
             <NavigationBar />
-            <NavigationTabs activeTab={"home"} />
+            STATS PAGE
+            <NavigationTabs activeTab={"stats"} />
         </div>
-    )
+    </div>
+  )
 }
 
-export default MainPage
+export default StatsPage
