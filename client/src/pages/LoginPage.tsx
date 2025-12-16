@@ -1,5 +1,6 @@
 import React, { useState } from "react"
 import OscarLogo from "../components/OscarLogo"
+import { Link } from "react-router-dom"
 
 const LoginPage = () => {
     const [loginData, setloginData] = useState({
@@ -24,7 +25,7 @@ const LoginPage = () => {
 
     return (
         <div className="bg-[#1a1717] min-h-screen text-white flex flex-col justify-center p-4">
-            <button className="font-sans text-left mb-6">← Back</button>
+            <Link to={"/"}><button className="font-sans text-left mb-6">← Back</button></Link>
             <OscarLogo />
             <div className="py-3 mb-4 text-left">
                 <div className="text-5xl font-bold mb-2">Welcome Back</div>
