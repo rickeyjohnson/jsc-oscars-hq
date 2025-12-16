@@ -1,15 +1,27 @@
 @import "tailwindcss";
 
 @font-face {
-  font-family: "CenturyGothic";
-  src: url("/fonts/CenturyGothic/centurygothic.woff2") format("woff2");
+  font-family: "CenturyGothicRegular";
+  src: url("/fonts/CenturyGothic/CenturyGothicPaneuropeanRegular.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
+@font-face {
+  font-family: "CenturyGothicThin";
+  src: url("/fonts/CenturyGothic/CenturyGothicPaneuropeanLight.woff2") format("woff2");
+  font-weight: 100;
+  font-style: thin;
+  font-display: swap;
+}
+
 @layer components {
-  .font-oscars {
-    font-family: "CenturyGothic", sans-serif;
+  .font-oscars-regular {
+    font-family: "CenturyGothicRegular", sans-serif;
+  }
+
+  .font-oscars-thin {
+    font-family: "CenturyGothicThin", sans-serif;
   }
 }

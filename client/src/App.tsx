@@ -1,12 +1,12 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom"
 import "./App.css"
-import Logo from "./components/Logo"
+import OscarLogo from "./components/OscarLogo"
 
 const App = () => {
     return (
         <BrowserRouter>
             <Routes>
-                <Route path="/" element={<Logo/>} />
+                <Route path="/" element={<OscarLogo/>} />
             </Routes>
         </BrowserRouter>
     )
