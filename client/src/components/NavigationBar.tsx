@@ -1,4 +1,3 @@
-import React from "react"
 import OscarLogo from "./OscarLogo"
 
 const NavigationBar = () => {

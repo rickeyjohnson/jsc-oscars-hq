@@ -3,7 +3,7 @@ import "./App.css"
 import LandingPage from "./pages/LandingPage"
 import SignupPage from "./pages/SignupPage"
 import LoginPage from "./pages/LoginPage"
-import HomePage from "./pages/HomePage"
+import HomePage from "./pages/MainPage"
 
 const App = () => {
     return (
