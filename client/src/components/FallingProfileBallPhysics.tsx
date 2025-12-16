@@ -10,7 +10,6 @@ import {
     MouseConstraint,
     Events,
     Body,
-    Vector,
 } from "matter-js"
 
 const BALL_COUNT = 13
@@ -94,19 +93,8 @@ const FallingProfileBallsPhysics: React.FC = () => {
                 stiffness: 0.25,
                 render: {
                     visible: false,
-                    lineWidth: 0,
-                    strokeStyle: ""
                 },
-                bodyA: new Body,
-                bodyB: new Body,
-                id: 0,
-                label: "",
-                length: 0,
-                pointA: new Vector,
-                pointB: new Vector,
-                damping: 0,
-                type: ""
-            },
+            } as any,
         })
 
         render.mouse = mouse
