@@ -25,7 +25,7 @@ const SignupPage = () => {
     }
 
     return (
-        <div className="bg-[#1a1717] min-h-screen text-white flex flex-col justify-center p-4">
+        <div className="bg-zinc-900 min-h-screen text-white flex flex-col justify-center p-4">
             <Link to={"/"}><button className="font-sans text-left mb-6">← Back</button></Link>
             <OscarLogo />
             <div className="py-3 mb-4 text-left">
