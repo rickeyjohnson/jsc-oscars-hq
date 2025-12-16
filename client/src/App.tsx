@@ -1,12 +1,15 @@
-import { BrowserRouter } from 'react-router-dom';
-import './App.css'
+import { BrowserRouter, Route, Routes } from "react-router-dom"
+import "./App.css"
+import Logo from "./components/Logo"
 
-function App() {
-  return (
-    <BrowserRouter>
-        /* Your routes and components go here */
-    </BrowserRouter>
-  );
+const App = () => {
+    return (
+        <BrowserRouter>
+            <Routes>
+                <Route path="/" element={<Logo/>} />
+            </Routes>
+        </BrowserRouter>
+    )
 }
 
-export default App;
+export default App
