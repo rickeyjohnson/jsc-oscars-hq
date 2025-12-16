@@ -5,7 +5,7 @@ import OscarLogo from "../components/OscarLogo"
 const LandingPage = () => {
 
   return (
-    <div className="bg-zinc-900 min-h-screen flex items-center justify-center flex-col">
+    <div className="bg-zinc-900 min-h-screen flex items-center justify-center flex-col overflow-hidden">
         <div className="z-10 flex flex-col items-center justify-center">
           <OscarLogo />
           <p className="font-sans text-white -mt-4">The all-in-one platform for everything Oscars</p>

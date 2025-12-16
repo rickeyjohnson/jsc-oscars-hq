@@ -18,16 +18,16 @@ const Logo: React.FC<LogoProps> = ({ size = "medium" }) => {
     const justSideSize = oscarsSize * RATIO
 
     return (
-        <div className="flex flex-col items-center justify-center text-center uppercase text-white p-2 select-none">
+        <div className="flex flex-col items-center justify-center text-center uppercase text-white select-none p-1">
             <div
-                className="font-oscars-regular leading-none"
+                className="font-oscars-regular leading-none mb-[0.25rem]"
                 style={{ fontSize: `${justSideSize}rem` }}
             >
                 JUST SIDECHATTING
             </div>
 
             <h1
-                className="font-oscars-thin leading-none"
+                className="font-oscars-thin leading-none mb-[-0.5rem]"
                 style={{ fontSize: `${oscarsSize}rem` }}
             >
                 OSCARS
