@@ -1,9 +1,8 @@
 import React, { useState } from "react"
 import OscarLogo from "../components/OscarLogo"
 
-const SignupPage = () => {
-    const [signupData, setSignupData] = useState({
-        name: "",
+const LoginPage = () => {
+    const [loginData, setloginData] = useState({
         username: "",
         password: "",
     })
@@ -11,8 +10,8 @@ const SignupPage = () => {
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
     ) => {
-        setSignupData({
-            ...signupData,
+        setloginData({
+            ...loginData,
             [e.target.name]: e.target.value,
         })
     }
@@ -20,7 +19,7 @@ const SignupPage = () => {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         // Handle signup logic here
-        console.log("Signup data submitted:", signupData)
+        console.log("Login data submitted:", loginData)
     }
 
     return (
@@ -28,35 +27,11 @@ const SignupPage = () => {
             <button className="font-sans text-left mb-6">← Back</button>
             <OscarLogo />
             <div className="py-3 mb-4 text-left">
-                <div className="text-5xl font-bold mb-2">Create Account</div>
-                <div>Create your account to start your Oscars experience</div>
+                <div className="text-5xl font-bold mb-2">Welcome Back</div>
+                <div>Login to continue your Oscars experience</div>
             </div>
 
             <form onSubmit={handleSubmit} className="">
-                <div className="flex flex-col mb-4">
-                    {" "}
-                    <label>Name</label>
-                    <select
-                        name="name"
-                        value={signupData.name}
-                        onChange={handleChange}
-                        className="bg-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-white/20"
-                    >
-                        <option value="anthony">Anthony</option>
-                        <option value="dakarai">Dakarai</option>
-                        <option value="demichael">Demichael</option>
-                        <option value="evan">Evan</option>
-                        <option value="john">John Sampson</option>
-                        <option value="jonathan">Jonathan Madden</option>
-                        <option value="justin">Justin</option>
-                        <option value="kadin">Kadin</option>
-                        <option value="langston">Langston</option>
-                        <option value="micah">Micah</option>
-                        <option value="nick">Nick</option>
-                        <option value="rickey">Rickey</option>
-                        <option value="tj">TJ</option>
-                    </select>
-                </div>
 
                 <div className="flex flex-col mb-4">
                     {" "}
@@ -65,7 +40,7 @@ const SignupPage = () => {
                         name="username"
                         type="text"
                         placeholder="Username"
-                        value={signupData.username}
+                        value={loginData.username}
                         onChange={handleChange}
                         className="bg-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-white/20"
                     />{" "}
@@ -77,7 +52,7 @@ const SignupPage = () => {
                         name="password"
                         type="password"
                         placeholder="Password"
-                        value={signupData.password}
+                        value={loginData.password}
                         onChange={handleChange}
                         className="bg-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-white/20"
                     />
@@ -87,18 +62,18 @@ const SignupPage = () => {
                     type="submit"
                     className="px-6 py-3 rounded-full bg-white text-black hover:bg-[#e6e6e6] font-medium w-full my-4"
                 >
-                    Create Account
+                    Login
                 </button>
             </form>
 
             <div className="text-center mt-4">
-                Already have an account?{" "}
-                <button className="font-sans hover:underline cursor-pointer">
-                    Login
+                Don't have an account?{" "}
+                <button className="font-sans underline cursor-pointer font-bold">
+                    Sign up
                 </button>
             </div>
         </div>
     )
 }
 
-export default SignupPage
+export default LoginPage
