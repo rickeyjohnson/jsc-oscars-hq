@@ -31,7 +31,7 @@ const HomePage = () => {
     }, [])
 
     return (
-        <div className="bg-zinc-900 min-h-screen text-neutral-100 pb-24">
+        <div className="bg-zinc-900 min-h-screen text-[#fffadd] pb-24">
             <NavigationBar />
 
             <div className="space-y-6">
