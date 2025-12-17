@@ -155,7 +155,7 @@ const SignupPage = () => {
                     </Link>
                     <p className="text-center text-[#fffadd]/60">
                         Already have an account?{" "}
-                        <Link to="/signup">
+                        <Link to="/login">
                             <button className="text-[#fffadd] hover:underline font-bold underline">
                                 Login
                             </button>

@@ -1,10 +1,11 @@
 import React, { useState } from "react"
-import OscarLogo from "../components/OscarLogo"
 import { Link } from "react-router-dom"
+import { Mail, Lock } from "lucide-react"
 
 const LoginPage = () => {
     const [loginData, setloginData] = useState({
         username: "",
+        email: "",
         password: "",
     })
 
@@ -24,54 +25,76 @@ const LoginPage = () => {
     }
 
     return (
-        <div className="bg-zinc-900 min-h-screen text-white flex flex-col justify-center p-4">
-            <Link to={"/"}><button className="font-sans text-left mb-6">← Back</button></Link>
-            <OscarLogo />
-            <div className="py-3 mb-4 text-left">
-                <div className="text-5xl font-bold mb-2">Welcome Back</div>
-                <div>Login to continue your Oscars experience</div>
-            </div>
-
-            <form onSubmit={handleSubmit} className="">
-
-                <div className="flex flex-col mb-4">
-                    {" "}
-                    <label>Username</label>
-                    <input
-                        name="username"
-                        type="text"
-                        placeholder="Username"
-                        value={loginData.username}
-                        onChange={handleChange}
-                        className="bg-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-white/20"
-                    />{" "}
+        <div className="min-h-screen bg-zinc-900 text-[#fffadd] flex items-center justify-center px-6 py-12">
+            <div className="w-full max-w-md">
+                <Link to={"/"}>
+                    <button className="mb-8 text-[#fffadd]/60 hover:text-[#fffadd] transition">
+                        ← Back
+                    </button>
+                </Link>
+                <div className="mb-8">
+                    <div className="font-oscars-regular text-xs text-[#fffadd] tracking-widest">
+                        JUST SIDECHATTING
+                    </div>
+                    <div className="font-oscars-thin text-3xl text-[#fffadd] font-light tracking-[0.15rem]">
+                        OSCARS
+                    </div>
                 </div>
+                <h2 className="text-4xl font-black mb-2 text-[#fffadd]">
+                    Welcome Back
+                </h2>
+                <p className="text-[#fffadd]/60 mb-8">
+                    Login to continue your Oscars experience
+                </p>
 
-                <div className="flex flex-col mb-4">
-                    <label>Password</label>
-                    <input
-                        name="password"
-                        type="password"
-                        placeholder="Password"
-                        value={loginData.password}
-                        onChange={handleChange}
-                        className="bg-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-white/20"
-                    />
+                <div className="mb-4">
+                    <label className="block text-sm font-medium mb-2">
+                        Email
+                    </label>
+                    <div className="relative">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#fffadd]/40" />
+                        <input
+                            type="email"
+                            name="email"
+                            value={loginData.email}
+                            onChange={handleChange}
+                            className="w-full bg-amber-100/5 border border-amber-100/10 rounded-xl px-12 py-4 focus:outline-none focus:border-amber-100/30 transition text-[#fffadd]"
+                            placeholder="you@example.com"
+                        />
+                    </div>
                 </div>
-
-                <button
-                    type="submit"
-                    className="px-6 py-3 rounded-full bg-white text-black hover:bg-[#e6e6e6] font-medium w-full my-4"
-                >
-                    Login
-                </button>
-            </form>
-
-            <div className="text-center mt-4">
-                Don't have an account?{" "}
-                <button className="font-sans underline cursor-pointer font-bold">
-                    Sign up
-                </button>
+                <div className="mb-6">
+                    <label className="block text-sm font-medium mb-2">
+                        Password
+                    </label>
+                    <div className="relative">
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#fffadd]/40" />
+                        <input
+                            type="password"
+                            name="password"
+                            value={loginData.password}
+                            onChange={handleChange}
+                            className="w-full bg-amber-100/5 border border-amber-100/10 rounded-xl px-12 py-4 focus:outline-none focus:border-amber-100/30 transition text-[#fffadd]"
+                            placeholder="••••••••"
+                        />
+                    </div>
+                </div>
+                <Link to="/login">
+                    <button
+                        className="w-full bg-amber-100 rounded-full text-zinc-900 py-4 font-bold hover:bg-amber-200 transition mb-4"
+                        onClick={handleSubmit}
+                    >
+                        Login
+                    </button>
+                </Link>
+                <p className="text-center text-[#fffadd]/60">
+                    Don't have an account?{" "}
+                    <Link to="/signup">
+                        <button className="text-[#fffadd] hover:underline font-bold underline">
+                            Sign Up
+                        </button>
+                    </Link>
+                </p>
             </div>
         </div>
     )
