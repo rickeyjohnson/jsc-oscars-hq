@@ -120,8 +120,8 @@ const SignupPage = () => {
                         <div className="relative">
                             <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#fffadd]/40" />
                             <input
-                                type="username"
-                                name="text"
+                                type="text"
+                                name="username"
                                 value={signupData.username}
                                 onChange={handleChange}
                                 className="w-full bg-amber-100/5 border border-amber-100/10 rounded-xl px-12 py-4 focus:outline-none focus:border-amber-100/30 transition text-[#fffadd]"
