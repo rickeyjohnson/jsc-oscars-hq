@@ -2,11 +2,15 @@ import React, { useState } from "react"
 import { Link } from "react-router-dom"
 import { Mail, Lock } from "lucide-react"
 
+interface LoginData {
+    email: null | string
+    password: null | string
+}
+
 const LoginPage = () => {
-    const [loginData, setloginData] = useState({
-        username: "",
-        email: "",
-        password: "",
+    const [loginData, setloginData] = useState<LoginData>({
+        email: null,
+        password: null,
     })
 
     const handleChange = (
@@ -47,46 +51,48 @@ const LoginPage = () => {
                     Login to continue your Oscars experience
                 </p>
 
-                <div className="mb-4">
-                    <label className="block text-sm font-medium mb-2">
-                        Email
-                    </label>
-                    <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#fffadd]/40" />
-                        <input
-                            type="email"
-                            name="email"
-                            value={loginData.email}
-                            onChange={handleChange}
-                            className="w-full bg-amber-100/5 border border-amber-100/10 rounded-xl px-12 py-4 focus:outline-none focus:border-amber-100/30 transition text-[#fffadd]"
-                            placeholder="you@example.com"
-                        />
+                <form onSubmit={handleSubmit}>
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium mb-2">
+                            Email
+                        </label>
+                        <div className="relative">
+                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#fffadd]/40" />
+                            <input
+                                type="email"
+                                name="email"
+                                value={loginData.email || ""}
+                                onChange={handleChange}
+                                className="w-full bg-amber-100/5 border border-amber-100/10 rounded-xl px-12 py-4 focus:outline-none focus:border-amber-100/30 transition text-[#fffadd]"
+                                placeholder="you@example.com"
+                                required={true}
+                            />
+                        </div>
                     </div>
-                </div>
-                <div className="mb-6">
-                    <label className="block text-sm font-medium mb-2">
-                        Password
-                    </label>
-                    <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#fffadd]/40" />
-                        <input
-                            type="password"
-                            name="password"
-                            value={loginData.password}
-                            onChange={handleChange}
-                            className="w-full bg-amber-100/5 border border-amber-100/10 rounded-xl px-12 py-4 focus:outline-none focus:border-amber-100/30 transition text-[#fffadd]"
-                            placeholder="••••••••"
-                        />
+                    <div className="mb-6">
+                        <label className="block text-sm font-medium mb-2">
+                            Password
+                        </label>
+                        <div className="relative">
+                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#fffadd]/40" />
+                            <input
+                                type="password"
+                                name="password"
+                                value={loginData.password || ""}
+                                onChange={handleChange}
+                                className="w-full bg-amber-100/5 border border-amber-100/10 rounded-xl px-12 py-4 focus:outline-none focus:border-amber-100/30 transition text-[#fffadd]"
+                                placeholder="••••••••"
+                                required={true}
+                            />
+                        </div>
                     </div>
-                </div>
-                <Link to="/login">
                     <button
+                        type="submit"
                         className="w-full bg-amber-100 rounded-full text-zinc-900 py-4 font-bold hover:bg-amber-200 transition mb-4"
-                        onClick={handleSubmit}
                     >
                         Login
                     </button>
-                </Link>
+                </form>
                 <p className="text-center text-[#fffadd]/60">
                     Don't have an account?{" "}
                     <Link to="/signup">

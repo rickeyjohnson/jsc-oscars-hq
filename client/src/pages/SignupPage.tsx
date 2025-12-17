@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 import { Link } from "react-router-dom"
 import { Mail, Lock, User, IdCard, Pencil } from "lucide-react"
+import { supabase } from "../supabaseClient"
 
 const SignupPage = () => {
     const [signupData, setSignupData] = useState({
@@ -14,7 +15,12 @@ const SignupPage = () => {
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
     ) => {
-        if (e.target.name === "pfp" && e.target instanceof HTMLInputElement && e.target.files && e.target.files[0]) {
+        if (
+            e.target.name === "pfp" &&
+            e.target instanceof HTMLInputElement &&
+            e.target.files &&
+            e.target.files[0]
+        ) {
             const img = e.target.files[0]
             setSignupData({
                 ...signupData,
@@ -29,10 +35,18 @@ const SignupPage = () => {
         })
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        // Handle signup logic here
-        console.log("Signup data submitted:", signupData)
+        const email = signupData.email
+        const password = signupData.password
+
+        const {error} = await supabase.auth.signUp({email, password})
+        if (error) {
+            console.error("error's signing up: ", error.message)
+            return
+        }
+
+        console.log('successly created!')
     }
 
     return (
@@ -57,14 +71,22 @@ const SignupPage = () => {
                 <p className="text-[#fffadd]/60 mb-8">
                     Create your account to start your Oscars experience
                 </p>
-                <div>
+                <form onSubmit={handleSubmit}>
                     <div className="mb-4 w-full flex items-center">
                         <div className="relative shrink-0 w-20 h-20 mr-[1.5rem]">
-                            <img src={signupData.pfp} className="rounded-full h-20 w-20"/>
+                            <img
+                                src={signupData.pfp}
+                                className="rounded-full h-20 w-20"
+                            />
                             <div className="bg-black rounded-full flex items-center justify-center p-2 w-fit absolute -bottom-2 -right-2 cursor-pointer">
-                                <Pencil size={15}/>
+                                <Pencil size={15} />
                             </div>
-                            <input name="pfp" type="file" className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer" onChange={handleChange}/>
+                            <input
+                                name="pfp"
+                                type="file"
+                                className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
+                                onChange={handleChange}
+                            />
                         </div>
                         <div className="w-full">
                             <label className="block text-sm font-medium mb-2">
@@ -78,19 +100,28 @@ const SignupPage = () => {
                                         value={signupData.name ?? ""}
                                         onChange={handleChange}
                                         className="w-full focus:outline-none text-[#fffadd] py-4"
+                                        required={true}
                                     >
-                                        <option value="" disabled hidden>New Nick</option>
+                                        <option value="" disabled hidden>
+                                            New Nick
+                                        </option>
                                         <option value="anthony">Anthony</option>
                                         <option value="dakarai">Dakarai</option>
-                                        <option value="demichael">Demichael</option>
+                                        <option value="demichael">
+                                            Demichael
+                                        </option>
                                         <option value="evan">Evan</option>
-                                        <option value="john">John Sampson</option>
+                                        <option value="john">
+                                            John Sampson
+                                        </option>
                                         <option value="jonathan">
                                             Jonathan Madden
                                         </option>
                                         <option value="justin">Justin</option>
                                         <option value="kadin">Kadin</option>
-                                        <option value="langston">Langston</option>
+                                        <option value="langston">
+                                            Langston
+                                        </option>
                                         <option value="micah">Micah</option>
                                         <option value="nick">Nick</option>
                                         <option value="rickey">Rickey</option>
@@ -113,6 +144,7 @@ const SignupPage = () => {
                                 onChange={handleChange}
                                 className="w-full bg-amber-100/5 border border-amber-100/10 rounded-xl px-12 py-4 focus:outline-none focus:border-amber-100/30 transition text-[#fffadd]"
                                 placeholder="you@example.com"
+                                required={true}
                             />
                         </div>
                     </div>
@@ -129,6 +161,7 @@ const SignupPage = () => {
                                 onChange={handleChange}
                                 className="w-full bg-amber-100/5 border border-amber-100/10 rounded-xl px-12 py-4 focus:outline-none focus:border-amber-100/30 transition text-[#fffadd]"
                                 placeholder="rickeyistaken"
+                                required={true}
                             />
                         </div>
                     </div>
@@ -145,26 +178,26 @@ const SignupPage = () => {
                                 onChange={handleChange}
                                 className="w-full bg-amber-100/5 border border-amber-100/10 rounded-xl px-12 py-4 focus:outline-none focus:border-amber-100/30 transition text-[#fffadd]"
                                 placeholder="••••••••"
+                                required={true}
                             />
                         </div>
                     </div>
+                    <button
+                        className="w-full bg-amber-100 rounded-full text-zinc-900 py-4 font-bold hover:bg-amber-200 transition mb-4"
+                        type="submit"
+                    >
+                        Create Account
+                    </button>
+                </form>
+
+                <p className="text-center text-[#fffadd]/60">
+                    Already have an account?{" "}
                     <Link to="/login">
-                        <button
-                            className="w-full bg-amber-100 rounded-full text-zinc-900 py-4 font-bold hover:bg-amber-200 transition mb-4"
-                            onClick={handleSubmit}
-                        >
-                            Create Account
+                        <button className="text-[#fffadd] hover:underline font-bold underline">
+                            Login
                         </button>
                     </Link>
-                    <p className="text-center text-[#fffadd]/60">
-                        Already have an account?{" "}
-                        <Link to="/login">
-                            <button className="text-[#fffadd] hover:underline font-bold underline">
-                                Login
-                            </button>
-                        </Link>
-                    </p>
-                </div>
+                </p>
             </div>
         </div>
     )
