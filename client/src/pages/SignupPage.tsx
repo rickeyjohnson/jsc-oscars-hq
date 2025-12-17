@@ -72,28 +72,31 @@ const SignupPage = () => {
                             </label>
                             <div className="relative">
                                 <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#fffadd]/40" />
-                                <select
-                                    name="name"
-                                    value={signupData.name ?? ""}
-                                    onChange={handleChange}
-                                    className="w-[100%] bg-amber-100/5 border border-amber-100/10 rounded-xl px-12 py-4 focus:outline-none focus:border-amber-100/30 transition text-[#fffadd]"
-                                >
-                                    <option value="anthony">Anthony</option>
-                                    <option value="dakarai">Dakarai</option>
-                                    <option value="demichael">Demichael</option>
-                                    <option value="evan">Evan</option>
-                                    <option value="john">John Sampson</option>
-                                    <option value="jonathan">
-                                        Jonathan Madden
-                                    </option>
-                                    <option value="justin">Justin</option>
-                                    <option value="kadin">Kadin</option>
-                                    <option value="langston">Langston</option>
-                                    <option value="micah">Micah</option>
-                                    <option value="nick">Nick</option>
-                                    <option value="rickey">Rickey</option>
-                                    <option value="tj">TJ</option>
-                                </select>
+                                <div className="group w-full bg-amber-100/5 border border-amber-100/10 rounded-xl pl-12 pr-4 focus-within:outline-none focus-within:border-amber-100/30 transition text-[#fffadd]">
+                                    <select
+                                        name="name"
+                                        value={signupData.name ?? ""}
+                                        onChange={handleChange}
+                                        className="w-full focus:outline-none text-[#fffadd] py-4"
+                                    >
+                                        <option value="" disabled hidden>New Nick</option>
+                                        <option value="anthony">Anthony</option>
+                                        <option value="dakarai">Dakarai</option>
+                                        <option value="demichael">Demichael</option>
+                                        <option value="evan">Evan</option>
+                                        <option value="john">John Sampson</option>
+                                        <option value="jonathan">
+                                            Jonathan Madden
+                                        </option>
+                                        <option value="justin">Justin</option>
+                                        <option value="kadin">Kadin</option>
+                                        <option value="langston">Langston</option>
+                                        <option value="micah">Micah</option>
+                                        <option value="nick">Nick</option>
+                                        <option value="rickey">Rickey</option>
+                                        <option value="tj">TJ</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
