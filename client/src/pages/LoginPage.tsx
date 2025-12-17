@@ -1,16 +1,17 @@
 import React, { useState } from "react"
 import { Link } from "react-router-dom"
 import { Mail, Lock } from "lucide-react"
+import { supabase } from "../supabaseClient"
 
 interface LoginData {
-    email: null | string
-    password: null | string
+    email: string
+    password: string
 }
 
 const LoginPage = () => {
     const [loginData, setloginData] = useState<LoginData>({
-        email: null,
-        password: null,
+        email: "",
+        password: "",
     })
 
     const handleChange = (
@@ -22,10 +23,24 @@ const LoginPage = () => {
         })
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        // Handle signup logic here
-        console.log("Login data submitted:", loginData)
+        const { email, password } = loginData
+
+        const { error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        })
+
+        if (error) {
+            console.error(
+                "an error has occured while logging in: ",
+                error.message
+            )
+            return
+        }
+
+        console.log("successfully logged in")
     }
 
     return (
@@ -61,7 +76,7 @@ const LoginPage = () => {
                             <input
                                 type="email"
                                 name="email"
-                                value={loginData.email || ""}
+                                value={loginData.email}
                                 onChange={handleChange}
                                 className="w-full bg-amber-100/5 border border-amber-100/10 rounded-xl px-12 py-4 focus:outline-none focus:border-amber-100/30 transition text-[#fffadd]"
                                 placeholder="you@example.com"
@@ -78,7 +93,7 @@ const LoginPage = () => {
                             <input
                                 type="password"
                                 name="password"
-                                value={loginData.password || ""}
+                                value={loginData.password}
                                 onChange={handleChange}
                                 className="w-full bg-amber-100/5 border border-amber-100/10 rounded-xl px-12 py-4 focus:outline-none focus:border-amber-100/30 transition text-[#fffadd]"
                                 placeholder="••••••••"

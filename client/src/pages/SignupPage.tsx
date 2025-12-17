@@ -40,13 +40,15 @@ const SignupPage = () => {
         const email = signupData.email
         const password = signupData.password
 
-        const {error} = await supabase.auth.signUp({email, password})
+        const { error } = await supabase.auth.signUp({ email, password })
         if (error) {
             console.error("error's signing up: ", error.message)
             return
         }
 
-        console.log('successly created!')
+        console.log("successly created!")
+
+        // TODO: add toast pop up to tell user to check email
     }
 
     return (
