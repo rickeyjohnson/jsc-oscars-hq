@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800;900&display=swap');
 
 @font-face {
   font-family: "CenturyGothicRegular";
@@ -23,5 +24,11 @@
 
   .font-oscars-thin {
     font-family: "CenturyGothicThin", sans-serif;
+  }
+}
+
+@layer base {
+  html {
+    font-family: 'Poppins', sans-serif;
   }
 }

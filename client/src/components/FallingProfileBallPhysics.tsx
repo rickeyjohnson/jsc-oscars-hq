@@ -65,7 +65,7 @@ const FallingProfileBallsPhysics: React.FC = () => {
         Composite.add(engine.world, walls)
 
         /* ---------- Balls ---------- */
-        const balls: any = Array.from({ length: BALL_COUNT }).map(() => {
+        const balls: any = Array.from({ length: BALL_COUNT }).map((_, index) => {
             const body = Bodies.circle(
                 Math.random() * (window.innerWidth - BALL_RADIUS * 2) +
                     BALL_RADIUS,
@@ -80,7 +80,7 @@ const FallingProfileBallsPhysics: React.FC = () => {
             ) as any
 
             const img = new Image()
-            img.src = "/blank-pfp.png"
+            img.src = "/sidechatters/" + (index + 1) + ".jpg"
             body.avatar = img
 
             return body
