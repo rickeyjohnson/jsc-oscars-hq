@@ -5,6 +5,7 @@ import PendingBallots from "../components/PendingBallots"
 import MusicPlaylistSection from "../components/MusicPlaylistSection"
 import MakeYourOwnCategories from "../components/MakeYourOwnCategories"
 import Locked from "../components/Locked"
+import Announcements from "../components/Announcements"
 
 const HomePage = () => {
     return (
@@ -20,6 +21,7 @@ const HomePage = () => {
                 <Locked>
                     <MusicPlaylistSection />
                 </Locked>
+                <Announcements />
             </div>
 
             <NavigationTabs activeTab={"home"} />
