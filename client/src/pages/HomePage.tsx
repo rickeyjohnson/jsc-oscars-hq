@@ -4,6 +4,7 @@ import Countdown from "../components/Countdown"
 import PendingBallots from "../components/PendingBallots"
 import MusicPlaylistSection from "../components/MusicPlaylistSection"
 import MakeYourOwnCategories from "../components/MakeYourOwnCategories"
+import Locked from "../components/Locked"
 
 const HomePage = () => {
     return (
@@ -13,8 +14,10 @@ const HomePage = () => {
             <div className="px-6 py-6">
                 <Countdown />
                 <PendingBallots ballots={[1]}/>
-                <MusicPlaylistSection />
                 <MakeYourOwnCategories />
+                <Locked>
+                    <MusicPlaylistSection />
+                </Locked>
             </div>
 
             <NavigationTabs activeTab={"home"} />
