@@ -1,4 +1,5 @@
 import { ChevronRight, Clock, Vote } from "lucide-react"
+import { Link } from "react-router-dom"
 
 // TODO: add props and fetch ballots
 
@@ -21,7 +22,7 @@ const PendingBallot = () => {
 }
 
 const PendingBallots = () => {
-    const TEST_HAS_PENDING_BALLOTS = false
+    const TEST_HAS_PENDING_BALLOTS = true
 
     return TEST_HAS_PENDING_BALLOTS ? (
         <div className="bg-gradient-to-br from-red-500/20 to-red-600/10 border-2 border-red-500/30 rounded-3xl p-6">
@@ -61,10 +62,12 @@ const PendingBallots = () => {
                     </p>
                 </div>
             </div>
-            <button className="w-full bg-amber-100 text-zinc-900 rounded-xl py-3 font-bold hover:bg-amber-200 transition flex items-center justify-center gap-2">
-                View Ballots
-                <ChevronRight className="w-5 h-5" />
-            </button>
+            <Link to={"/app/ballots"}>
+                <button className="w-full bg-amber-100 text-zinc-900 rounded-xl py-3 font-bold hover:bg-amber-200 transition flex items-center justify-center gap-2">
+                    View Ballots
+                    <ChevronRight className="w-5 h-5" />
+                </button>
+            </Link>
         </div>
     )
 }

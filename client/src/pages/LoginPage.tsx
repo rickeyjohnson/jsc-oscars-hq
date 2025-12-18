@@ -10,12 +10,74 @@ interface LoginData {
     password: string
 }
 
+const ForgotPasswordModal = ({ closeModal }: { closeModal: () => void }) => {
+    const [forgotPasswordEmail, setForgotPasswordEmail] = useState("")
+    const handleForgotPassword = (e: React.FormEvent) => {
+        e.preventDefault()
+    }
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+            <div
+                className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+                onClick={closeModal}
+            ></div>
+            <form
+                className="relative bg-zinc-900 border border-amber-100/20 rounded-3xl p-8 max-w-md w-full"
+                onSubmit={handleForgotPassword}
+            >
+                <h2 className="text-2xl font-black text-amber-100 mb-2">
+                    Reset Password
+                </h2>
+                <p className="text-sm text-amber-100/60 mb-6">
+                    Enter your email and we'll send you a reset link
+                </p>
+
+                <div className="mb-6">
+                    <label className="block text-sm font-medium mb-2">
+                        Email Address
+                    </label>
+                    <div className="relative">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-100/40" />
+                        <input
+                            type="email"
+                            value={forgotPasswordEmail}
+                            onChange={(e) =>
+                                setForgotPasswordEmail(e.target.value)
+                            }
+                            className="w-full bg-amber-100/5 border border-amber-100/10 rounded-xl px-12 py-4 focus:outline-none focus:border-amber-100/30 transition text-amber-100"
+                            placeholder="you@example.com"
+                        />
+                    </div>
+                </div>
+
+                <div className="flex gap-3">
+                    <button
+                        onClick={closeModal}
+                        className="flex-1 py-3 bg-amber-100/10 text-amber-100 rounded-xl font-medium hover:bg-amber-100/20 transition"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        className="flex-1 py-3 bg-amber-100 text-zinc-900 rounded-xl font-bold hover:bg-amber-200 transition"
+                    >
+                        Send Reset Link
+                    </button>
+                </div>
+            </form>
+        </div>
+    )
+}
+
 const LoginPage = () => {
     const { session } = useAuth()
     const [loginData, setloginData] = useState<LoginData>({
         email: "",
         password: "",
     })
+    const [showForgotPasswordModal, setShowForgotPasswordModal] =
+        useState(false)
     const navigate = useNavigate()
 
     const handleChange = (
@@ -47,6 +109,10 @@ const LoginPage = () => {
         navigate("/app")
     }
 
+    const closeModal = () => {
+        setShowForgotPasswordModal(false)
+    }
+
     useEffect(() => {
         if (session) {
             navigate("/app")
@@ -55,6 +121,9 @@ const LoginPage = () => {
 
     return (
         <div className="min-h-screen bg-zinc-900 text-[#fffadd] flex items-center justify-center px-6 py-12">
+            {showForgotPasswordModal && (
+                <ForgotPasswordModal closeModal={closeModal} />
+            )}
             <div className="w-full max-w-md">
                 <Link to={"/"}>
                     <button className="mb-8 text-[#fffadd]/60 hover:text-[#fffadd] transition">
@@ -110,6 +179,15 @@ const LoginPage = () => {
                                 required={true}
                             />
                         </div>
+                    </div>
+                    <div className="mb-6 text-right">
+                        <button
+                            type="button"
+                            onClick={() => setShowForgotPasswordModal(true)}
+                            className="text-sm text-amber-100/60 hover:text-amber-100 transition"
+                        >
+                            Forgot password?
+                        </button>
                     </div>
                     <button
                         type="submit"
