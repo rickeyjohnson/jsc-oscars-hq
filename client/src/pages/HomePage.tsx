@@ -14,7 +14,9 @@ const HomePage = () => {
             <div className="px-6 py-6 space-y-6">
                 <Countdown />
                 <PendingBallots />
-                <MakeYourOwnCategories />
+                <Locked>
+                    <MakeYourOwnCategories />
+                </Locked>
                 <Locked>
                     <MusicPlaylistSection />
                 </Locked>
