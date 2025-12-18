@@ -51,7 +51,7 @@ const Countdown = () => {
         <div className="bg-gradient-to-br from-amber-100/10 to-amber-100/5 border border-amber-100/20 rounded-3xl p-8 text-center">
             <div className="flex items-center justify-center gap-2 mb-4">
                 <Trophy className="w-6 h-6 text-amber-100" />
-                <h2 className="text-2xl font-bold text-amber-100">
+                <h2 className="text-2xl font-bold text-amber-100 font-sans">
                     6th JSC Oscars
                 </h2>
             </div>
