@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { Mail, Lock } from "lucide-react"
+import { Mail, Lock, LoaderCircle } from "lucide-react"
 import { supabase } from "../supabaseClient"
 import { useAuth } from "../context/AuthContext"
 
@@ -12,8 +12,24 @@ interface LoginData {
 
 const ForgotPasswordModal = ({ closeModal }: { closeModal: () => void }) => {
     const [forgotPasswordEmail, setForgotPasswordEmail] = useState("")
-    const handleForgotPassword = (e: React.FormEvent) => {
+    const [loading, setLoading] = useState(false)
+
+    const handleForgotPassword = async (e: React.FormEvent) => {
         e.preventDefault()
+
+        setLoading(true)
+
+        const { error } = await supabase.auth.resetPasswordForEmail(
+            forgotPasswordEmail,
+            { redirectTo: "http://localhost:5173/login/reset" }
+        )
+
+        if (error) {
+            console.error("error reseting password:", error.message)
+            return
+        }
+
+        setLoading(false)
     }
 
     return (
@@ -26,10 +42,10 @@ const ForgotPasswordModal = ({ closeModal }: { closeModal: () => void }) => {
                 className="relative bg-zinc-900 border border-amber-100/20 rounded-3xl p-8 max-w-md w-full"
                 onSubmit={handleForgotPassword}
             >
-                <h2 className="text-2xl font-black text-amber-100 mb-2">
+                <h2 className="text-2xl font-black text-[#fffadd] mb-2">
                     Reset Password
                 </h2>
-                <p className="text-sm text-amber-100/60 mb-6">
+                <p className="text-sm text-[#fffadd]/60 mb-6">
                     Enter your email and we'll send you a reset link
                 </p>
 
@@ -38,14 +54,14 @@ const ForgotPasswordModal = ({ closeModal }: { closeModal: () => void }) => {
                         Email Address
                     </label>
                     <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-100/40" />
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#fffadd]/40" />
                         <input
                             type="email"
                             value={forgotPasswordEmail}
                             onChange={(e) =>
                                 setForgotPasswordEmail(e.target.value)
                             }
-                            className="w-full bg-amber-100/5 border border-amber-100/10 rounded-xl px-12 py-4 focus:outline-none focus:border-amber-100/30 transition text-amber-100"
+                            className="w-full bg-amber-100/5 border border-amber-100/10 rounded-xl px-12 py-4 focus:outline-none focus:border-amber-100/30 transition text-[#fffadd]"
                             placeholder="you@example.com"
                         />
                     </div>
@@ -54,15 +70,15 @@ const ForgotPasswordModal = ({ closeModal }: { closeModal: () => void }) => {
                 <div className="flex gap-3">
                     <button
                         onClick={closeModal}
-                        className="flex-1 py-3 bg-amber-100/10 text-amber-100 rounded-xl font-medium hover:bg-amber-100/20 transition"
+                        className="flex-1 py-3 bg-amber-100/10 text-[#fffadd] rounded-xl font-medium hover:bg-amber-100/20 transition"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
-                        className="flex-1 py-3 bg-amber-100 text-zinc-900 rounded-xl font-bold hover:bg-amber-200 transition"
+                        className="flex-1 py-3 bg-amber-100 text-zinc-900 rounded-xl font-bold hover:bg-amber-200 transition flex items-center justify-center"
                     >
-                        Send Reset Link
+                        {!loading ? "Send Reset Link" : <LoaderCircle className="animate-spin w-5 h-5"/>}
                     </button>
                 </div>
             </form>
@@ -184,14 +200,14 @@ const LoginPage = () => {
                         <button
                             type="button"
                             onClick={() => setShowForgotPasswordModal(true)}
-                            className="text-sm text-amber-100/60 hover:text-amber-100 transition"
+                            className="text-sm text-[#fffadd]/60 hover:text-[#fffadd] transition"
                         >
                             Forgot password?
                         </button>
                     </div>
                     <button
                         type="submit"
-                        className="w-full bg-amber-100 rounded-full text-zinc-900 py-4 font-bold hover:bg-amber-200 transition mb-4"
+                        className="w-full bg-[#fffadd] rounded-full text-zinc-900 py-4 font-bold hover:bg-[#fffadd]/80 transition mb-4"
                     >
                         Login
                     </button>

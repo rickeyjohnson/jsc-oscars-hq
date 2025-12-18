@@ -186,7 +186,7 @@ const SignupPage = () => {
                         </div>
                     </div>
                     <button
-                        className="w-full bg-amber-100 rounded-full text-zinc-900 py-4 font-bold hover:bg-amber-200 transition mb-4"
+                        className="w-full bg-[#fffadd] rounded-full text-zinc-900 py-4 font-bold hover:bg-[#fffadd]/80 transition mb-4"
                         type="submit"
                     >
                         Create Account
