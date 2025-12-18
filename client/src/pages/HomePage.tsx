@@ -1,7 +1,7 @@
-/* eslint-disable react-refresh/only-export-components */
 import NavigationBar from "../components/NavigationBar"
 import NavigationTabs from "../components/NavigationTabs"
 import Countdown from "../components/Countdown"
+import PendingBallots from "../components/PendingBallots"
 
 const HomePage = () => {
     return (
@@ -10,6 +10,7 @@ const HomePage = () => {
 
             <div className="px-6 py-6">
                 <Countdown />
+                <PendingBallots ballots={[1]}/>
             </div>
 
             <NavigationTabs activeTab={"home"} />
