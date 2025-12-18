@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom"
+import { Route, Routes } from "react-router-dom"
 import "./App.css"
 import LandingPage from "./pages/LandingPage"
 import SignupPage from "./pages/SignupPage"
@@ -7,21 +7,25 @@ import HomePage from "./pages/HomePage"
 import BallotsPage from "./pages/BallotsPage"
 import StatsPage from "./pages/StatsPage"
 import ProfilePage from "./pages/ProfilePage"
+import WithAuth from "./components/WithAuth"
 
 const App = () => {
+    const ProtectedHomePage = WithAuth(HomePage)
+    const ProtectedBallotsPage = WithAuth(BallotsPage)
+    const ProtectedStatsPage = WithAuth(StatsPage)
+    const ProtectedProfilePage = WithAuth(ProfilePage)
+
     return (
-        <BrowserRouter>
-            <Routes>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/signup" element={<SignupPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/app" element={<HomePage />} />
-                <Route path="/app/ballots" element={<BallotsPage />} />
-                <Route path="/app/stats" element={<StatsPage />} />
-                <Route path="/app/profile" element={<ProfilePage />} />
-                <Route path="*" element={<div>404 Not Found</div>} />
-            </Routes>
-        </BrowserRouter>
+        <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/app" element={<ProtectedHomePage />} />
+            <Route path="/app/ballots" element={<ProtectedBallotsPage />} />
+            <Route path="/app/stats" element={<ProtectedStatsPage />} />
+            <Route path="/app/profile" element={<ProtectedProfilePage />} />
+            <Route path="*" element={<div>404 Not Found</div>} />
+        </Routes>
     )
 }
 

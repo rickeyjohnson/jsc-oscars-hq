@@ -1,7 +1,9 @@
-import React, { useState } from "react"
-import { Link } from "react-router-dom"
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useEffect, useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
 import { Mail, Lock } from "lucide-react"
 import { supabase } from "../supabaseClient"
+import { useAuth } from "../context/AuthContext"
 
 interface LoginData {
     email: string
@@ -9,10 +11,12 @@ interface LoginData {
 }
 
 const LoginPage = () => {
+    const { session } = useAuth()
     const [loginData, setloginData] = useState<LoginData>({
         email: "",
         password: "",
     })
+    const navigate = useNavigate()
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -40,8 +44,14 @@ const LoginPage = () => {
             return
         }
 
-        console.log("successfully logged in")
+        navigate("/app")
     }
+
+    useEffect(() => {
+        if (session) {
+            navigate("/app")
+        }
+    }, [])
 
     return (
         <div className="min-h-screen bg-zinc-900 text-[#fffadd] flex items-center justify-center px-6 py-12">

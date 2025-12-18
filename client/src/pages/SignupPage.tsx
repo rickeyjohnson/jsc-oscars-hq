@@ -1,9 +1,10 @@
 import React, { useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { Mail, Lock, User, IdCard, Pencil } from "lucide-react"
 import { supabase } from "../supabaseClient"
 
 const SignupPage = () => {
+    const navigate = useNavigate()
     const [signupData, setSignupData] = useState({
         email: "",
         name: "",
@@ -46,9 +47,9 @@ const SignupPage = () => {
             return
         }
 
-        console.log("successly created!")
-
         // TODO: add toast pop up to tell user to check email
+
+        navigate('/app')
     }
 
     return (

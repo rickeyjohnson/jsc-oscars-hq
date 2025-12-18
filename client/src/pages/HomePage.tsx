@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { Trophy } from "lucide-react"
 import NavigationBar from "../components/NavigationBar"
 import NavigationTabs from "../components/NavigationTabs"
