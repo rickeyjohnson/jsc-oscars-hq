@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import React, { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Mail, Lock, User, IdCard, LoaderCircle } from "lucide-react"
