@@ -1,35 +1,47 @@
-import React, { useState } from "react"
+/* eslint-disable react-hooks/set-state-in-effect */
+import React, { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { Mail, Lock, User, IdCard, Pencil } from "lucide-react"
+import { Mail, Lock, User, IdCard, LoaderCircle } from "lucide-react"
 import { supabase } from "../supabaseClient"
+import { useAuth } from "../context/AuthContext"
+
+type SignupDate = {
+    email: string
+    name: string
+    username: string
+    image: File | null
+    password: string
+}
+
+const VerifyEmailModal = () => {
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 h-screen">
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+            <div className="relative flex flex-col justify-items items-center">
+                <LoaderCircle className="animate-spin w-10 h-10 mb-7" />
+                <p>Please verify email to continue</p>
+                {/* add resend email. option! */}
+            </div>
+        </div>
+    )
+}
 
 const SignupPage = () => {
-    const navigate = useNavigate()
-    const [signupData, setSignupData] = useState({
+    const { user } = useAuth()
+    const [showVerifyEmailModal, setShowVerifyEmailModal] = useState(false)
+    const [loader, setLoader] = useState(false)
+    const [signupData, setSignupData] = useState<SignupDate>({
         email: "",
         name: "",
         username: "",
         password: "",
-        pfp: "/blank-pfp.png",
+        image: null,
     })
+    const navigate = useNavigate()
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
     ) => {
-        if (
-            e.target.name === "pfp" &&
-            e.target instanceof HTMLInputElement &&
-            e.target.files &&
-            e.target.files[0]
-        ) {
-            const img = e.target.files[0]
-            setSignupData({
-                ...signupData,
-                pfp: URL.createObjectURL(img),
-            })
-            return
-        }
-
         setSignupData({
             ...signupData,
             [e.target.name]: e.target.value,
@@ -38,22 +50,51 @@ const SignupPage = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+        setLoader(true)
+
         const email = signupData.email
         const password = signupData.password
+        const username = signupData.username
+        const name = signupData.name
+        let is_committee = false
 
-        const { error } = await supabase.auth.signUp({ email, password })
+        if (name === "rickey" || name === "kadin") {
+            is_committee = true
+        }
+
+        // supabase signup
+        const { error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: {
+                    username,
+                    name,
+                    is_committee,
+                },
+                emailRedirectTo: "http://localhost:5173/signup/confirmed",
+            },
+        })
+
+        setLoader(false)
+
         if (error) {
             console.error("error's signing up: ", error.message)
             return
         }
 
-        // TODO: add toast pop up to tell user to check email
-
-        navigate('/app')
+        setShowVerifyEmailModal(true)
     }
+
+    useEffect(() => {
+        if (user && user?.email_confirmed_at) {
+            navigate("/app")
+        }
+    }, [user, user?.email_confirmed_at])
 
     return (
         <div className="min-h-screen bg-zinc-900 text-[#fffadd] flex items-center justify-center px-6 py-12">
+            {showVerifyEmailModal && <VerifyEmailModal />}
             <div className="w-full max-w-md">
                 <Link to={"/"}>
                     <button className="mb-8 text-[#fffadd]/60 hover:text-[#fffadd] transition">
@@ -76,21 +117,6 @@ const SignupPage = () => {
                 </p>
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4 w-full flex items-center">
-                        <div className="relative shrink-0 w-20 h-20 mr-[1.5rem]">
-                            <img
-                                src={signupData.pfp}
-                                className="rounded-full h-20 w-20"
-                            />
-                            <div className="bg-black rounded-full flex items-center justify-center p-2 w-fit absolute -bottom-2 -right-2 cursor-pointer">
-                                <Pencil size={15} />
-                            </div>
-                            <input
-                                name="pfp"
-                                type="file"
-                                className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
-                                onChange={handleChange}
-                            />
-                        </div>
                         <div className="w-full">
                             <label className="block text-sm font-medium mb-2">
                                 Name
@@ -186,10 +212,14 @@ const SignupPage = () => {
                         </div>
                     </div>
                     <button
-                        className="w-full bg-[#fffadd] rounded-full text-zinc-900 py-4 font-bold hover:bg-[#fffadd]/80 transition mb-4"
+                        className="w-full bg-[#fffadd] rounded-full text-zinc-900 py-4 font-bold hover:bg-[#fffadd]/80 transition mb-4 flex justify-center items-center"
                         type="submit"
                     >
-                        Create Account
+                        {loader ? (
+                            <LoaderCircle className="animate-spin w-5 h-5" />
+                        ) : (
+                            "Create Account"
+                        )}
                     </button>
                 </form>
 

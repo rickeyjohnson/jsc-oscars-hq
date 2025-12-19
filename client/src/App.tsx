@@ -9,6 +9,7 @@ import StatsPage from "./pages/StatsPage"
 import ProfilePage from "./pages/ProfilePage"
 import WithAuth from "./components/WithAuth"
 import ResetPassword from "./pages/ResetPassword"
+import ComfirmedEmailPage from "./pages/ComfirmedEmailPage"
 
 const App = () => {
     const ProtectedHomePage = WithAuth(HomePage)
@@ -20,6 +21,7 @@ const App = () => {
         <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/signup" element={<SignupPage />} />
+            <Route path="/signup/confirmed" element={<ComfirmedEmailPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/login/reset" element={<ResetPassword />} />
             <Route path="/app" element={<ProtectedHomePage />} />
