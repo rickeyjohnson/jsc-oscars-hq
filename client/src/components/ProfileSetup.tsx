@@ -1,17 +1,45 @@
-import { LoaderCircle, Pencil } from "lucide-react"
+import { Upload } from "lucide-react"
+import { AnimatePresence, motion } from "motion/react"
+import { useEffect, useState } from "react"
 
-const ProfileSetup = () => {
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (
-            e.target.name === "pfp" &&
-            e.target instanceof HTMLInputElement &&
-            e.target.files &&
-            e.target.files[0]
-        ) {
-            const img = e.target.files[0]
+type ProfileSetupProps = {
+    onComplete: () => void
+}
 
-            return
-        }
+const slides = [
+    {
+        title: "You're almost done",
+        text: "Just a few quick steps to finish setting up your profile.",
+    },
+    {
+        title: "Add a profile photo",
+        text: "This helps people recognize you on the app, as well as serve as your photo submission for the next Oscars.",
+    },
+    {
+        title: "All set!",
+        text: "Thanks for completing your profile.",
+    },
+    {
+        title: "Welcome to Oscars HQ ✨",
+        text: "",
+    },
+]
+
+const LAST_SLIDE = slides.length - 1
+const IMAGE_UPLOAD_SLIDE = slides.findIndex(
+    (slide) => slide.title === "Add a profile photo"
+)
+
+const ProfileSetup = ({ onComplete }: ProfileSetupProps) => {
+    const [step, setStep] = useState(0)
+    const [closing, setClosing] = useState(false)
+    const [isVisible, setIsVisible] = useState(!document.hidden)
+    const [image, setImage] = useState<File | null>(null)
+    const [preview, setPreview] = useState<string | null>(null)
+
+    const handleImageUpload = (file: File) => {
+        setImage(file)
+        setPreview(URL.createObjectURL(file))
     }
 
     // const uploadImage = async (file: File): Promise<string | null> => {
@@ -40,31 +68,134 @@ const ProfileSetup = () => {
     //     return data.publicUrl
     // }
 
+    useEffect(() => {
+        if (step === IMAGE_UPLOAD_SLIDE || !isVisible) return
+
+        const timer = setTimeout(() => {
+            if (step === LAST_SLIDE) {
+                setClosing(true)
+                setTimeout(onComplete, 600)
+            } else {
+                setStep(step + 1)
+            }
+        }, 5000)
+
+        return () => clearTimeout(timer)
+    }, [step, isVisible])
+
+    useEffect(() => {
+        const handleVisibilityChange = () => setIsVisible(!document.hidden)
+        const handleFocus = () => setIsVisible(true)
+        const handleBlur = () => setIsVisible(false)
+
+        document.addEventListener("visibilitychange", handleVisibilityChange)
+        window.addEventListener("focus", handleFocus)
+        window.addEventListener("blur", handleBlur)
+
+        return () => {
+            document.removeEventListener(
+                "visibilitychange",
+                handleVisibilityChange
+            )
+            window.removeEventListener("focus", handleFocus)
+            window.removeEventListener("blur", handleBlur)
+        }
+    }, [])
+
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 h-screen">
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
-            <div className="relative flex flex-col justify-items items-center">
-                <LoaderCircle className="animate-spin w-10 h-10 mb-7" />
-                <p>Please verify email to continue</p>
-                <div className="relative shrink-0 w-20 h-20 mr-[1.5rem]">
-                    <img
-                        src={"/blank-pfp.png"}
-                        className="rounded-full h-20 w-20"
-                    />
-                    <div className="bg-black rounded-full flex items-center justify-center p-2 w-fit absolute -bottom-2 -right-2 cursor-pointer">
-                        <Pencil size={15} />
+        <AnimatePresence>
+            {!closing && (
+                <motion.div
+                    key="profile-setup-container"
+                    initial={{ y: 0, opacity: 1 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{
+                        y: "-110%",
+                        opacity: 0,
+                        scale: 0.96,
+                        filter: "blur(6px)",
+                        transition: {
+                            duration: 1.25,
+                            ease: [0.22, 1, 0.36, 1],
+                        },
+                    }}
+                    className="fixed inset-0 z-50 flex items-center justify-center p-6 h-screen"
+                >
+                    <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+                    <div className="relative flex flex-col justify-items items-center w-[80%]">
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={step}
+                                initial={{
+                                    opacity: 0,
+                                    filter: "blur(8px)",
+                                    scale: 0.98,
+                                }}
+                                animate={{
+                                    opacity: 1,
+                                    filter: "blur(0px)",
+                                    scale: 1,
+                                }}
+                                exit={{
+                                    opacity: 0,
+                                    filter: "blur(8px)",
+                                    scale: 0.98,
+                                }}
+                                transition={{ duration: 0.67, ease: "easeOut" }}
+                                className="text-center w-full"
+                            >
+                                <h2 className="font-bold">
+                                    {slides[step].title}
+                                </h2>
+                                <p className="text-[#fffadd]/60 mt-2">
+                                    {slides[step].text}
+                                </p>
+
+                                {step === IMAGE_UPLOAD_SLIDE && (
+                                    <div className="mt-6">
+                                        <label className="relative w-32 h-32 mx-auto block cursor-pointer">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                onChange={(e) =>
+                                                    e.target.files &&
+                                                    handleImageUpload(
+                                                        e.target.files[0]
+                                                    )
+                                                }
+                                            />
+
+                                            <div className="w-full h-full rounded-full border border-[#fffadd]/20 bg-amber-100/5 flex items-center justify-center overflow-hidden hover:border-[#fffadd]/40 transition">
+                                                {preview ? (
+                                                    <img
+                                                        src={preview}
+                                                        alt="Preview"
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <Upload className="w-8 h-8 text-[#fffadd]/50" />
+                                                )}
+                                            </div>
+                                        </label>
+
+                                        <button
+                                            disabled={!image}
+                                            onClick={() =>
+                                                setStep((step) => step + 1)
+                                            }
+                                            className="mt-6 bg-[#fffadd] text-zinc-900 px-6 py-3 rounded-full font-bold disabled:opacity-40 transition"
+                                        >
+                                            Continue
+                                        </button>
+                                    </div>
+                                )}
+                            </motion.div>
+                        </AnimatePresence>
                     </div>
-                    <input
-                        name="pfp"
-                        type="file"
-                        accept="image/*"
-                        className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
-                        onChange={handleChange}
-                        required={true}
-                    />
-                </div>
-            </div>
-        </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
     )
 }
 

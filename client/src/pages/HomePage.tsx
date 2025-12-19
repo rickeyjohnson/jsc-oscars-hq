@@ -7,11 +7,17 @@ import MakeYourOwnCategories from "../components/MakeYourOwnCategories"
 import Locked from "../components/Locked"
 import Announcements from "../components/Announcements"
 import ProfileSetup from "../components/ProfileSetup"
+import { useState } from "react"
 
 const HomePage = () => {
+    const [profileSetupComplete, setProfileSetupComplete] = useState(false)
+
+    const handleProfileSetupComplete = () => {
+        setProfileSetupComplete(false)
+    }
+
     return (
-        <div className="bg-zinc-900 min-h-screen text-[#fffadd] pb-24 font-poppins">
-            <ProfileSetup />
+        <div className="realtive bg-zinc-900 min-h-screen text-[#fffadd] pb-24 font-poppins overflow-hidden">
             <NavigationBar />
 
             <div className="px-6 py-6 space-y-6">
@@ -27,6 +33,10 @@ const HomePage = () => {
             </div>
 
             <NavigationTabs activeTab={"home"} />
+
+            {!profileSetupComplete && (
+                <ProfileSetup onComplete={handleProfileSetupComplete} />
+            )}
         </div>
     )
 }

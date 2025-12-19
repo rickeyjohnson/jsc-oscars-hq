@@ -90,7 +90,7 @@ const SignupPage = () => {
         if (user && user?.email_confirmed_at) {
             navigate("/app")
         }
-    }, [user, user?.email_confirmed_at])
+    }, [navigate, user, user?.email_confirmed_at])
 
     return (
         <div className="min-h-screen bg-zinc-900 text-[#fffadd] flex items-center justify-center px-6 py-12">
