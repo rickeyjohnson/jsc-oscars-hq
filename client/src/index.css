@@ -32,3 +32,7 @@
     font-family: 'Poppins', sans-serif;
   }
 }
+
+:root {
+  background: oklch(21% 0.006 285.885);
+}

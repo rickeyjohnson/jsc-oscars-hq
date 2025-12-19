@@ -1,6 +1,8 @@
-import { Upload } from "lucide-react"
+import { LoaderCircle, Upload } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import { useEffect, useState } from "react"
+import { supabase } from "../supabaseClient"
+import { useAuth } from "../context/AuthContext"
 
 type ProfileSetupProps = {
     onComplete: () => void
@@ -31,42 +33,58 @@ const IMAGE_UPLOAD_SLIDE = slides.findIndex(
 )
 
 const ProfileSetup = ({ onComplete }: ProfileSetupProps) => {
+    const { user } = useAuth()
     const [step, setStep] = useState(0)
     const [closing, setClosing] = useState(false)
     const [isVisible, setIsVisible] = useState(!document.hidden)
     const [image, setImage] = useState<File | null>(null)
     const [preview, setPreview] = useState<string | null>(null)
+    const [loading, setLoading] = useState(false)
 
     const handleImageUpload = (file: File) => {
         setImage(file)
         setPreview(URL.createObjectURL(file))
     }
 
-    // const uploadImage = async (file: File): Promise<string | null> => {
-    //     const filePath = `${file.name}-${Date.now()}`
+    const uploadImage = async (file: File): Promise<string | null> => {
+        const filePath = `${file.name}-${Date.now()}`
 
-    //     console.log("uploading photo to storage")
+        const { error } = await supabase.storage
+            .from("profile-pics")
+            .upload(filePath, file)
 
-    //     const { error } = await supabase.storage
-    //         .from("profile-pics")
-    //         .upload(filePath, file)
+        if (error) {
+            console.error("Error uploading image: ", error.message)
+            setLoading(false)
+            return null
+        }
 
-    //     if (error) {
-    //         console.error("Error uploading image: ", error.message)
-    //         return null
-    //     }
+        const { data } = await supabase.storage
+            .from("profile-pics")
+            .getPublicUrl(filePath)
 
-    //     console.log("upload successful")
-    //     console.log("getting url for image")
+        return data.publicUrl
+    }
 
-    //     const { data } = await supabase.storage
-    //         .from("profile-pics")
-    //         .getPublicUrl(filePath)
+    const handleImageSubmission = async () => {
+        setLoading(true)
 
-    //     console.log("url successful")
+        const url = await uploadImage(image!)
+        if (!url) return
 
-    //     return data.publicUrl
-    // }
+        const { error } = await supabase
+            .from("profiles")
+            .update({ image_url: url })
+            .eq("user_id", user?.id)
+
+        setLoading(false)
+
+        if (error) {
+            console.error("error inserting profile image: ", error.message)
+        }
+
+        setStep((prev) => prev + 1)
+    }
 
     useEffect(() => {
         if (step === IMAGE_UPLOAD_SLIDE || !isVisible) return
@@ -182,12 +200,14 @@ const ProfileSetup = ({ onComplete }: ProfileSetupProps) => {
 
                                         <button
                                             disabled={!image}
-                                            onClick={() =>
-                                                setStep((step) => step + 1)
-                                            }
+                                            onClick={handleImageSubmission}
                                             className="mt-6 bg-[#fffadd] text-zinc-900 px-6 py-3 rounded-full font-bold disabled:opacity-40 transition"
                                         >
-                                            Continue
+                                            {loading ? (
+                                                <LoaderCircle className="animate-spin w-7 h-7" />
+                                            ) : (
+                                                "Continue"
+                                            )}
                                         </button>
                                     </div>
                                 )}
