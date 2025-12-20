@@ -15,7 +15,7 @@ const HomePage = () => {
     const { user } = useAuth()
     const [profileSetupComplete, setProfileSetupComplete] = useState<
         boolean | null
-    >(false)
+    >(true)
 
     const handleProfileSetupComplete = () => {
         setProfileSetupComplete(false)
@@ -41,7 +41,7 @@ const HomePage = () => {
         }
 
         isProfileComplete()
-    }, [])
+    }, [user?.id])
 
     return (
         <div className="realtive bg-zinc-900 min-h-screen text-[#fffadd] pb-24 font-poppins overflow-hidden">
@@ -56,7 +56,9 @@ const HomePage = () => {
                 <Locked>
                     <MusicPlaylistSection />
                 </Locked>
-                <Announcements />
+                <Locked>
+                    <Announcements />
+                </Locked>
             </div>
 
             <NavigationTabs activeTab={"home"} />
