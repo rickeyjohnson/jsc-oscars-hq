@@ -1,6 +1,5 @@
 import {
     Award,
-    ChevronRight,
     FlaskConical,
     Laugh,
     Plus,
@@ -16,6 +15,7 @@ import NavigationBar from "../components/NavigationBar"
 import NavigationTabs from "../components/NavigationTabs"
 import { supabase } from "../supabaseClient"
 import { useUserData } from "../context/UserContenxt"
+import ProfilePageButton from "../components/ProfilePageButton"
 
 const ProfilePage = () => {
     const { profile } = useUserData()
@@ -74,29 +74,17 @@ const ProfilePage = () => {
                     </div>
 
                     {/* Account Settings */}
-                    <div className="space-y-3">
-                        <button className="w-full bg-amber-100/5 border border-amber-100/10 rounded-2xl p-4 text-left hover:bg-amber-100/10 transition">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <User className="w-5 h-5 text-amber-100" />
-                                    <span className="font-medium text-amber-100">
-                                        Edit Profile
-                                    </span>
-                                </div>
-                                <ChevronRight className="w-5 h-5 text-amber-100/40" />
-                            </div>
-                        </button>
-                        <button className="w-full bg-amber-100/5 border border-amber-100/10 rounded-2xl p-4 text-left hover:bg-amber-100/10 transition mb-6">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <Settings className="w-5 h-5 text-amber-100" />
-                                    <span className="font-medium text-amber-100">
-                                        Settings
-                                    </span>
-                                </div>
-                                <ChevronRight className="w-5 h-5 text-amber-100/40" />
-                            </div>
-                        </button>
+                    <div>
+                        <div className="space-y-3 mb-6">
+                            <ProfilePageButton
+                                label="Edit Profile"
+                                icon={<User className="w-5 h-5" />}
+                            />
+                            <ProfilePageButton
+                                label="Settings"
+                                icon={<Settings className="w-5 h-5" />}
+                            />
+                        </div>
 
                         <div className="pt-4 border-t border-amber-100/10 space-y-3 mb-6">
                             <div className="flex items-center gap-2 mb-6">
@@ -105,17 +93,15 @@ const ProfilePage = () => {
                                     Experimental
                                 </span>
                             </div>
-                            <button className="w-full bg-gradient-to-r from-green-500 to-cyan-600 rounded-2xl p-4 text-left hover:from-amber-600 hover:to-amber-700 transition">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <Laugh className="w-5 h-5 text-zinc-900" />
-                                        <span className="font-bold text-zinc-900">
-                                            Joke Generator
-                                        </span>
-                                    </div>
-                                    <ChevronRight className="w-5 h-5 text-zinc-900" />
-                                </div>
-                            </button>
+                            <ProfilePageButton
+                                label="Joke Generator"
+                                icon={<Laugh className="w-5 h-5" />}
+                                variant="gradient"
+                                textColor="text-zinc-900"
+                                iconColor="text-zinc-900"
+                                rightIconColor="text-zinc-900"
+                                className="from-green-500 to-cyan-600 hover:from-amber-600 hover:to-amber-700"
+                            />
                         </div>
 
                         {/* Committee Only */}
@@ -127,50 +113,27 @@ const ProfilePage = () => {
                                         Admin Controls
                                     </span>
                                 </div>
-                                <button className="w-full bg-gradient-to-r from-amber-500 to-amber-600 rounded-2xl p-4 text-left hover:from-amber-600 hover:to-amber-700 transition">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <Plus className="w-5 h-5 text-zinc-900" />
-                                            <span className="font-bold text-zinc-900">
-                                                Create New Ballot
-                                            </span>
-                                        </div>
-                                        <ChevronRight className="w-5 h-5 text-zinc-900" />
-                                    </div>
-                                </button>
-                                <button className="w-full bg-amber-100/5 border border-amber-100/10 rounded-2xl p-4 text-left hover:bg-amber-100/10 transition">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <Settings className="w-5 h-5 text-amber-100" />
-                                            <span className="font-medium text-amber-100">
-                                                Manage Ballots
-                                            </span>
-                                        </div>
-                                        <ChevronRight className="w-5 h-5 text-amber-100/40" />
-                                    </div>
-                                </button>
-                                <button className="w-full bg-amber-100/5 border border-amber-100/10 rounded-2xl p-4 text-left hover:bg-amber-100/10 transition">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <SquareCheckBig className="w-5 h-5 text-amber-100" />
-                                            <span className="font-medium text-amber-100">
-                                                View Results
-                                            </span>
-                                        </div>
-                                        <ChevronRight className="w-5 h-5 text-amber-100/40" />
-                                    </div>
-                                </button>
-                                <button className="w-full bg-amber-100/5 border border-amber-100/10 rounded-2xl p-4 text-left hover:bg-amber-100/10 transition">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <Users className="w-5 h-5 text-amber-100" />
-                                            <span className="font-medium text-amber-100">
-                                                User Management
-                                            </span>
-                                        </div>
-                                        <ChevronRight className="w-5 h-5 text-amber-100/40" />
-                                    </div>
-                                </button>
+                                <ProfilePageButton
+                                    label="Create New Ballot"
+                                    icon={<Plus className="w-5 h-5" />}
+                                    variant="gradient"
+                                    textColor="text-zinc-900"
+                                    iconColor="text-zinc-900"
+                                />
+                                <ProfilePageButton
+                                    label="Manage Ballots"
+                                    icon={<Settings className="w-5 h-5" />}
+                                />
+                                <ProfilePageButton
+                                    label="View Results"
+                                    icon={
+                                        <SquareCheckBig className="w-5 h-5" />
+                                    }
+                                />
+                                <ProfilePageButton
+                                    label="User Management"
+                                    icon={<Users className="w-5 h-5" />}
+                                />
                             </div>
                         )}
                     </div>
