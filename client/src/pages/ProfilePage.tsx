@@ -1,6 +1,8 @@
 import {
     Award,
     ChevronRight,
+    FlaskConical,
+    Laugh,
     Plus,
     Settings,
     Shield,
@@ -95,6 +97,26 @@ const ProfilePage = () => {
                                 <ChevronRight className="w-5 h-5 text-amber-100/40" />
                             </div>
                         </button>
+
+                        <div className="pt-4 border-t border-amber-100/10 space-y-3 mb-6">
+                            <div className="flex items-center gap-2 mb-6">
+                                <FlaskConical className="w-5 h-5 text-amber-100" />
+                                <span className="text-sm font-bold text-amber-100">
+                                    Experimental
+                                </span>
+                            </div>
+                            <button className="w-full bg-gradient-to-r from-green-500 to-cyan-600 rounded-2xl p-4 text-left hover:from-amber-600 hover:to-amber-700 transition">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Laugh className="w-5 h-5 text-zinc-900" />
+                                        <span className="font-bold text-zinc-900">
+                                            Joke Generator
+                                        </span>
+                                    </div>
+                                    <ChevronRight className="w-5 h-5 text-zinc-900" />
+                                </div>
+                            </button>
+                        </div>
 
                         {/* Committee Only */}
                         {profile?.is_committee && (

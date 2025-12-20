@@ -2,7 +2,7 @@ import NavigationBar from "../components/NavigationBar"
 import NavigationTabs from "../components/NavigationTabs"
 import { useState } from "react"
 import { useUserData } from "../context/UserContenxt"
-import { Target, TrendingUp, Trophy } from "lucide-react"
+import { Award, Target, TrendingUp, Trophy } from "lucide-react"
 
 const StatsPage = () => {
     const { profile } = useUserData()
@@ -82,6 +82,58 @@ const StatsPage = () => {
                                         Win Rate
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Categories Won */}
+                        <div>
+                            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                <Award className="w-5 h-5" />
+                                Categories Won
+                            </h3>
+                            <div className="bg-gradient-to-br from-amber-100/10 to-amber-100/5 border border-amber-100/20 rounded-3xl p-6">
+                                <div className="space-y-3">
+                                    {[
+                                        {
+                                            category: "Best Picture",
+                                            year: 2024,
+                                        },
+                                        {
+                                            category: "Best Director",
+                                            year: 2023,
+                                        },
+                                        { category: "Best Actor", year: 2023 },
+                                    ].map((cat, i) => (
+                                        <div
+                                            key={i}
+                                            className="bg-zinc-900/40 border border-amber-100/10 rounded-xl p-4 flex items-center justify-between"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <Trophy className="w-5 h-5 text-amber-100" />
+                                                <div>
+                                                    <div className="font-bold text-amber-100">
+                                                        {cat.category}
+                                                    </div>
+                                                    <div className="text-xs text-amber-100/60">
+                                                        {cat.year}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="px-3 py-1 bg-amber-100/20 text-amber-100 rounded-full text-xs font-bold">
+                                                WINNER
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                {[
+                                    { category: "Best Picture", year: 2024 },
+                                    { category: "Best Director", year: 2023 },
+                                    { category: "Best Actor", year: 2023 },
+                                ].length === 0 && (
+                                    <p className="text-center text-amber-100/60 py-4">
+                                        No categories won yet
+                                    </p>
+                                )}
                             </div>
                         </div>
 

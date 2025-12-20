@@ -52,9 +52,12 @@ const BallotsPage = () => {
 
                         {/* Ballot Cards */}
                         <div className="space-y-4">
-                            {[].map((ballot) => (
-                                <BallotCard key={ballot.id} ballot={ballot} />
-                            )) && <div className="text-center">No ballots</div>}
+                            {[].map((ballot, index) => (
+                                <BallotCard key={index} ballot={ballot} />
+                            )) && (
+                                <div className="text-center">No ballots</div>
+                            )}{" "}
+                            {/* replace key */}
                         </div>
                     </div>
                 </main>
