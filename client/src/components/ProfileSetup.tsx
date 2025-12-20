@@ -47,7 +47,8 @@ const ProfileSetup = ({ onComplete }: ProfileSetupProps) => {
     }
 
     const uploadImage = async (file: File): Promise<string | null> => {
-        const filePath = `${file.name}-${Date.now()}`
+        const fileName = file.name.split(".")[0]
+        const filePath = `${fileName}-${Date.now()}`
 
         const { error } = await supabase.storage
             .from("profile-pics")

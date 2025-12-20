@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             value={{
                 session,
                 user,
-                loading
+                loading,
             }}
         >
             {children}
