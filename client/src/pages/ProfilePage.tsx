@@ -1,5 +1,6 @@
 import {
     Award,
+    Calendar,
     FlaskConical,
     Laugh,
     Plus,
@@ -16,9 +17,12 @@ import NavigationTabs from "../components/NavigationTabs"
 import { supabase } from "../supabaseClient"
 import { useUserData } from "../context/UserContenxt"
 import ProfilePageButton from "../components/ProfilePageButton"
+import ManageOscarsModal from "../components/ManageOscarsModal"
+import { useState } from "react"
 
 const ProfilePage = () => {
     const { profile } = useUserData()
+    const [openManageOscarModal, setOpenManageOscarModal] = useState(false)
     const handleLogout = async () => {
         await supabase.auth.signOut()
     }
@@ -134,6 +138,13 @@ const ProfilePage = () => {
                                     label="User Management"
                                     icon={<Users className="w-5 h-5" />}
                                 />
+                                <ProfilePageButton
+                                    label="Manage Events"
+                                    icon={<Calendar className="w-5 h-5" />}
+                                    onClick={() =>
+                                        setOpenManageOscarModal(true)
+                                    }
+                                />
                             </div>
                         )}
                     </div>
@@ -147,6 +158,12 @@ const ProfilePage = () => {
                 </main>
 
                 <NavigationTabs activeTab={"profile"} />
+
+                {/* Modals */}
+                <ManageOscarsModal
+                    isOpen={openManageOscarModal}
+                    onClose={() => setOpenManageOscarModal(false)}
+                />
             </div>
         </div>
     )
