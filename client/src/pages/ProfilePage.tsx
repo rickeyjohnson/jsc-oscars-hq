@@ -13,41 +13,13 @@ import {
 import NavigationBar from "../components/NavigationBar"
 import NavigationTabs from "../components/NavigationTabs"
 import { supabase } from "../supabaseClient"
-import { useEffect, useState } from "react"
-import type { Profile } from "../types"
-import { useAuth } from "../context/AuthContext"
+import { useUserData } from "../context/UserContenxt"
 
 const ProfilePage = () => {
-    const { user } = useAuth()
-    const [profile, setProfile] = useState<Profile | null>(null)
-
+    const { profile } = useUserData()
     const handleLogout = async () => {
         await supabase.auth.signOut()
     }
-
-    useEffect(() => {
-        const fetchProfile = async () => {
-            const { data, error } = await supabase
-                .from("profiles")
-                .select("*")
-                .eq("user_id", user?.id)
-                .single()
-
-            if (error) {
-                // full screen blur error (w/ reload or something)
-                console.error(
-                    "[Profile Page] Error fetching profile info: ",
-                    error.message
-                )
-                return
-            }
-
-            setProfile(data)
-            console.log(data)
-        }
-
-        fetchProfile()
-    }, [user?.id])
 
     return (
         <div>

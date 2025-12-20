@@ -59,7 +59,7 @@ const Countdown = () => {
                 {Object.keys(timeLeft).length > 0 ? (
                     <>
                         <div className="bg-zinc-900/50 rounded-2xl p-4 border border-amber-100/10 overflow-hidden text-ellipsis">
-                            <div className="text-4xl font-black text-amber-100">
+                            <div className="text-3xl sm:text-4xl font-black text-amber-100">
                                 {timeLeft.days || "0"}
                             </div>
                             <div className="text-xs text-amber-100/60 mt-1">
@@ -67,7 +67,7 @@ const Countdown = () => {
                             </div>
                         </div>
                         <div className="bg-zinc-900/50 rounded-2xl p-4 border border-amber-100/10 overflow-hidden text-ellipsis">
-                            <div className="text-4xl font-black text-amber-100">
+                            <div className="text-3xl sm:text-4xl font-black text-amber-100">
                                 {timeLeft.hours || "0"}
                             </div>
                             <div className="text-xs text-amber-100/60 mt-1">
@@ -75,7 +75,7 @@ const Countdown = () => {
                             </div>
                         </div>
                         <div className="bg-zinc-900/50 rounded-2xl p-4 border border-amber-100/10 overflow-hidden text-ellipsis">
-                            <div className="text-4xl font-black text-amber-100">
+                            <div className="text-3xl sm:text-4xl font-black text-amber-100">
                                 {timeLeft.minutes || "0"}
                             </div>
                             <div className="text-xs text-amber-100/60 mt-1">
@@ -83,7 +83,7 @@ const Countdown = () => {
                             </div>
                         </div>
                         <div className="bg-zinc-900/50 rounded-2xl p-4 border border-amber-100/10 overflow-hidden text-ellipsis">
-                            <div className="text-4xl font-black text-amber-100">
+                            <div className="text-3xl sm:text-4xl font-black text-amber-100">
                                 {timeLeft.seconds || "0"}
                             </div>
                             <div className="text-xs text-amber-100/60 mt-1">
