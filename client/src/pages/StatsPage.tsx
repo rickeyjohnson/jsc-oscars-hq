@@ -1,8 +1,8 @@
-import { Award, Target, TrendingUp, Trophy } from "lucide-react"
 import NavigationBar from "../components/NavigationBar"
 import NavigationTabs from "../components/NavigationTabs"
 import { useState } from "react"
 import { useUserData } from "../context/UserContenxt"
+import { Target, TrendingUp, Trophy } from "lucide-react"
 
 const StatsPage = () => {
     const { profile } = useUserData()
@@ -60,7 +60,7 @@ const StatsPage = () => {
                             <div className="grid grid-cols-3 gap-4">
                                 <div className="text-center">
                                     <div className="text-3xl font-black text-amber-100">
-                                        24
+                                        --
                                     </div>
                                     <div className="text-xs text-amber-100/60 mt-1">
                                         Nominations
@@ -68,7 +68,7 @@ const StatsPage = () => {
                                 </div>
                                 <div className="text-center">
                                     <div className="text-3xl font-black text-green-400">
-                                        18
+                                        --
                                     </div>
                                     <div className="text-xs text-amber-100/60 mt-1">
                                         Wins
@@ -76,7 +76,7 @@ const StatsPage = () => {
                                 </div>
                                 <div className="text-center">
                                     <div className="text-3xl font-black text-amber-100">
-                                        75%
+                                        --%
                                     </div>
                                     <div className="text-xs text-amber-100/60 mt-1">
                                         Win Rate
@@ -101,7 +101,8 @@ const StatsPage = () => {
                                     <div className="flex-1 text-center">
                                         <div className="w-16 h-16 mx-auto mb-2 bg-gradient-to-br from-gray-300 to-gray-400 rounded-full flex items-center justify-center text-2xl font-black text-zinc-900 border-4 border-gray-200">
                                             C
-                                        </div>
+                                        </div>{" "}
+                                        {/* TODO: add the pfps */}
                                         <div className="font-bold text-amber-100 text-sm mb-1">
                                             CinemaLover
                                         </div>
@@ -112,7 +113,6 @@ const StatsPage = () => {
                                             <div className="text-3xl font-black text-zinc-900">
                                                 2
                                             </div>
-                                            <Award className="w-5 h-5 text-zinc-900 mt-1" />
                                         </div>
                                     </div>
 
@@ -120,7 +120,8 @@ const StatsPage = () => {
                                     <div className="flex-1 text-center">
                                         <div className="w-20 h-20 mx-auto mb-2 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center text-3xl font-black text-zinc-900 border-4 border-amber-200 shadow-lg">
                                             M
-                                        </div>
+                                        </div>{" "}
+                                        {/* TODO: add the pfps */}
                                         <div className="font-bold text-amber-100 mb-1">
                                             MovieBuff2024
                                         </div>
@@ -131,7 +132,6 @@ const StatsPage = () => {
                                             <div className="text-4xl font-black text-zinc-900">
                                                 1
                                             </div>
-                                            <Trophy className="w-6 h-6 text-zinc-900 mt-1" />
                                         </div>
                                     </div>
 
@@ -139,7 +139,8 @@ const StatsPage = () => {
                                     <div className="flex-1 text-center">
                                         <div className="w-16 h-16 mx-auto mb-2 bg-gradient-to-br from-amber-700 to-amber-900 rounded-full flex items-center justify-center text-2xl font-black text-white border-4 border-amber-800">
                                             F
-                                        </div>
+                                        </div>{" "}
+                                        {/* TODO: add the pfps */}
                                         <div className="font-bold text-amber-100 text-sm mb-1">
                                             FilmFanatic
                                         </div>
@@ -150,7 +151,6 @@ const StatsPage = () => {
                                             <div className="text-3xl font-black text-white">
                                                 3
                                             </div>
-                                            <Award className="w-5 h-5 text-white mt-1" />
                                         </div>
                                     </div>
                                 </div>
@@ -171,13 +171,14 @@ const StatsPage = () => {
                                     "rickeyistaken",
                                     "kadinlovesdogs",
                                     "tjisnotspades",
-                                ].map((name) => (
+                                ].map((name, index) => (
                                     <div className="bg-amber-100/5 border border-amber-100/10 rounded-2xl p-4">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 bg-amber-100/10 rounded-full flex items-center justify-center font-black text-amber-100">
-                                                    4
-                                                </div>
+                                                    {index + 4}
+                                                </div>{" "}
+                                                {/* TODO: add the pfps */}
                                                 <div>
                                                     <div className="font-bold text-amber-100">
                                                         {profile?.username ===
