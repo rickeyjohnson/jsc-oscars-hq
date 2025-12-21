@@ -1,26 +1,13 @@
+import { LoaderCircle } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 
-interface DeleteConfirmModalProps {
-    isOpen: boolean
-    onClose: () => void
-    onConfirm: () => void
+const FullScreenLoader = ({
+    title,
+    description,
+}: {
     title?: string
     description?: string
-    confirmText?: string
-}
-
-// TODO: make this look prettier (like profile setup)
-
-const DeleteConfirmationModal = ({
-    isOpen,
-    onClose,
-    onConfirm,
-    title = "Delete Item",
-    description = "Are you sure you want to delete this? This action cannot be undone.",
-    confirmText = "Delete",
-}: DeleteConfirmModalProps) => {
-    if (!isOpen) return null
-
+}) => {
     return (
         <>
             <AnimatePresence>
@@ -51,22 +38,7 @@ const DeleteConfirmationModal = ({
                         <p className="text-[#fffadd]/60 mt-2">{description}</p>
 
                         <div className="flex mt-4 gap-4">
-                            <button
-                                onClick={onClose}
-                                className="h-full rounded-full border border-[#fffadd]/20 bg-amber-100/5 flex items-center justify-center overflow-hidden hover:border-[#fffadd]/40 transition p-4"
-                            >
-                                Cancel
-                            </button>
-
-                            <button
-                                onClick={() => {
-                                    onConfirm()
-                                    onClose()
-                                }}
-                                className="h-full rounded-full border border-[#fffadd]/20 flex items-center justify-center overflow-hidden hover:border-[#fffadd]/40 transition bg-red-500 text-amber-100 font-bold hover:bg-red-600 transition p-4"
-                            >
-                                {confirmText}
-                            </button>
+                            <LoaderCircle className="animate-spin w-5 h-5" />
                         </div>
                     </motion.div>
                 </motion.div>
@@ -75,4 +47,4 @@ const DeleteConfirmationModal = ({
     )
 }
 
-export default DeleteConfirmationModal
+export default FullScreenLoader

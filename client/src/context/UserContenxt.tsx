@@ -15,6 +15,15 @@ interface UserProfile {
 interface UserDataContextType {
     profile: UserProfile | null
     loading: boolean
+    fetchOscars: () => Promise<OscarsEvent[]>
+}
+
+export interface OscarsEvent {
+    id?: string | null
+    starts_at?: string
+    ends_at?: string
+    semester?: string
+    name?: string
 }
 
 const UserDataContext = createContext<UserDataContextType | null>(null)
@@ -32,6 +41,17 @@ export const UserDataProvider = ({
     // fetchStats
     // fetchBallots
     // fetchLeaderboard
+
+    const fetchOscars = async () => {
+        const { data, error } = await supabase.from("oscarsEvents").select("*").order("starts_at", { ascending: false})
+
+        if (error) {
+            console.error("Error fetching oscars")
+            return []
+        }
+
+        return data
+    }
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -56,7 +76,7 @@ export const UserDataProvider = ({
     }, [user])
 
     return (
-        <UserDataContext.Provider value={{ profile, loading }}>
+        <UserDataContext.Provider value={{ profile, loading, fetchOscars }}>
             {children}
         </UserDataContext.Provider>
     )
