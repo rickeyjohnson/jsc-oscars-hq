@@ -57,7 +57,7 @@ const EditOscarEvent = ({
 
     useEffect(() => {
         console.log(oscarEvent)
-    }, [])
+    }, [oscarEvent])
 
     return (
         <>
