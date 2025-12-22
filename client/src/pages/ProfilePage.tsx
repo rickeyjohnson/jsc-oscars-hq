@@ -21,12 +21,15 @@ import ManageOscarsModal from "../components/ManageOscarsModal"
 import { useState } from "react"
 import UserManagementModal from "./profile/UserManagementModal"
 import JokeGeneratorModal from "./profile/JokeGeneratorModal"
+import EditProfileModal from "../components/EditProfileModal"
 
 const ProfilePage = () => {
     const { profile } = useUserData()
     const [openManageOscarModal, setOpenManageOscarModal] = useState(false)
     const [openUserManagement, setOpenUserManagement] = useState(false)
     const [openJokeGenerator, setOpenJokeGenerator] = useState(false)
+    const [openEditProfile, setOpenEditProfile] = useState(false)
+
     const handleLogout = async () => {
         await supabase.auth.signOut()
     }
@@ -87,6 +90,7 @@ const ProfilePage = () => {
                             <ProfilePageButton
                                 label="Edit Profile"
                                 icon={<User className="w-5 h-5" />}
+                                onClick={() => setOpenEditProfile(true)}
                             />
                             <ProfilePageButton
                                 label="Settings"
@@ -179,6 +183,11 @@ const ProfilePage = () => {
                 <JokeGeneratorModal
                     isOpen={openJokeGenerator}
                     onClose={() => setOpenJokeGenerator(false)}
+                />
+
+                <EditProfileModal
+                    isOpen={openEditProfile}
+                    onClose={() => setOpenEditProfile(false)}
                 />
             </div>
         </div>
