@@ -19,10 +19,14 @@ import { useUserData } from "../context/UserContenxt"
 import ProfilePageButton from "../components/ProfilePageButton"
 import ManageOscarsModal from "../components/ManageOscarsModal"
 import { useState } from "react"
+import UserManagementModal from "./profile/UserManagementModal"
+import JokeGeneratorModal from "./profile/JokeGeneratorModal"
 
 const ProfilePage = () => {
     const { profile } = useUserData()
     const [openManageOscarModal, setOpenManageOscarModal] = useState(false)
+    const [openUserManagement, setOpenUserManagement] = useState(false)
+    const [openJokeGenerator, setOpenJokeGenerator] = useState(false)
     const handleLogout = async () => {
         await supabase.auth.signOut()
     }
@@ -104,7 +108,8 @@ const ProfilePage = () => {
                                 textColor="text-zinc-900"
                                 iconColor="text-zinc-900"
                                 rightIconColor="text-zinc-900"
-                                className="from-green-500 to-cyan-600 hover:from-amber-600 hover:to-amber-700"
+                                className="from-green-500 to-cyan-600 hover:from-green-600 hover:to-cyan-700"
+                                onClick={() => setOpenJokeGenerator(true)}
                             />
                         </div>
 
@@ -137,6 +142,7 @@ const ProfilePage = () => {
                                 <ProfilePageButton
                                     label="User Management"
                                     icon={<Users className="w-5 h-5" />}
+                                    onClick={() => setOpenUserManagement(true)}
                                 />
                                 <ProfilePageButton
                                     label="Manage Events"
@@ -163,6 +169,16 @@ const ProfilePage = () => {
                 <ManageOscarsModal
                     isOpen={openManageOscarModal}
                     onClose={() => setOpenManageOscarModal(false)}
+                />
+
+                <UserManagementModal
+                    isOpen={openUserManagement}
+                    onClose={() => setOpenUserManagement(false)}
+                />
+
+                <JokeGeneratorModal
+                    isOpen={openJokeGenerator}
+                    onClose={() => setOpenJokeGenerator(false)}
                 />
             </div>
         </div>

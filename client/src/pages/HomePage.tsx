@@ -44,7 +44,7 @@ const HomePage = () => {
     }, [user?.id])
 
     return (
-        <div className="realtive bg-zinc-900 min-h-screen text-[#fffadd] pb-24 font-poppins overflow-hidden">
+        <div className="bg-zinc-900 min-h-screen text-[#fffadd] pb-24 font-poppins">
             <NavigationBar />
 
             <div className="px-6 py-6 space-y-6">

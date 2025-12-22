@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from "motion/react"
 import type { ReactNode } from "react"
 
 interface ModalProps {
-    isOpen?: boolean
+    isOpen: boolean
     onClose: () => void
     children: ReactNode
     maxWidth?: string // e.g. "max-w-lg", "max-w-xl"

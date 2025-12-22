@@ -43,7 +43,10 @@ export const UserDataProvider = ({
     // fetchLeaderboard
 
     const fetchOscars = async () => {
-        const { data, error } = await supabase.from("oscarsEvents").select("*").order("starts_at", { ascending: false})
+        const { data, error } = await supabase
+            .from("oscarsEvents")
+            .select("*")
+            .order("starts_at", { ascending: false })
 
         if (error) {
             console.error("Error fetching oscars")
