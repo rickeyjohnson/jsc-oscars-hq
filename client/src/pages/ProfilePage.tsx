@@ -19,8 +19,8 @@ import { useUserData } from "../context/UserContenxt"
 import ProfilePageButton from "../components/ProfilePageButton"
 import ManageOscarsModal from "../components/ManageOscarsModal"
 import { useState } from "react"
-import UserManagementModal from "./profile/UserManagementModal"
-import JokeGeneratorModal from "./profile/JokeGeneratorModal"
+import UserManagementModal from "../components/UserManagementModal"
+import JokeGeneratorModal from "../components/JokeGeneratorModal"
 import EditProfileModal from "../components/EditProfileModal"
 
 const ProfilePage = () => {
