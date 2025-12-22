@@ -19,46 +19,52 @@ const App = () => {
     const ProtectedProfilePage = WithAuth(ProfilePage)
 
     return (
-        <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/signup/confirmed" element={<ComfirmedEmailPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/login/reset" element={<ResetPassword />} />
-            <Route
-                path="/app"
-                element={
-                    <UserDataProvider>
-                        <ProtectedHomePage />
-                    </UserDataProvider>
-                }
-            />
-            <Route
-                path="/app/ballots"
-                element={
-                    <UserDataProvider>
-                        <ProtectedBallotsPage />
-                    </UserDataProvider>
-                }
-            />
-            <Route
-                path="/app/stats"
-                element={
-                    <UserDataProvider>
-                        <ProtectedStatsPage />
-                    </UserDataProvider>
-                }
-            />
-            <Route
-                path="/app/profile"
-                element={
-                    <UserDataProvider>
-                        <ProtectedProfilePage />
-                    </UserDataProvider>
-                }
-            />
-            <Route path="*" element={<div>404 Not Found</div>} />
-        </Routes>
+        <>
+            <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/signup" element={<SignupPage />} />
+                <Route
+                    path="/signup/confirmed"
+                    element={<ComfirmedEmailPage />}
+                />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/login/reset" element={<ResetPassword />} />
+                <Route
+                    path="/app"
+                    element={
+                        <UserDataProvider>
+                            <ProtectedHomePage />
+                        </UserDataProvider>
+                    }
+                />
+                <Route
+                    path="/app/ballots"
+                    element={
+                        <UserDataProvider>
+                            <ProtectedBallotsPage />
+                        </UserDataProvider>
+                    }
+                />
+                <Route
+                    path="/app/stats"
+                    element={
+                        <UserDataProvider>
+                            <ProtectedStatsPage />
+                        </UserDataProvider>
+                    }
+                />
+                <Route
+                    path="/app/profile"
+                    element={
+                        <UserDataProvider>
+                            <ProtectedProfilePage />
+                        </UserDataProvider>
+                    }
+                />
+
+                <Route path="*" element={<div>404 Not Found</div>} />
+            </Routes>
+        </>
     )
 }
 

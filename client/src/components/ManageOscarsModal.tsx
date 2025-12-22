@@ -57,7 +57,7 @@ const ManageOscarsModal = ({
                     setShowEditEventModal(true)
                     setIsEdit(false)
                 }}
-                className="w-full mb-4 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-xl font-bold hover:from-amber-600 hover:to-amber-700 transition flex items-center justify-center gap-2 text-sm"
+                className="w-full mb-4 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-zinc-900 rounded-xl font-bold hover:from-amber-600 hover:to-amber-700 transition flex items-center justify-center gap-2 text-sm"
             >
                 <Plus className="w-5 h-5" />
                 Add New Event
@@ -87,7 +87,7 @@ const ManageOscarsModal = ({
                                             {event.name}
                                         </div>
                                         <div className="flex items-center gap-x-4 gap-y-1 text-sm text-amber-100/60 flex-wrap">
-                                            <div className="flex items-center justify-center gap-2">
+                                            <div className="flex items-center justify-center gap-3">
                                                 <Calendar className="w-4 h-4" />
                                                 {event.starts_at
                                                     ? new Date(
