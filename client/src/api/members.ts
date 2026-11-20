@@ -7,6 +7,17 @@ export const fetchAvailableMemberNames = async (): Promise<string[]> => {
     return (data ?? []) as string[]
 }
 
+export type MemberNameStatus = { name: string; taken: boolean }
+
+// All member names with a taken flag (RPC member_name_status, callable signed out). If the RPC is not deployed yet
+// (or fails for any reason) fall back to the available names only, so signup is never blocked by this.
+export const fetchMemberNameStatus = async (): Promise<MemberNameStatus[]> => {
+    const { data, error } = await supabase.rpc("member_name_status")
+    if (!error) return ((data ?? []) as MemberNameStatus[]).map((r) => ({ name: r.name, taken: !!r.taken }))
+    const names = await fetchAvailableMemberNames()
+    return names.map((name) => ({ name, taken: false }))
+}
+
 export const fetchMembers = async (): Promise<Member[]> => {
     const { data, error } = await supabase.from("members").select("id, name, user_id").order("name")
     if (error) throw error

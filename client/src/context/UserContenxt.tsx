@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react"
 import { useAuth } from "./AuthContext"
 import { supabase } from "../supabaseClient"
 import type { Member } from "../types"
@@ -17,6 +17,10 @@ interface UserDataContextType {
     profile: UserProfile | null
     member: Member | null
     loading: boolean
+    /** True when the member lookup errored (so "no member" is not trustworthy). */
+    memberFailed?: boolean
+    /** Re-run the profile + member lookup (e.g. after claiming a name). */
+    refetch: () => Promise<void>
     fetchOscars: () => Promise<OscarsEvent[]>
 }
 
@@ -39,6 +43,9 @@ export const UserDataProvider = ({
     const [profile, setProfile] = useState<UserProfile | null>(null)
     const [member, setMember] = useState<Member | null>(null)
     const [loading, setLoading] = useState(true)
+    const [memberFailed, setMemberFailed] = useState(false)
+    const [tick, setTick] = useState(0)
+    const pending = useRef<(() => void)[]>([])
 
     // TODO: add other supabase fetches (chatgpt helper functions)
     // fetchStats
@@ -86,17 +93,29 @@ export const UserDataProvider = ({
             }
             if (memberRes.error) {
                 console.error("Error fetching member:", memberRes.error)
+                setMemberFailed(true)
             } else {
+                setMemberFailed(false)
                 setMember(memberRes.data)
             }
             setLoading(false)
+            pending.current.splice(0).forEach((resolve) => resolve())
         }
 
         fetchProfile()
-    }, [user])
+    }, [user, tick])
+
+    const refetch = useCallback(
+        () =>
+            new Promise<void>((resolve) => {
+                pending.current.push(resolve)
+                setTick((t) => t + 1)
+            }),
+        []
+    )
 
     return (
-        <UserDataContext.Provider value={{ profile, member, loading, fetchOscars }}>
+        <UserDataContext.Provider value={{ profile, member, loading, memberFailed, refetch, fetchOscars }}>
             {children}
         </UserDataContext.Provider>
     )

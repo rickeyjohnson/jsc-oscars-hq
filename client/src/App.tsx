@@ -22,6 +22,8 @@ import MemberNamesPage from "./pages/committee/MemberNamesPage"
 import { AppShell } from "./ui/AppShell"
 import { RequireAuth } from "./ui/RequireAuth"
 import { NotFound } from "./ui/NotFound"
+import { ClaimGate } from "./ui/ClaimGate"
+import ClaimNamePage from "./pages/ClaimNamePage"
 import { ConfirmProvider } from "./ui/ConfirmProvider"
 
 // Dev-only: the constant folds to null in production builds, so the gallery is tree-shaken out.
@@ -46,6 +48,16 @@ const App = () => {
                 <Route path="/signup/confirmed" element={<ComfirmedEmailPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/login/reset" element={<ResetPassword />} />
+                <Route
+                    path="/claim"
+                    element={
+                        <RequireAuth>
+                            <UserDataProvider>
+                                <ClaimNamePage />
+                            </UserDataProvider>
+                        </RequireAuth>
+                    }
+                />
 
                 {/* Full-bleed, no shell. UX gate only; RLS is the real protection for committee actions. */}
                 <Route
@@ -66,7 +78,9 @@ const App = () => {
                     element={
                         <RequireAuth>
                             <UserDataProvider>
-                                <SubmitBallotPage />
+                                <ClaimGate>
+                                    <SubmitBallotPage />
+                                </ClaimGate>
                             </UserDataProvider>
                         </RequireAuth>
                     }
@@ -77,7 +91,9 @@ const App = () => {
                     element={
                         <RequireAuth>
                             <UserDataProvider>
-                                <AppShell />
+                                <ClaimGate>
+                                    <AppShell />
+                                </ClaimGate>
                             </UserDataProvider>
                         </RequireAuth>
                     }

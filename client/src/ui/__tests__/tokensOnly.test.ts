@@ -9,6 +9,7 @@ const MIGRATED = ["components/OscarLogo.tsx", "components/ProfileSetup.tsx", "pa
     "pages/LandingPage.tsx",
     "pages/LoginPage.tsx",
     "pages/SignupPage.tsx",
+    "pages/ClaimNamePage.tsx",
     "pages/ResetPassword.tsx",
     "pages/ComfirmedEmailPage.tsx",
     "components/FallingProfileBallPhysics.tsx",

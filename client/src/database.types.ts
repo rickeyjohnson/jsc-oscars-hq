@@ -401,6 +401,11 @@ export type Database = {
         Returns: string
       }
       available_member_names: { Args: never; Returns: string[] }
+      claim_member_name: { Args: { p_name: string }; Returns: undefined }
+      member_name_status: {
+        Args: never
+        Returns: { name: string; taken: boolean }[]
+      }
       ballot_is_open: { Args: { p_ballot: string }; Returns: boolean }
       ballot_visible: { Args: { p_ballot: string }; Returns: boolean }
       can_cast_vote: {
