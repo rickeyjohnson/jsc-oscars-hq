@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { pendingBallots, selectableNominees, groupCandidates, votedCount, dashStates, nextUnvotedIndex, findMatchingNominee, ballotCardStatus } from "./voting"
+import { pendingBallots, selectableNominees, groupCandidates, votedCount, dashStates, nextUnvotedIndex, findMatchingNominee, ballotCardStatus, completionByMember } from "./voting"
 import type { Ballot, Member, Nominee } from "../types"
 
 const nom = (name: string, ids: string[], type: Nominee["type"] = "person"): Nominee => ({
@@ -87,5 +87,25 @@ describe("pendingBallots", () => {
             { ...base, id: "closed", status: "closed" as const, category_count: 3, my_vote_count: 0 },
         ]
         expect(pendingBallots(list, now).map((b) => b.id)).toEqual(["a"])
+    })
+})
+
+describe("completionByMember", () => {
+    const members: Member[] = [
+        { id: "m1", name: "Micah", user_id: "u1" },
+        { id: "m2", name: "Nick", user_id: "u2" },
+        { id: "m3", name: "Rico", user_id: null },
+    ]
+    it("counts votes per member, sorted least-voted first, ignoring non-members", () => {
+        const votes = [
+            { voter_id: "u1", category_id: "c1" },
+            { voter_id: "u1", category_id: "c2" },
+            { voter_id: "ghost", category_id: "c1" },
+        ]
+        expect(completionByMember(members, votes, 3)).toEqual([
+            { name: "Nick", voted: 0, total: 3, claimed: true },
+            { name: "Rico", voted: 0, total: 3, claimed: false },
+            { name: "Micah", voted: 2, total: 3, claimed: true },
+        ])
     })
 })

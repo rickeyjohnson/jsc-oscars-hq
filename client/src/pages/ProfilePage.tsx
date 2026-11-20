@@ -139,12 +139,14 @@ const ProfilePage = () => {
                                 <ProfilePageButton
                                     label="Manage Ballots"
                                     icon={<Settings className="w-5 h-5" />}
+                                    onClick={() => navigate("/app/profile/ballots")}
                                 />
                                 <ProfilePageButton
                                     label="View Results"
                                     icon={
                                         <SquareCheckBig className="w-5 h-5" />
                                     }
+                                    onClick={() => navigate("/app/profile/ballots")}
                                 />
                                 <ProfilePageButton
                                     label="User Management"

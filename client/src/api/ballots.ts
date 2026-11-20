@@ -114,8 +114,10 @@ export const fetchCurrentSeason = async (): Promise<Season | null> => {
 }
 
 // Visible (RLS) non-draft ballots with category counts and the caller's own vote counts.
-export const fetchBallotSummaries = async (): Promise<BallotSummary[]> => {
-    const { data: ballots, error } = await supabase.from("ballots").select("*").neq("status", "draft").order("closes_at", { ascending: true })
+export const fetchBallotSummaries = async (includeDrafts = false): Promise<BallotSummary[]> => {
+    let query = supabase.from("ballots").select("*")
+    if (!includeDrafts) query = query.neq("status", "draft")
+    const { data: ballots, error } = await query.order("closes_at", { ascending: true })
     if (error) throw error
     const list = (ballots ?? []) as Ballot[]
     if (list.length === 0) return []

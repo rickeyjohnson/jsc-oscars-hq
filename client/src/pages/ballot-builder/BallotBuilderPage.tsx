@@ -54,8 +54,7 @@ const BallotBuilderPage = () => {
             setBallotId(id)
             if (publish) {
                 await setBallotStatus(id, "open")
-                // TODO(Task 11): navigate to /app/profile/ballots/${id}
-                navigate("/app/profile")
+                navigate(`/app/profile/ballots/${id}`)
             } else {
                 setNotice("Draft saved")
             }

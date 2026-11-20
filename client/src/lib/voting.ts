@@ -42,3 +42,19 @@ export const ballotCardStatus = (b: Ballot, categoryCount: number, myVoteCount: 
 
 export const pendingBallots = (ballots: BallotSummary[], now: Date): BallotSummary[] =>
     ballots.filter((b) => b.category_count > b.my_vote_count && ballotCardStatus(b, b.category_count, b.my_vote_count, now) === "open")
+
+export type MemberCompletion = { name: string; voted: number; total: number; claimed: boolean }
+
+// Per-member progress, least-voted first. Votes by voters who are not members are ignored.
+export const completionByMember = (members: Member[], votes: { voter_id: string; category_id: string }[], categoryCount: number): MemberCompletion[] => {
+    const byVoter = new Map<string, Set<string>>()
+    for (const v of votes) byVoter.set(v.voter_id, (byVoter.get(v.voter_id) ?? new Set()).add(v.category_id))
+    return members
+        .map((m) => ({
+            name: m.name,
+            voted: m.user_id ? Math.min(byVoter.get(m.user_id)?.size ?? 0, categoryCount) : 0,
+            total: categoryCount,
+            claimed: Boolean(m.user_id),
+        }))
+        .sort((a, b) => a.voted - b.voted || a.name.localeCompare(b.name))
+}

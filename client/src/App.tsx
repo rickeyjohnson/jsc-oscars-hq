@@ -15,6 +15,8 @@ import { UserDataProvider } from "./context/UserContenxt"
 import RequireCommittee from "./components/RequireCommittee"
 import BallotBuilderPage from "./pages/ballot-builder/BallotBuilderPage"
 import VotePage from "./pages/VotePage"
+import ManageBallotsPage from "./pages/committee/ManageBallotsPage"
+import BallotAdminPage from "./pages/committee/BallotAdminPage"
 
 const App = () => {
     const ProtectedHomePage = WithAuth(HomePage)
@@ -89,6 +91,15 @@ const App = () => {
                 <Route
                     path="/app/profile/ballots/create"
                     element={committeeRoute(<BallotBuilderPage />)}
+                />
+
+                <Route
+                    path="/app/profile/ballots"
+                    element={committeeRoute(<ManageBallotsPage />)}
+                />
+                <Route
+                    path="/app/profile/ballots/:ballotId"
+                    element={committeeRoute(<BallotAdminPage />)}
                 />
 
                 <Route path="*" element={<div>404 Not Found</div>} />
