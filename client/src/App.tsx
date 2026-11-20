@@ -1,4 +1,4 @@
-import type { ReactNode } from "react"
+import { lazy, Suspense, type ReactNode } from "react"
 import { Route, Routes } from "react-router-dom"
 import "./App.css"
 import LandingPage from "./pages/LandingPage"
@@ -20,6 +20,9 @@ import ManageBallotsPage from "./pages/committee/ManageBallotsPage"
 import BallotAdminPage from "./pages/committee/BallotAdminPage"
 import ReleasePage from "./pages/committee/ReleasePage"
 import MemberNamesPage from "./pages/committee/MemberNamesPage"
+
+// Dev-only: the constant folds to null in production builds, so the gallery is tree-shaken out.
+const DesignGallery = import.meta.env.DEV ? lazy(() => import("./dev/DesignGallery")) : null
 
 const App = () => {
     const ProtectedHomePage = WithAuth(HomePage)
@@ -43,6 +46,16 @@ const App = () => {
         <>
             <Routes>
                 <Route path="/" element={<LandingPage />} />
+                {DesignGallery && (
+                    <Route
+                        path="/dev/design"
+                        element={
+                            <Suspense fallback={null}>
+                                <DesignGallery />
+                            </Suspense>
+                        }
+                    />
+                )}
                 <Route path="/signup" element={<SignupPage />} />
                 <Route
                     path="/signup/confirmed"
