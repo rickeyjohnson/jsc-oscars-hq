@@ -14,12 +14,14 @@ import ComfirmedEmailPage from "./pages/ComfirmedEmailPage"
 import { UserDataProvider } from "./context/UserContenxt"
 import RequireCommittee from "./components/RequireCommittee"
 import BallotBuilderPage from "./pages/ballot-builder/BallotBuilderPage"
+import VotePage from "./pages/VotePage"
 
 const App = () => {
     const ProtectedHomePage = WithAuth(HomePage)
     const ProtectedBallotsPage = WithAuth(BallotsPage)
     const ProtectedStatsPage = WithAuth(StatsPage)
     const ProtectedProfilePage = WithAuth(ProfilePage)
+    const ProtectedVotePage = WithAuth(VotePage)
 
     // UX gate only; RLS is the real protection for committee actions.
     const committeeRoute = (el: ReactNode) => {
@@ -67,6 +69,14 @@ const App = () => {
                     }
                 />
                 
+                <Route
+                    path="/app/ballots/:ballotId"
+                    element={
+                        <UserDataProvider>
+                            <ProtectedVotePage />
+                        </UserDataProvider>
+                    }
+                />
                 <Route
                     path="/app/profile"
                     element={
