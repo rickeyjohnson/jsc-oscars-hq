@@ -29,6 +29,15 @@ describe("buildResultCards", () => {
     const [card] = buildResultCards([c1], { c1: { ...row("c1", "A", "votes"), places: [p("A", 1, 1, false), p("B", 2, 2, false), p("C", 3, 3, false), p("D", null, 4, true), p("E", null, 4, true)] } })
     expect(card.also.map(a => a.placeLabel)).toEqual(["tied 4th", "tied 4th"])
   })
+  it("keeps a tie for 3rd across the podium boundary", () => {
+    const [card] = buildResultCards([c1], { c1: { ...row("c1", "A", "votes"), places: [p("A", 1, 1, false), p("B", 2, 2, false), p("C", 3, 3, true), p("D", null, 3, true)] } })
+    expect(card.podium[2].tieLabel).toBe("tied 3rd")
+    expect(card.also).toEqual([{ nominee_id: "D", name: "Di", placeLabel: "tied 3rd" }])
+  })
+  it("falls back to winner-first order when places disagree with the winner", () => {
+    const [card] = buildResultCards([c1], { c1: { ...row("c1", "B", "votes"), places: [p("A", 1, 1, false), p("B", 2, 2, false)], nominee_ids: ["B", "A"], top3_nominee_ids: ["B", "A"] } })
+    expect(card.podium.map(e => [e.name, e.slot])).toEqual([["Ann", 2], ["Bo", 1]])
+  })
   it("falls back to nominee order without places", () => {
     expect(buildResultCards([c1], { c1: { ...row("c1", "B", "tiebreak"), places: null, nominee_ids: ["A", "B"], top3_nominee_ids: ["A", "B", "C"] } })[0].podium.map(e => [e.name, e.slot, e.tieLabel]))
       .toEqual([["Ann", 2, null], ["Bo", 1, null], ["Cy", 3, null]])

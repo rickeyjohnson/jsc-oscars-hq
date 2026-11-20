@@ -12,7 +12,7 @@ import type { Season } from "../types"
 type Load =
     | { state: "loading" }
     | { state: "error" }
-    | { state: "hidden"; season: Season }
+    | { state: "hidden" }
     | { state: "ready"; season: Season; cards: ResultCard[]; avatars: Record<string, string | null> }
 
 const Shell = ({ children }: { children: React.ReactNode }) => (
@@ -33,12 +33,12 @@ const ResultsPage = () => {
         try {
             const season = await fetchCurrentSeason()
             if (!season) {
-                setLoad({ state: "error" })
+                setLoad({ state: "hidden" })
                 return
             }
             const released = season.results_released_at != null
             if (!released && !isCommittee) {
-                setLoad({ state: "hidden", season })
+                setLoad({ state: "hidden" })
                 return
             }
             const [{ categories, results }, avatars] = await Promise.all([fetchSeasonResults(season.id), fetchMemberAvatars().catch(() => ({}))])
@@ -66,6 +66,14 @@ const ResultsPage = () => {
         )
     }
 
+    if (load.state === "hidden") {
+        return (
+            <Shell>
+                <p className="text-center text-amber-100/60 pt-10">Results will be revealed at the ceremony.</p>
+            </Shell>
+        )
+    }
+
     const { season } = load
     const header = (
         <div className="text-center">
@@ -74,28 +82,22 @@ const ResultsPage = () => {
         </div>
     )
 
-    if (load.state === "hidden") {
-        return (
-            <Shell>
-                {header}
-                <p className="text-center text-amber-100/60 pt-10">Results will be revealed at the ceremony.</p>
-            </Shell>
-        )
-    }
-
     const released = season.results_released_at != null
     return (
         <Shell>
             {header}
             {!released && (
-                <div className="rounded-xl bg-amber-100/10 border border-amber-100/20 text-center text-xs py-2 px-3">
-                    Preview (only the committee can see this)
-                </div>
+                <>
+                    <p className="text-center text-amber-100/60">Results will be revealed at the ceremony.</p>
+                    <div className="rounded-xl bg-amber-100/10 border border-amber-100/20 text-center text-xs py-2 px-3">
+                        Preview (only the committee can see this)
+                    </div>
+                </>
             )}
             {load.cards.length === 0 && <p className="text-center text-amber-100/60">No categories yet.</p>}
             {load.cards.map((card) => (
                 <section key={card.category_id} className="bg-[#27272a] rounded-2xl p-4">
-                    <div className="text-xs uppercase tracking-wide text-amber-100/60">{`${card.number} · ${card.name}`}</div>
+                    <h2 className="text-xs font-normal uppercase tracking-wide text-amber-100/60">{`${card.number} · ${card.name}`}</h2>
                     {card.pending ? (
                         <p className="text-sm text-amber-100/60 mt-3">No winner recorded</p>
                     ) : (
@@ -110,14 +112,16 @@ const ResultsPage = () => {
                                 }))}
                             />
                             {card.also.length > 0 && (
-                                <div className="mt-3 space-y-1.5">
+                                <div className="mt-3">
                                     <div className="text-xs tracking-wide text-amber-100/60">ALSO PLACED</div>
-                                    {card.also.map((a) => (
-                                        <div key={a.nominee_id} className="flex items-center gap-2 bg-[#3f3f46] rounded-lg px-3 py-1.5 text-sm">
-                                            <span className="text-xs rounded-full bg-zinc-900/60 px-2 py-0.5 text-amber-100/80">{a.placeLabel}</span>
-                                            <span className="flex-1 min-w-0 break-words">{a.name}</span>
-                                        </div>
-                                    ))}
+                                    <ul className="space-y-1.5 mt-1.5 list-none p-0">
+                                        {card.also.map((a) => (
+                                            <li key={a.nominee_id} className="flex items-center gap-2 bg-[#3f3f46] rounded-lg px-3 py-1.5 text-sm">
+                                                <span className="text-xs rounded-full bg-zinc-900/60 px-2 py-0.5 text-amber-100/80">{a.placeLabel}</span>
+                                                <span className="flex-1 min-w-0 break-words">{a.name}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
                                 </div>
                             )}
                             {card.note && <p className="mt-3 text-center text-xs text-amber-100/60">{card.note}</p>}

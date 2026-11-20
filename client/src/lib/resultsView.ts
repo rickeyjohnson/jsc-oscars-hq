@@ -38,7 +38,9 @@ export function buildResultCards(categories: Category[], results: Record<string,
     if (!row || row.winner_nominee_id == null) return { ...base, podium: [], also: [], note: null, pending: true }
     const byId = new Map(category.nominees.map(n => [n.id, n]))
     const nameOf = (id: string) => byId.get(id)?.display_name ?? "Unknown nominee"
-    const places = displayPlaces(row)
+    const stored = displayPlaces(row)
+    // stored places that disagree with the recorded winner fall back to winner-first order
+    const places = stored.find(p => p.slot === 1)?.nominee_id === row.winner_nominee_id ? stored : displayPlaces({ ...row, places: null })
     const podium: PodiumEntry[] = places
       .filter((p): p is typeof p & { slot: 1 | 2 | 3 } => p.slot != null)
       .sort((a, b) => DISPLAY_ORDER[a.slot] - DISPLAY_ORDER[b.slot])
