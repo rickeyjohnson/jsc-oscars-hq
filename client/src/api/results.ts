@@ -1,6 +1,6 @@
 import { supabase } from "../supabaseClient"
 import { runRelease, type ReleaseIO, type ReleaseStatus } from "../lib/release"
-import type { Ballot, Place, ResultRow, Season } from "../types"
+import type { Ballot, Category, Place, ResultRow, Season } from "../types"
 import { fetchBallotDetail } from "./ballots"
 
 // Committee reads every result; members only after the season is released (RLS).
@@ -79,3 +79,23 @@ const realReleaseIO: ReleaseIO = {
 // Committee only. Checks first (no writes if any fail), marks finished ballots released,
 // then reveals the season's results to members last.
 export const releaseSeasonResults = (seasonId: string): Promise<void> => runRelease(realReleaseIO, seasonId, new Date())
+
+export type SeasonResults = { categories: Category[]; results: Record<string, ResultRow> }
+
+// Main, non-draft ballots of the season by opens_at; their categories in ballot order, with recorded results.
+export const fetchSeasonResults = async (seasonId: string): Promise<SeasonResults> => {
+    const { data: ballots, error } = await supabase
+        .from("ballots")
+        .select("id")
+        .eq("season_id", seasonId)
+        .eq("round", "main")
+        .neq("status", "draft")
+        .order("opens_at")
+    if (error) throw error
+    const details = await Promise.all((ballots ?? []).map((b) => fetchBallotDetail(b.id as string)))
+    const categories = details.flatMap((d) => d.categories)
+    const rows = await fetchResults(categories.map((c) => c.id))
+    const results: Record<string, ResultRow> = {}
+    for (const r of rows) results[r.category_id] = r
+    return { categories, results }
+}

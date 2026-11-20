@@ -4,6 +4,7 @@ import Countdown from "../components/Countdown"
 import PendingBallots from "../components/PendingBallots"
 import ProfileSetup from "../components/ProfileSetup"
 import { useEffect, useState } from "react"
+import { Link } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { supabase } from "../supabaseClient"
 import { fetchBallotSummaries, fetchCurrentSeason } from "../api/ballots"
@@ -79,6 +80,13 @@ const HomePage = () => {
 
             <div className="px-6 py-6 space-y-6">
                 {seasonError ? <p className="text-sm text-red-400 text-center">Couldn't load the ceremony date</p> : <Countdown season={season} />}
+                {season?.results_released_at && (
+                    <Link to="/app/results" className="block rounded-2xl bg-[#fffadd] text-zinc-900 p-5 text-center">
+                        <div className="text-xs tracking-[0.25em] opacity-60">THE WINNERS</div>
+                        <div className="text-xl font-black">The winners are in</div>
+                        <div className="text-sm font-bold mt-1">See the winners</div>
+                    </Link>
+                )}
                 {ballotsError ? (
                     <p className="text-sm text-red-400 text-center">
                         Couldn't load ballots{" "}

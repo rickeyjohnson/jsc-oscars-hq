@@ -95,6 +95,11 @@ const ProfilePage = () => {
                                 onClick={() => setOpenEditProfile(true)}
                             />
                             <ProfilePageButton
+                                label="View Results"
+                                icon={<Award className="w-5 h-5" />}
+                                onClick={() => navigate("/app/results")}
+                            />
+                            <ProfilePageButton
                                 label="Settings"
                                 icon={<Settings className="w-5 h-5" />}
                             />

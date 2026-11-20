@@ -7,6 +7,7 @@ import LoginPage from "./pages/LoginPage"
 import HomePage from "./pages/HomePage"
 import BallotsPage from "./pages/BallotsPage"
 import StatsPage from "./pages/StatsPage"
+import ResultsPage from "./pages/ResultsPage"
 import ProfilePage from "./pages/ProfilePage"
 import WithAuth from "./components/WithAuth"
 import ResetPassword from "./pages/ResetPassword"
@@ -24,6 +25,7 @@ const App = () => {
     const ProtectedBallotsPage = WithAuth(BallotsPage)
     const ProtectedStatsPage = WithAuth(StatsPage)
     const ProtectedProfilePage = WithAuth(ProfilePage)
+    const ProtectedResultsPage = WithAuth(ResultsPage)
     const ProtectedVotePage = WithAuth(VotePage)
 
     // UX gate only; RLS is the real protection for committee actions.
@@ -77,6 +79,14 @@ const App = () => {
                     element={
                         <UserDataProvider>
                             <ProtectedVotePage />
+                        </UserDataProvider>
+                    }
+                />
+                <Route
+                    path="/app/results"
+                    element={
+                        <UserDataProvider>
+                            <ProtectedResultsPage />
                         </UserDataProvider>
                     }
                 />

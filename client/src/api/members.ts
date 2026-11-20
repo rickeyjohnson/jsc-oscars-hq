@@ -23,3 +23,13 @@ export const fetchCommitteeMemberIds = async (): Promise<string[]> => {
     const committee = new Set((profiles.data ?? []).map((p) => p.user_id))
     return members.filter((m) => m.user_id && committee.has(m.user_id)).map((m) => m.id)
 }
+
+// Member id -> profile photo url (null when the member has no claimed account or no photo).
+export const fetchMemberAvatars = async (): Promise<Record<string, string | null>> => {
+    const [members, profiles] = await Promise.all([fetchMembers(), supabase.from("profiles").select("user_id, image_url")])
+    if (profiles.error) throw profiles.error
+    const byUser = new Map((profiles.data ?? []).map((p) => [p.user_id as string, (p.image_url as string | null) ?? null]))
+    const out: Record<string, string | null> = {}
+    for (const m of members) out[m.id] = m.user_id ? byUser.get(m.user_id) ?? null : null
+    return out
+}

@@ -62,8 +62,8 @@ const BallotCard = ({ ballot, now }: { ballot: BallotSummary; now: Date }) => {
 
             <div className="flex items-center justify-between pt-3 border-t border-amber-100/10">
                 <div className="text-sm text-amber-100/60">{ballot.category_count} categorie(s)</div>
-                <Link to={`/app/ballots/${ballot.id}`} className={`px-4 py-2 rounded-full text-sm transition ${config.actionStyle}`}>
-                    {config.actionText}
+                <Link to={ballot.status === "released" ? "/app/results" : `/app/ballots/${ballot.id}`} className={`px-4 py-2 rounded-full text-sm transition ${config.actionStyle}`}>
+                    {ballot.status === "released" ? "View Results" : config.actionText}
                 </Link>
             </div>
         </div>
