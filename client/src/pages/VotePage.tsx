@@ -126,11 +126,11 @@ const VotePage = () => {
     const jump = (i: number) => {
         const el = cardEls.current[ids[i]]
         if (!el) return
-        el.scrollIntoView({ behavior: "smooth", block: "center" })
+        el.scrollIntoView({ behavior: "smooth", block: "start" })
         el.focus({ preventScroll: true })
     }
     const jumpNextUnvoted = () => {
-        const i = nextUnvotedIndex(ids, myVotes, Math.max(0, ids.indexOf(activeId ?? "")))
+        const i = nextUnvotedIndex(ids, myVotes, ids.indexOf(activeId ?? ""))
         if (i >= 0) jump(i)
     }
 
@@ -169,7 +169,7 @@ const VotePage = () => {
                             onClick={() => jump(i)}
                             aria-label={`Category ${i + 1}: ${ballot.categories[i].name}, ${s.voted ? "voted" : "not voted"}`}
                             aria-current={s.current ? "step" : undefined}
-                            className="flex-1 basis-0 min-w-[6px] py-2"
+                            className="flex-1 basis-0 min-w-[10px] py-3"
                         >
                             <span className={`block w-full rounded-sm ${s.current ? "h-3 ring-1 ring-[#fffadd]" : "h-2"} ${s.voted ? "bg-[#fffadd]" : "bg-white/15"}`} />
                         </button>
@@ -222,16 +222,16 @@ const VotePage = () => {
                 )}
             </div>
 
-            {/* Sits just above NavigationTabs (about 76px tall). */}
-            <div className="fixed bottom-[76px] left-0 right-0 z-30 border-t border-[#fffadd]/10 bg-zinc-900/95 px-6 py-3 backdrop-blur-sm">
-                <div className="mx-auto flex max-w-2xl items-center justify-between">
-                    <span className="text-sm opacity-70">{left} left</span>
-                    <button type="button" disabled={left === 0} onClick={jumpNextUnvoted} className="rounded-full bg-[#fffadd] px-4 py-2 text-sm font-medium text-black disabled:opacity-40">
-                        Jump to next unvoted ↓
-                    </button>
+            <NavigationTabs activeTab="ballots">
+                <div className="border-t border-[#fffadd]/10 bg-zinc-900/95 px-6 py-3 backdrop-blur-sm">
+                    <div className="mx-auto flex max-w-2xl items-center justify-between">
+                        <span className="text-sm opacity-70">{left} left</span>
+                        <button type="button" disabled={left === 0} onClick={jumpNextUnvoted} className="rounded-full bg-[#fffadd] px-4 py-2 text-sm font-medium text-black disabled:opacity-40">
+                            Jump to next unvoted ↓
+                        </button>
+                    </div>
                 </div>
-            </div>
-            <NavigationTabs activeTab="ballots" />
+            </NavigationTabs>
         </Shell>
     )
 }

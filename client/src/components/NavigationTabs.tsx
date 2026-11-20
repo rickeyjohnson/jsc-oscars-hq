@@ -1,9 +1,12 @@
 import { BarChart3, Home, User, Vote } from "lucide-react"
+import type { ReactNode } from "react"
 import { Link } from "react-router-dom"
 
-const NavigationTabs = ({ activeTab = "home" }: { activeTab: string }) => {
+const NavigationTabs = ({ activeTab = "home", children }: { activeTab: string; children?: ReactNode }) => {
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-zinc-900/95 backdrop-blur-sm border-t border-[#fffadd]/10 px-6 py-4">
+        <div className="fixed bottom-0 left-0 right-0 z-40">
+            {children}
+            <div className="bg-zinc-900/95 backdrop-blur-sm border-t border-[#fffadd]/10 px-6 py-4">
             <div className="flex justify-around items-center max-w-2xl mx-auto">
                 <Link to="/app">
                     <button
@@ -56,6 +59,7 @@ const NavigationTabs = ({ activeTab = "home" }: { activeTab: string }) => {
                         <span className="text-xs font-medium">Profile</span>
                     </button>
                 </Link>
+            </div>
             </div>
         </div>
     )
