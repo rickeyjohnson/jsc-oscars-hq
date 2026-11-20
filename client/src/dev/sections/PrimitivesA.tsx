@@ -87,7 +87,7 @@ export default function PrimitivesA() {
                         <Avatar id="p1" name="Photo Person" src={PHOTO} size={56} />
                         <Avatar id="p2" name="Broken Image" src="/missing.jpg" size={56} />
                         <Avatar id="p3" name="Struck Name" size={56} struck />
-                        {(["bg", "gold", "silver", "bronze", "lemon"] as const).map((r) => (
+                        {(["bg", "gold", "silver", "bronze", "lemon", "pebble"] as const).map((r) => (
                             <Avatar key={r} id={`r-${r}`} name={r} size={56} ring={r} />
                         ))}
                     </div>

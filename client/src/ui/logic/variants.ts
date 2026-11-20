@@ -5,7 +5,7 @@ export type ButtonVariant = "primary" | "pebble" | "secondary" | "tinted" | "des
 export type ButtonSize = "lg" | "md" | "sm"
 export type ChipTone = "neutral" | "success" | "warn" | "danger" | "gold" | Exclude<PebbleName, "grape">
 export type AvatarSize = 24 | 32 | 40 | 56 | 72 | 96
-export type AvatarRing = "bg" | "gold" | "silver" | "bronze" | "lemon"
+export type AvatarRing = "bg" | "gold" | "silver" | "bronze" | "lemon" | "pebble"
 
 const BUTTON_VARIANT: Record<Exclude<ButtonVariant, "pebble">, string> = {
     primary: "bg-inverse text-on-inverse",
@@ -70,4 +70,17 @@ export const AVATAR_RING: Record<AvatarRing, string> = {
     silver: "ring-2 ring-silver",
     bronze: "ring-2 ring-bronze",
     lemon: "ring-2 ring-pebble-lemon",
+    // Resolved per person in Avatar (see PEBBLE_RING); this entry is only the shared geometry.
+    pebble: "ring-[3px] ring-offset-2 ring-offset-bg",
+}
+
+// A 3px ring in the person's own pebble color with a dark inner gap. Literal strings for Tailwind's scanner.
+export const PEBBLE_RING: Record<PebbleName, string> = {
+    strawberry: "ring-pebble-strawberry",
+    cherry: "ring-pebble-cherry",
+    tangerine: "ring-pebble-tangerine",
+    lemon: "ring-pebble-lemon",
+    lime: "ring-pebble-lime",
+    sky: "ring-pebble-sky",
+    grape: "ring-pebble-grape",
 }
