@@ -2,9 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { createRoundBallot, fetchBallotDetail, fetchRoundBallots } from "../../api/ballots"
 import { fetchCommitteeMemberIds } from "../../api/members"
-import { fetchResults, upsertResults } from "../../api/results"
+import { fetchResults, updatePlaces, upsertResults } from "../../api/results"
 import { fetchAllVotes } from "../../api/votes"
+import { attachPlaces, backfillPlaces } from "../../lib/places"
 import { manualResult, roundEntries } from "../../lib/rounds"
+import { tallyCategory, type CategoryTally } from "../../lib/tally"
 import { buildCategoryViews, manualBase, recordPlan, ROUND_ORDER, summaryLine, type Badge, type CategoryView } from "../../lib/tallyView"
 import { toUtcIso } from "../../lib/time"
 import { chipStatus } from "../../lib/voting"
@@ -16,6 +18,8 @@ type Loaded = {
     detail: BallotDetail
     main: BallotDetail
     votes: VoteRow[]
+    // the main ballot's tally per main category (podium places come from it)
+    mainTallies: Record<string, CategoryTally>
     results: Record<string, ResultRow>
     committeeMemberIds: string[]
     rounds: Ballot[]
@@ -35,6 +39,7 @@ const errText = (e: unknown, fallback: string) => (e instanceof Error ? e.messag
 
 const primary = "bg-[#fffadd] text-zinc-900 font-bold rounded-full text-sm px-4 py-2 disabled:opacity-50"
 const secondary = "bg-[#302f2d] text-[#fffadd] rounded-full text-sm px-4 py-2 disabled:opacity-50"
+const secondarySmall = "bg-[#302f2d] text-[#fffadd] rounded-full text-xs px-3 py-1.5 disabled:opacity-50"
 
 // Committee-only tally of a finished ballot: per category ranks and vote counts, next step,
 // Record results, the next round, and manual picks.
@@ -62,9 +67,11 @@ const TallyPanel = ({ ballot }: Props) => {
                 fetchCommitteeMemberIds(),
                 fetchRoundBallots(mainId),
             ])
-            const main = mainId === ballot.id ? detail : await fetchBallotDetail(mainId)
+            const [main, mainVotes] =
+                mainId === ballot.id ? [detail, votes] : await Promise.all([fetchBallotDetail(mainId), fetchAllVotes(mainId)])
+            const mainTallies = Object.fromEntries(main.categories.map((c) => [c.id, tallyCategory(c.id, mainVotes)]))
             const rows = await fetchResults(detail.categories.map((c) => c.id))
-            setData({ detail, main, votes, committeeMemberIds, rounds, results: Object.fromEntries(rows.map((r) => [r.category_id, r])) })
+            setData({ detail, main, votes, mainTallies, committeeMemberIds, rounds, results: Object.fromEntries(rows.map((r) => [r.category_id, r])) })
         } catch (e) {
             setLoadError(errText(e, "Could not load the tally"))
         }
@@ -124,7 +131,7 @@ const TallyPanel = ({ ballot }: Props) => {
     const recordAll = () =>
         run(async () => {
             const later = new Set(data.rounds.filter((b) => ROUND_ORDER[b.round] > ROUND_ORDER[ballot.round]).map((b) => b.id))
-            const plan = recordPlan(ballot.round, ballot.id, views, data.results, later)
+            const plan = recordPlan(ballot.round, ballot.id, views, data.results, later, data.mainTallies)
             if (plan.overwrites.length > 0) {
                 const list = plan.overwrites.map(catName).join(", ")
                 if (!window.confirm(`This changes an already recorded winner in: ${list}. Continue?`)) return null
@@ -159,8 +166,28 @@ const TallyPanel = ({ ballot }: Props) => {
             if (existing?.winner_nominee_id && existing.winner_nominee_id !== pick) {
                 if (!window.confirm(`${v.name} already has a recorded winner (${name(existing.winner_nominee_id)}). Replace it?`)) return null
             }
-            await upsertResults([manualResult(manualBase(ballot.round, ballot.id, v, existing), pick, ballot.id)])
+            const row = manualResult(manualBase(ballot.round, ballot.id, v, existing), pick, ballot.id)
+            await upsertResults([attachPlaces(row, data.mainTallies[v.category_id] ?? v.tally, ballot.round === "main" ? null : v.tally)])
             return `Recorded ${name(pick)} for ${v.name}.`
+        })
+
+    // Rows recorded before podium places existed (main ballot only).
+    const missingPlaces = ballot.round === "main" ? Object.values(data.results).filter((r) => r.places == null && data.mainTallies[r.category_id]) : []
+
+    const fillPlaces = () =>
+        run(async () => {
+            const roundTallies: Record<string, CategoryTally> = {}
+            const roundIds = new Set(missingPlaces.map((r) => r.decided_ballot_id))
+            for (const rb of data.rounds.filter((b) => roundIds.has(b.id))) {
+                const [detail, roundVotes] = await Promise.all([fetchBallotDetail(rb.id), fetchAllVotes(rb.id)])
+                for (const c of detail.categories) {
+                    const decidedHere = missingPlaces.some((r) => r.category_id === c.id && r.decided_ballot_id === rb.id)
+                    if (decidedHere) roundTallies[c.id] = tallyCategory(c.id, roundVotes, c.nominees.map((n) => n.id))
+                }
+            }
+            const updates = backfillPlaces(missingPlaces, data.mainTallies, roundTallies)
+            await updatePlaces(updates)
+            return `Filled podium places for ${updates.length} ${updates.length === 1 ? "category" : "categories"}.`
         })
 
     const toggle = (id: string) =>
@@ -188,6 +215,11 @@ const TallyPanel = ({ ballot }: Props) => {
                     <Link to={`/app/profile/ballots/${existingRound.id}`} className={secondary}>
                         Open {roundLabel} round →
                     </Link>
+                )}
+                {missingPlaces.length > 0 && (
+                    <button onClick={fillPlaces} disabled={busy} className={secondarySmall}>
+                        Fill in podium places ({missingPlaces.length})
+                    </button>
                 )}
             </div>
 

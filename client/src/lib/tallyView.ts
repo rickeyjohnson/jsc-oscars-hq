@@ -1,4 +1,5 @@
 import type { BallotRound, Category, DecidedBy, ResultRow } from "../types"
+import { attachPlaces } from "./places"
 import { nextStep, resultForRound, type NextStep } from "./rounds"
 import { tallyCategory, type CategoryTally, type RankedNominee } from "./tally"
 
@@ -77,7 +78,16 @@ export type RecordPlan = { rows: ResultRow[]; overwrites: string[]; skipped: str
 // Rows "Record results" writes. Skips categories decided by a later round (laterBallotIds)
 // and never replaces a recorded winner with "no winner" (keeps manual picks).
 // overwrites = categories whose recorded winner would change (ask before writing).
-export function recordPlan(round: BallotRound, ballotId: string, views: CategoryView[], results: Record<string, ResultRow>, laterBallotIds: Set<string>): RecordPlan {
+// Every written row carries podium places: from the main ballot's tally (mainTallies, falling back
+// to this ballot's tally), with a round ballot's tally ordering the main-ballot contenders.
+export function recordPlan(
+    round: BallotRound,
+    ballotId: string,
+    views: CategoryView[],
+    results: Record<string, ResultRow>,
+    laterBallotIds: Set<string>,
+    mainTallies?: Record<string, CategoryTally>,
+): RecordPlan {
     const plan: RecordPlan = { rows: [], overwrites: [], skipped: [] }
     for (const v of views) {
         const existing = results[v.category_id] ?? null
@@ -87,7 +97,7 @@ export function recordPlan(round: BallotRound, ballotId: string, views: Category
             continue
         }
         if (existing?.winner_nominee_id && existing.winner_nominee_id !== row.winner_nominee_id) plan.overwrites.push(v.category_id)
-        plan.rows.push(row)
+        plan.rows.push(attachPlaces(row, mainTallies?.[v.category_id] ?? v.tally, round === "main" ? null : v.tally))
     }
     return plan
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import type { Category, Nominee, ResultRow } from "../types"
+import { tallyCategory } from "./tally"
 import { buildCategoryViews, recordPlan, summaryLine } from "./tallyView"
 
 const nom = (id: string, member_ids: string[] = []): Nominee => ({ id, display_name: id, type: "person", member_ids })
@@ -73,7 +74,28 @@ describe("recordPlan", () => {
     const prev = res("c2", { nominee_ids: ["A", "B"], top3_nominee_ids: ["A", "B", "C"] })
     const views = buildCategoryViews({ round: "tiebreak", categories: round, mainCategories: main, votes: votes("c2", { B: 3, A: 1 }), results: { c2: prev }, committeeMemberIds: [] })
     const plan = recordPlan("tiebreak", "T", views, { c2: prev }, new Set())
-    expect(plan.rows).toEqual([{ ...prev, decided_ballot_id: "T", winner_nominee_id: "B", decided_by: "tiebreak" }])
+    expect(plan.rows).toEqual([{ ...prev, decided_ballot_id: "T", winner_nominee_id: "B", decided_by: "tiebreak", places: expect.any(Array) }])
     expect(plan.overwrites).toEqual([])
+  })
+})
+
+describe("recordPlan places", () => {
+  const views = buildCategoryViews({ round: "main", categories: main, mainCategories: main, votes: mainVotes, results: {}, committeeMemberIds: [] })
+  it("main ballot: every row carries places from the main tally", () => {
+    const plan = recordPlan("main", "M", views, {}, new Set())
+    expect(plan.rows.find((r) => r.category_id === "c1")!.places!.map((x) => [x.nominee_id, x.place, x.tied])).toEqual([["A", 1, false], ["C", 2, true], ["B", 2, true], ["D", 4, false], ["E", 5, false]])
+    expect(plan.rows.every((r) => Array.isArray(r.places))).toBe(true)
+  })
+  it("tiebreak round: places come from the main tally, contenders ordered by round votes", () => {
+    const prev = res("c2", { nominee_ids: ["A", "B"], top3_nominee_ids: ["A", "B", "C"] })
+    const tbViews = buildCategoryViews({ round: "tiebreak", categories: [cat("c2", 1, [nom("A"), nom("B")])], mainCategories: main, votes: votes("c2", { B: 3, A: 1 }), results: { c2: prev }, committeeMemberIds: [] })
+    const tb = recordPlan("tiebreak", "T", tbViews, { c2: prev }, new Set(), { c2: tallyCategory("c2", mainVotes) })
+    expect(tb.rows[0].places!.map((x) => x.nominee_id)).toEqual(["B", "A", "C"])
+    expect(tb.rows[0].places!.map((x) => [x.place, x.tied])).toEqual([[1, false], [2, false], [3, false]])
+  })
+  it("a category decided by a later round gets no row (its places stay untouched)", () => {
+    const plan = recordPlan("main", "M", views, { c1: res("c1", { decided_ballot_id: "T", winner_nominee_id: "B" }) }, new Set(["T"]))
+    expect(plan.rows.map((r) => r.category_id)).not.toContain("c1")
+    expect(plan.skipped).toContain("c1")
   })
 })

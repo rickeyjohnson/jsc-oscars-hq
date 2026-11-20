@@ -1,23 +1,35 @@
 import { supabase } from "../supabaseClient"
-import type { ResultRow } from "../types"
+import type { Place, ResultRow } from "../types"
 
 // Committee reads every result; members only after the season is released (RLS).
 export const fetchResults = async (categoryIds: string[]): Promise<ResultRow[]> => {
     if (categoryIds.length === 0) return []
     const { data, error } = await supabase
         .from("results")
-        .select("category_id, decided_ballot_id, winner_nominee_id, nominee_ids, top3_nominee_ids, decided_by")
+        .select("category_id, decided_ballot_id, winner_nominee_id, nominee_ids, top3_nominee_ids, decided_by, places")
         .in("category_id", categoryIds)
     if (error) throw error
     return (data ?? []) as ResultRow[]
 }
 
 // Committee only (RLS). One row per category (primary key category_id).
+// A row without `places` leaves the stored places alone (the key is not sent).
+// Rows in one call should agree on whether they carry places: PostgREST sends the union of keys
+// and fills a missing one with null (default_to_null).
 export const upsertResults = async (rows: ResultRow[]): Promise<void> => {
     if (rows.length === 0) return
     const now = new Date().toISOString()
-    const { error } = await supabase.from("results").upsert(rows.map((r) => ({ ...r, updated_at: now })), { onConflict: "category_id" })
+    const payload = rows.map(({ places, ...rest }) => (places === undefined ? { ...rest, updated_at: now } : { ...rest, places, updated_at: now }))
+    const { error } = await supabase.from("results").upsert(payload, { onConflict: "category_id" })
     if (error) throw error
+}
+
+// Committee only. Writes podium places onto already recorded rows; touches no other column.
+export const updatePlaces = async (rows: { category_id: string; places: Place[] }[]): Promise<void> => {
+    for (const { category_id, places } of rows) {
+        const { error } = await supabase.from("results").update({ places }).eq("category_id", category_id)
+        if (error) throw error
+    }
 }
 
 // Committee only. Reveals the season's results to members and marks its finished ballots released.
