@@ -6,6 +6,7 @@ import PrimitivesA from "./PrimitivesA"
 import PrimitivesB from "./PrimitivesB"
 import Shell from "./Shell"
 import Sheets from "./Sheets"
+import Reveal from "./Reveal"
 
 export type GallerySection = { id: string; title: string; Component: ComponentType }
 
@@ -26,5 +27,6 @@ export const SECTIONS: GallerySection[] = [
     { id: "primitives-b", title: "Primitives B", Component: PrimitivesB },
     { id: "navigation", title: "Navigation", Component: Shell },
     { id: "sheets-and-dialogs", title: "Sheets and dialogs", Component: Sheets },
+    { id: "reveal", title: "Reveal", Component: Reveal },
     ...UPCOMING.map((t) => ({ id: t.toLowerCase().replace(/[^a-z]+/g, "-"), title: t, Component: placeholder(t) })),
 ]

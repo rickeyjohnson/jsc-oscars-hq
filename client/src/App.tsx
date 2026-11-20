@@ -1,12 +1,11 @@
 import { lazy, Suspense } from "react"
-import { Outlet, Route, Routes } from "react-router-dom"
+import { Navigate, Outlet, Route, Routes } from "react-router-dom"
 import "./App.css"
 import LandingPage from "./pages/LandingPage"
 import SignupPage from "./pages/SignupPage"
 import LoginPage from "./pages/LoginPage"
 import HomePage from "./pages/HomePage"
 import BallotsPage from "./pages/BallotsPage"
-import StatsPage from "./pages/StatsPage"
 import ResultsPage from "./pages/ResultsPage"
 import ProfilePage from "./pages/ProfilePage"
 import ResetPassword from "./pages/ResetPassword"
@@ -75,8 +74,7 @@ const App = () => {
                     <Route path="ballots" element={<BallotsPage />} />
                     <Route path="ballots/:ballotId" element={<VotePage />} />
                     <Route path="results" element={<ResultsPage />} />
-                    {/* Stats folds into Results in a later task; keep the route working until then. */}
-                    <Route path="stats" element={<StatsPage />} />
+                    <Route path="stats" element={<Navigate to="/app/results?view=leaderboard" replace />} />
                     <Route path="profile" element={<ProfilePage />} />
                     <Route
                         element={

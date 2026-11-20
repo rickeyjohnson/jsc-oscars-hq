@@ -1,135 +1,162 @@
-import { useCallback, useEffect, useState } from "react"
-import NavigationBar from "../components/NavigationBar"
-import NavigationTabs from "../components/NavigationTabs"
-import Podium from "../components/Podium"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { useSearchParams } from "react-router-dom"
+import { Clapperboard } from "lucide-react"
 import { fetchCurrentSeason } from "../api/ballots"
 import { fetchSeasonResults } from "../api/results"
-import { fetchMemberAvatars } from "../api/members"
+import { fetchMemberAvatars, fetchMembers } from "../api/members"
 import { useUserData } from "../context/UserContenxt"
+import OscarLogo from "../components/OscarLogo"
 import { buildResultCards, type ResultCard } from "../lib/resultsView"
-import type { Season } from "../types"
+import { nomineeStats } from "../lib/stats"
+import { leaderboard, myCategories, type LeaderRow } from "../lib/leaderboard"
+import type { Nominee, Season } from "../types"
+import { Screen } from "../ui/Screen"
+import { SegmentedControl } from "../ui/SegmentedControl"
+import { Skeleton, SkeletonScreen } from "../ui/Skeleton"
+import { ErrorState } from "../ui/ErrorState"
+import { Chip } from "../ui/Chip"
+import { Countdown } from "../ui/Countdown"
+import { Envelope } from "../ui/Envelope"
+import { COPY } from "../ui/copy"
+import { parseResultsTab, type ResultsTab } from "../ui/logic/resultsTab"
+import { hasSeenEnvelope, markEnvelopeSeen, safeStorage } from "../ui/logic/reveal"
+import { WinnersView } from "./results/WinnersView"
+import { LeaderboardView } from "./results/LeaderboardView"
+import type { You } from "./results/YouCard"
 
-type Load =
-    | { state: "loading" }
-    | { state: "error" }
-    | { state: "hidden" }
-    | { state: "ready"; season: Season; cards: ResultCard[]; avatars: Record<string, string | null> }
+type Ready = { season: Season; released: boolean; cards: ResultCard[]; rows: LeaderRow[]; avatars: Record<string, string | null>; you: You | null }
+type Load = { state: "loading" } | { state: "error" } | { state: "sealed"; season: Season } | { state: "none" } | ({ state: "ready" } & Ready)
 
-const Shell = ({ children }: { children: React.ReactNode }) => (
-    <div className="bg-zinc-900 min-h-screen text-[#fffadd] pb-24">
-        <NavigationBar />
-        <main className="px-6 py-6 space-y-4 max-w-md mx-auto">{children}</main>
-        <NavigationTabs activeTab="results" />
-    </div>
-)
+const TABS: { value: ResultsTab; label: string }[] = [
+    { value: "winners", label: "Winners" },
+    { value: "leaderboard", label: "Leaderboard" },
+]
 
 const ResultsPage = () => {
-    const { profile, loading: profileLoading } = useUserData()
+    const { profile, member, loading: userLoading } = useUserData()
     const isCommittee = Boolean(profile?.is_committee)
+    const [params, setParams] = useSearchParams()
+    const tab = parseResultsTab(`?${params.toString()}`)
     const [load, setLoad] = useState<Load>({ state: "loading" })
+    const [envelopeDone, setEnvelopeDone] = useState(false)
+    const seq = useRef(0)
 
     const run = useCallback(async () => {
+        const mine = ++seq.current
         setLoad({ state: "loading" })
         try {
             const season = await fetchCurrentSeason()
+            if (mine !== seq.current) return
             if (!season) {
-                setLoad({ state: "hidden" })
+                setLoad({ state: "none" })
                 return
             }
             const released = season.results_released_at != null
+            // Members request nothing about results before release (season row only).
             if (!released && !isCommittee) {
-                setLoad({ state: "hidden" })
+                setLoad({ state: "sealed", season })
                 return
             }
-            const [{ categories, results }, avatars] = await Promise.all([fetchSeasonResults(season.id), fetchMemberAvatars().catch(() => ({}))])
-            setLoad({ state: "ready", season, cards: buildResultCards(categories, results), avatars })
+            const [{ categories, results }, avatars, members] = await Promise.all([
+                fetchSeasonResults(season.id),
+                fetchMemberAvatars().catch(() => ({}) as Record<string, string | null>),
+                released ? fetchMembers() : Promise.resolve([]),
+            ])
+            let rows: LeaderRow[] = []
+            let you: You | null = null
+            if (released) {
+                const nominees: Record<string, Nominee> = {}
+                for (const c of categories) for (const n of c.nominees) nominees[n.id] = n
+                rows = leaderboard(nomineeStats(Object.values(results), nominees).members, members)
+                const row = member ? rows.find((r) => r.member_id === member.id) : undefined
+                if (member && row) you = { name: member.name, row, ...myCategories(categories, results, member.id, members) }
+            }
+            if (mine !== seq.current) return
+            setLoad({ state: "ready", season, released, cards: buildResultCards(categories, results), rows, avatars, you })
         } catch (e) {
+            if (mine !== seq.current) return
             console.error("Error loading results: ", e)
             setLoad({ state: "error" })
         }
-    }, [isCommittee])
+    }, [isCommittee, member])
 
     useEffect(() => {
-        if (profileLoading) return
+        if (userLoading) return
         void run()
-    }, [run, profileLoading])
+    }, [run, userLoading])
 
-    if (load.state === "loading") return <Shell><p className="text-center text-amber-100/60 pt-10">Loading...</p></Shell>
+    const setTab = (v: ResultsTab) => setParams(v === "winners" ? {} : { view: v }, { replace: true })
+
+    if (load.state === "loading") {
+        return (
+            <Screen title="Results">
+                <SkeletonScreen label="Loading results">
+                    <div className="space-y-4">
+                        <Skeleton shape="row" />
+                        <Skeleton shape="card" />
+                        <Skeleton shape="card" />
+                    </div>
+                </SkeletonScreen>
+            </Screen>
+        )
+    }
     if (load.state === "error") {
         return (
-            <Shell>
-                <p className="text-center text-red-400 pt-10">
-                    Couldn't load the results{" "}
-                    <button className="underline" onClick={() => void run()}>Retry</button>
-                </p>
-            </Shell>
+            <Screen title="Results">
+                <ErrorState title={COPY.somethingWrong} body={COPY.loadFailed("the results")} onRetry={() => void run()} />
+            </Screen>
         )
     }
-
-    if (load.state === "hidden") {
+    if (load.state === "none" || load.state === "sealed") {
+        const at = load.state === "sealed" && load.season.ceremony_at ? new Date(load.season.ceremony_at) : null
         return (
-            <Shell>
-                <p className="text-center text-amber-100/60 pt-10">Results will be revealed at the ceremony.</p>
-            </Shell>
+            <Screen title="Results">
+                <section className="rounded-card bg-pebble-lemon p-6 text-on-pebble-lemon">
+                    <Clapperboard aria-hidden className="size-12" />
+                    <h2 className="mt-3 font-display text-title-1">Results are sealed.</h2>
+                    <p className="mt-1 text-callout">
+                        {at
+                            ? `The winners are revealed at the ceremony on ${at.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} at ${at.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}.`
+                            : "The winners are revealed at the ceremony."}
+                    </p>
+                    <div className="mt-4">
+                        <Countdown target={at} />
+                    </div>
+                </section>
+            </Screen>
         )
     }
 
-    const { season } = load
-    const header = (
-        <div className="text-center">
-            <div className="text-xs tracking-[0.25em] text-amber-100/60">THE WINNERS</div>
-            <h1 className="text-2xl font-black mt-1">{season.name}</h1>
-        </div>
-    )
+    const { season, released } = load
+    const showEnvelope = released && !envelopeDone && !hasSeenEnvelope(safeStorage(), season.id)
+    const closeEnvelope = () => {
+        markEnvelopeSeen(safeStorage(), season.id)
+        setEnvelopeDone(true)
+    }
 
-    const released = season.results_released_at != null
     return (
-        <Shell>
-            {header}
-            {!released && (
-                <>
-                    <p className="text-center text-amber-100/60">Results will be revealed at the ceremony.</p>
-                    <div className="rounded-xl bg-amber-100/10 border border-amber-100/20 text-center text-xs py-2 px-3">
-                        Preview (only the committee can see this)
-                    </div>
-                </>
-            )}
-            {load.cards.length === 0 && <p className="text-center text-amber-100/60">No categories yet.</p>}
-            {load.cards.map((card) => (
-                <section key={card.category_id} className="bg-[#27272a] rounded-2xl p-4">
-                    <h2 className="text-xs font-normal uppercase tracking-wide text-amber-100/60">{`${card.number} · ${card.name}`}</h2>
-                    {card.pending ? (
-                        <p className="text-sm text-amber-100/60 mt-3">No winner recorded</p>
-                    ) : (
+        <Screen title="Results" width="wide">
+            {showEnvelope && <Envelope onDone={closeEnvelope} />}
+            <div className="space-y-4">
+                {!released && <Chip tone="warn">Preview · only the committee sees this</Chip>}
+                <SegmentedControl label="Results view" idPrefix="results" options={TABS} value={tab} onChange={setTab} />
+                <div role="tabpanel" aria-labelledby={`results-tab-${tab}`}>
+                    {tab === "winners" ? (
                         <>
-                            <Podium
-                                items={card.podium.map((e) => ({
-                                    key: e.nominee_id,
-                                    slot: e.slot,
-                                    name: e.name,
-                                    sub: e.tieLabel,
-                                    avatarUrl: e.memberIds.length === 1 ? load.avatars[e.memberIds[0]] ?? null : null,
-                                }))}
-                            />
-                            {card.also.length > 0 && (
-                                <div className="mt-3">
-                                    <div className="text-xs tracking-wide text-amber-100/60">ALSO PLACED</div>
-                                    <ul className="space-y-1.5 mt-1.5 list-none p-0">
-                                        {card.also.map((a) => (
-                                            <li key={a.nominee_id} className="flex items-center gap-2 bg-[#3f3f46] rounded-lg px-3 py-1.5 text-sm">
-                                                <span className="text-xs rounded-full bg-zinc-900/60 px-2 py-0.5 text-amber-100/80">{a.placeLabel}</span>
-                                                <span className="flex-1 min-w-0 break-words">{a.name}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
-                            {card.note && <p className="mt-3 text-center text-xs text-amber-100/60">{card.note}</p>}
+                            <div className="mb-4 flex flex-col items-center gap-3 text-center">
+                                <OscarLogo size="xsmall" decorative />
+                                <h2 className="font-display text-large-title">And the winners are…</h2>
+                            </div>
+                            <WinnersView cards={load.cards} avatars={load.avatars} />
                         </>
+                    ) : released ? (
+                        <LeaderboardView seasonName={season.name} rows={load.rows} avatars={load.avatars} you={load.you} />
+                    ) : (
+                        <p className="py-12 text-center text-callout text-label-2">Stats appear after the envelope opens.</p>
                     )}
-                </section>
-            ))}
-        </Shell>
+                </div>
+            </div>
+        </Screen>
     )
 }
 
