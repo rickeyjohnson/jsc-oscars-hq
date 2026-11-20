@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react"
 import { useParams } from "react-router-dom"
-import NavigationBar from "../../components/NavigationBar"
-import NavigationTabs from "../../components/NavigationTabs"
 import StatusChip from "../../components/committee/StatusChip"
+import { statusPebble } from "../../components/committee/statusPebble"
 import CompletionPanel from "../../components/committee/CompletionPanel"
 import ExportCsvButton from "../../components/committee/ExportCsvButton"
 import TallyPanel from "../../components/committee/TallyPanel"
@@ -13,6 +12,14 @@ import { publishBlockers } from "../../lib/ballotForm"
 import { completionByMember, chipStatus, type BallotSummary, type MemberCompletion } from "../../lib/voting"
 import { useConfirm } from "../../ui/ConfirmProvider"
 import { closesInLabel } from "../../lib/time"
+import { Screen } from "../../ui/Screen"
+import { Button } from "../../ui/Button"
+import { ColorBlock } from "../../ui/ColorBlock"
+import { ErrorState } from "../../ui/ErrorState"
+import { Skeleton, SkeletonScreen } from "../../ui/Skeleton"
+import { COPY } from "../../ui/copy"
+
+const UPDATE_FAILED = "Couldn't update the ballot. Check your connection and try again."
 
 // resultsAction / resultsBody override the default Export CSV button and TallyPanel.
 type Props = { resultsAction?: ReactNode; resultsBody?: ReactNode }
@@ -22,7 +29,7 @@ const BallotAdminPage = ({ resultsAction, resultsBody }: Props) => {
     const confirm = useConfirm()
     const [ballot, setBallot] = useState<BallotSummary | null>(null)
     const [rows, setRows] = useState<MemberCompletion[]>([])
-    const [error, setError] = useState<string | null>(null)
+    const [error, setError] = useState(false)
     const [actionError, setActionError] = useState<string | null>(null)
     const [blockers, setBlockers] = useState<string[]>([])
     const [busy, setBusy] = useState(false)
@@ -36,9 +43,10 @@ const BallotAdminPage = ({ resultsAction, resultsBody }: Props) => {
             if (!found) throw new Error("Ballot not found")
             setBallot(found)
             setRows(completionByMember(members, votes, found.category_count))
-            setError(null)
+            setError(false)
         } catch (e) {
-            setError(e instanceof Error ? e.message : "Could not load ballot")
+            console.error(e)
+            setError(true)
         }
     }, [ballotId])
 
@@ -56,72 +64,90 @@ const BallotAdminPage = ({ resultsAction, resultsBody }: Props) => {
             await setBallotStatus(ballotId, status)
             await load()
         } catch (e) {
-            setActionError(e instanceof Error ? e.message : "Could not update ballot")
+            console.error(e)
+            setActionError(UPDATE_FAILED)
         } finally {
             setBusy(false)
         }
     }
 
     const fmt = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+    const retry = () => {
+        setError(false)
+        setBallot(null)
+        void load()
+    }
+    const status = ballot ? chipStatus(ballot, new Date()) : null
 
     return (
-        <div className="bg-zinc-900 min-h-screen text-[#fffadd] pb-24">
-            <NavigationBar />
-            <main className="p-6 space-y-6">
-                {error && <div className="text-center text-red-400">{error}</div>}
-                {!error && !ballot && <div className="text-center text-amber-100/60">Loading...</div>}
-                {ballot && !error && (
-                    <>
-                        <div>
-                            <div className="flex justify-between items-center gap-2">
-                                <h2 className="text-2xl font-black">{ballot.name}</h2>
-                                <StatusChip status={chipStatus(ballot, new Date())} />
+        <Screen title={ballot?.name ?? "Ballot"} back={{ to: "/app/profile/ballots", label: "Ballots" }} width="wide">
+            {error && <ErrorState title={COPY.somethingWrong} body={COPY.loadFailed("this ballot")} onRetry={retry} />}
+            {!error && !ballot && (
+                <SkeletonScreen label="Loading ballot">
+                    <div className="space-y-4">
+                        <Skeleton shape="block" />
+                        <Skeleton shape="card" />
+                    </div>
+                </SkeletonScreen>
+            )}
+            {ballot && !error && status && (
+                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] lg:items-start">
+                    <div className="space-y-4">
+                        <ColorBlock pebble={statusPebble(status) ?? "grape"} as="section">
+                            <div className="flex items-center justify-between gap-3">
+                                <p className="text-callout">
+                                    Closes {fmt(ballot.closes_at)} · {closesInLabel(new Date(ballot.closes_at), new Date()).replace(/^Closes /, "")}
+                                </p>
+                                <StatusChip status={status} onColor />
                             </div>
-                            <p className="text-sm text-amber-100/60 mt-1">
-                                Closes {fmt(ballot.closes_at)} · {closesInLabel(new Date(ballot.closes_at), new Date()).replace(/^Closes /, "")}
-                            </p>
-                        </div>
+                        </ColorBlock>
 
                         {ballot.status === "open" && (
-                            <button
+                            <Button
+                                variant="pebble"
+                                pebble="cherry"
+                                size="md"
+                                fullWidth
                                 disabled={busy}
                                 onClick={() => changeStatus("closed", { title: `Close voting for ${ballot.name}?`, message: "Votes can no longer be changed.", confirmLabel: "Close voting", destructive: true })}
-                                className="w-full bg-red-600 text-white font-bold rounded-2xl p-4 disabled:opacity-50"
                             >
                                 Close now
-                            </button>
+                            </Button>
                         )}
                         {ballot.status === "draft" && (
-                            <button
+                            <Button
+                                variant="primary"
+                                size="md"
+                                fullWidth
                                 disabled={busy || blockers.length > 0}
                                 onClick={() => changeStatus("open", { title: "Publish this ballot?", message: "Members will be able to vote.", confirmLabel: "Publish" })}
-                                className="w-full bg-amber-100 text-zinc-900 font-bold rounded-2xl p-4 disabled:opacity-50"
                             >
                                 Publish
-                            </button>
+                            </Button>
                         )}
                         {ballot.status === "draft" && blockers.length > 0 && (
-                            <ul className="text-xs text-amber-400 space-y-1">
+                            <ul className="space-y-1 text-footnote text-warn">
                                 {blockers.map((b) => <li key={b}>{b}</li>)}
                             </ul>
                         )}
-                        {actionError && <div className="text-center text-red-400">{actionError}</div>}
+                        {actionError && <div role="alert" className="text-center text-callout text-danger">{actionError}</div>}
 
                         <CompletionPanel rows={rows} />
+                    </div>
 
-                        <div className="bg-amber-100/5 border border-amber-100/10 rounded-2xl p-4">
-                            <div className="flex justify-between items-center mb-3">
-                                <h3 className="font-bold">Results</h3>
+                    <div className="space-y-4">
+                        <ColorBlock pebble="lemon" as="section">
+                            <div className="flex items-center justify-between gap-3">
+                                <h3 className="text-title-3">Results</h3>
                                 {resultsAction ?? <ExportCsvButton ballotId={ballot.id} ballotName={ballot.name} />}
                             </div>
-                            <p className="text-xs text-amber-100/60 mb-3">The CSV works any time, including mid-vote.</p>
-                            {resultsBody ?? <TallyPanel key={`${ballot.id}-${ballot.status}`} ballot={ballot} />}
-                        </div>
-                    </>
-                )}
-            </main>
-            <NavigationTabs activeTab={"profile"} />
-        </div>
+                            <p className="mt-2 text-footnote">The CSV works any time, including mid-vote.</p>
+                        </ColorBlock>
+                        {resultsBody ?? <TallyPanel key={`${ballot.id}-${ballot.status}`} ballot={ballot} />}
+                    </div>
+                </div>
+            )}
+        </Screen>
     )
 }
 

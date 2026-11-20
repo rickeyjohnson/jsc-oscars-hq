@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Link } from "react-router-dom"
+import { ChevronDown, ChevronLeft, ChevronUp } from "lucide-react"
 import { createRoundBallot, fetchBallotDetail, fetchRoundBallots } from "../../api/ballots"
 import { fetchCommitteeMemberIds } from "../../api/members"
 import { fetchResults, updatePlaces, upsertResults } from "../../api/results"
@@ -11,6 +11,15 @@ import { badgeFor, buildCategoryViews, manualBase, recordPlan, ROUND_ORDER, summ
 import { toUtcIso } from "../../lib/time"
 import { chipStatus } from "../../lib/voting"
 import { useConfirm } from "../../ui/ConfirmProvider"
+import { Button } from "../../ui/Button"
+import { Card } from "../../ui/Card"
+import { Chip } from "../../ui/Chip"
+import { ColorBlock } from "../../ui/ColorBlock"
+import { ErrorState } from "../../ui/ErrorState"
+import { Podium, type PodiumItem } from "../../ui/Podium"
+import { Skeleton, SkeletonScreen } from "../../ui/Skeleton"
+import { COPY } from "../../ui/copy"
+import type { ChipTone } from "../../ui/logic/variants"
 import type { Ballot, BallotDetail, ResultRow, VoteRow } from "../../types"
 
 type Props = { ballot: Ballot }
@@ -28,23 +37,25 @@ type Loaded = {
     roundByCategory: Record<string, "tiebreak" | "committee">
 }
 
-const BADGE: Record<BadgeKey, { label: string; className: string }> = {
-    winner: { label: "Winner", className: "bg-[#fffadd] text-black" },
-    tiebreak: { label: "Tiebreak needed", className: "bg-[#78350f] text-[#fde68a]" },
-    committee: { label: "Committee vote needed", className: "bg-[#1e3a8a] text-[#bfdbfe]" },
-    manual: { label: "Manual pick needed", className: "bg-[#7f1d1d] text-[#fecaca]" },
-    in_tiebreak: { label: "In tiebreak", className: "bg-[#78350f] text-[#fde68a]" },
-    in_committee: { label: "In committee round", className: "bg-[#1e3a8a] text-[#bfdbfe]" },
+const BADGE: Record<BadgeKey, { label: string; tone: ChipTone }> = {
+    winner: { label: "Winner", tone: "lime" },
+    tiebreak: { label: "Tiebreak needed", tone: "tangerine" },
+    committee: { label: "Committee vote needed", tone: "sky" },
+    manual: { label: "Manual pick needed", tone: "cherry" },
+    in_tiebreak: { label: "In tiebreak", tone: "warn" },
+    in_committee: { label: "In committee round", tone: "warn" },
 }
 const DECIDED_BY: Record<string, string> = { votes: "votes", tiebreak: "tiebreak", committee_vote: "committee vote", manual: "manual pick" }
 
 const pad = (n: number) => String(n).padStart(2, "0")
 const localInput = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-const errText = (e: unknown, fallback: string) => (e instanceof Error ? e.message : e && typeof e === "object" && "message" in e ? String(e.message) : fallback)
 
-const primary = "bg-[#fffadd] text-zinc-900 font-bold rounded-full text-sm px-4 py-2 disabled:opacity-50"
-const secondary = "bg-[#302f2d] text-[#fffadd] rounded-full text-sm px-4 py-2 disabled:opacity-50"
-const secondarySmall = "bg-[#302f2d] text-[#fffadd] rounded-full text-xs px-3 py-1.5 disabled:opacity-50"
+// A message meant for the committee member (a missing pick); anything else is logged and replaced by COPY.
+class Invalid extends Error {}
+const LOAD_FAILED = COPY.loadFailed("the tally")
+const ACTION_FAILED = "Couldn't save that. Check your connection and try again."
+
+const fieldCls = "block w-full min-h-11 rounded-control bg-surface-2 px-3 text-body text-label focus-visible:outline-2 focus-visible:outline-accent"
 
 // Committee-only tally of a finished ballot: per category ranks and vote counts, next step,
 // Record results, the next round, and manual picks.
@@ -82,7 +93,8 @@ const TallyPanel = ({ ballot }: Props) => {
             for (const { rb, d } of roundDetails) if (rb.round !== "main") for (const c of d.categories) roundByCategory[c.id] = rb.round
             setData({ detail, main, votes, mainTallies, committeeMemberIds, rounds, roundByCategory, results: Object.fromEntries(rows.map((r) => [r.category_id, r])) })
         } catch (e) {
-            setLoadError(errText(e, "Could not load the tally"))
+            console.error(e)
+            setLoadError(LOAD_FAILED)
         }
     }, [ballot.id, mainId])
 
@@ -105,15 +117,18 @@ const TallyPanel = ({ ballot }: Props) => {
         [data, ballot.round],
     )
 
-    if (!ended) return <p className="text-sm text-amber-100/60">Tally, ties, tiebreak and winners appear here once voting closes.</p>
-    if (loadError)
+    if (!ended) return <Card><p className="text-footnote text-label-2">Tally, ties, tiebreak and winners appear here once voting closes.</p></Card>
+    if (loadError) return <ErrorState title={COPY.somethingWrong} body={loadError} onRetry={load} />
+    if (!data)
         return (
-            <div className="text-sm text-red-400 space-y-2">
-                <p>{loadError}</p>
-                <button onClick={load} className={secondary}>Retry</button>
-            </div>
+            <SkeletonScreen label="Loading tally">
+                <div className="space-y-3">
+                    <Skeleton shape="row" />
+                    <Skeleton shape="card" />
+                    <Skeleton shape="card" />
+                </div>
+            </SkeletonScreen>
         )
-    if (!data) return <p className="text-sm text-amber-100/60">Loading tally...</p>
 
     const names: Record<string, string> = {}
     for (const c of data.main.categories) for (const n of c.nominees) names[n.id] = n.display_name
@@ -131,7 +146,8 @@ const TallyPanel = ({ ballot }: Props) => {
                 await load()
             }
         } catch (e) {
-            setActionError(errText(e, "Something went wrong"))
+            if (!(e instanceof Invalid)) console.error(e)
+            setActionError(e instanceof Invalid ? e.message : ACTION_FAILED)
         } finally {
             setBusy(false)
         }
@@ -159,7 +175,7 @@ const TallyPanel = ({ ballot }: Props) => {
     const createRound = () =>
         run(async () => {
             if (!nextRound) return null
-            if (!closesAt) throw new Error("Pick when the round closes")
+            if (!closesAt) throw new Invalid("Pick when the round closes")
             const main: Ballot = data.main
             const n = entries.length
             if (!(await confirm({ title: `Create a ${roundLabel} round?`, message: `${n} ${n === 1 ? "category" : "categories"}. It opens for voting right away.`, confirmLabel: "Create round" }))) return null
@@ -170,7 +186,7 @@ const TallyPanel = ({ ballot }: Props) => {
     const recordManual = (v: CategoryView) =>
         run(async () => {
             const pick = picks[v.category_id]
-            if (!pick) throw new Error("Pick a winner first")
+            if (!pick) throw new Invalid("Pick a winner first")
             const existing = data.results[v.category_id]
             if (existing?.winner_nominee_id && existing.winner_nominee_id !== pick) {
                 if (!(await confirm({ title: `Replace the winner for ${v.name}?`, message: `${v.name} already has a recorded winner (${name(existing.winner_nominee_id)}).`, confirmLabel: "Replace", destructive: true }))) return null
@@ -209,110 +225,151 @@ const TallyPanel = ({ ballot }: Props) => {
             return next
         })
 
+    const decided = views.filter((v) => v.badge === "winner").length
+    const ties = views.filter((v) => v.badge === "tiebreak" || v.badge === "committee").length
+    const manual = views.filter((v) => v.badge === "manual").length
+
+    const podiumFor = (v: CategoryView): PodiumItem[] =>
+        v.recordedWinnerId
+            ? (data.results[v.category_id]?.places ?? [])
+                  .filter((p): p is typeof p & { slot: 1 | 2 | 3 } => p.slot != null)
+                  .map((p) => ({ key: p.nominee_id, slot: p.slot, name: name(p.nominee_id) }))
+            : []
+
     return (
-        <div className="space-y-3">
+        <div className="space-y-4">
             {ballot.round !== "main" && (
-                <Link to={`/app/profile/ballots/${mainId}`} className="text-xs text-amber-100/60 underline">
-                    ← Main ballot
-                </Link>
+                <Button to={`/app/profile/ballots/${mainId}`} variant="plain" size="md" icon={<ChevronLeft aria-hidden className="size-4" />}>
+                    Main ballot
+                </Button>
             )}
-            <p className="text-xs text-amber-100/60">{summaryLine(views)}</p>
+            <p className="sr-only">{summaryLine(views)}</p>
+            <div className="grid grid-cols-3 gap-3">
+                <ColorBlock pebble="lime" className="p-3!">
+                    <div className="text-title-1 font-display tabular-nums">{decided}</div>
+                    <div className="text-footnote">decided</div>
+                </ColorBlock>
+                <ColorBlock pebble="tangerine" className="p-3!">
+                    <div className="text-title-1 font-display tabular-nums">{ties}</div>
+                    <div className="text-footnote">{ties === 1 ? "tie" : "ties"}</div>
+                </ColorBlock>
+                <ColorBlock pebble="cherry" className="p-3!">
+                    <div className="text-title-1 font-display tabular-nums">{manual}</div>
+                    <div className="text-footnote">manual</div>
+                </ColorBlock>
+            </div>
             {data.committeeMemberIds.length === 0 && (
-                <p className="text-xs text-amber-400">No committee members found. Every tie left after a tiebreak will need a manual pick. Check profiles.is_committee.</p>
+                <p className="text-footnote text-warn">No committee members found. Every tie left after a tiebreak will need a manual pick. Check profiles.is_committee.</p>
             )}
 
-            <div className="flex flex-wrap gap-2 items-center">
-                <button onClick={recordAll} disabled={busy || views.length === 0} className={primary}>
+            <div className="flex flex-wrap items-center gap-3">
+                <Button variant="primary" size="md" onClick={recordAll} disabled={busy || views.length === 0}>
                     Record results
-                </button>
+                </Button>
                 {nextRound && existingRound && (
-                    <Link to={`/app/profile/ballots/${existingRound.id}`} className={secondary}>
+                    <Button to={`/app/profile/ballots/${existingRound.id}`} variant="secondary" size="md">
                         Open {roundLabel} round →
-                    </Link>
+                    </Button>
                 )}
                 {missingPlaces.length > 0 && (
-                    <button onClick={fillPlaces} disabled={busy} className={secondarySmall}>
+                    <Button variant="secondary" size="sm" onClick={fillPlaces} disabled={busy}>
                         Fill in podium places ({missingPlaces.length})
-                    </button>
+                    </Button>
                 )}
             </div>
 
             {nextRound && !existingRound && entries.length > 0 && (
-                <div className="bg-zinc-800/60 rounded-2xl p-3 space-y-2">
-                    <label className="block text-xs text-amber-100/60">
+                <Card className="space-y-3">
+                    <label className="block text-footnote text-label-2">
                         {roundLabel === "tiebreak" ? "Tiebreak" : "Committee"} round closes
-                        <input
-                            type="datetime-local"
-                            value={closesAt}
-                            onChange={(e) => setClosesAt(e.target.value)}
-                            className="block w-full mt-1 bg-zinc-900 text-[#fffadd] border border-amber-100/20 rounded-xl px-3 py-2 text-sm"
-                        />
+                        <input type="datetime-local" value={closesAt} onChange={(e) => setClosesAt(e.target.value)} className={`${fieldCls} mt-1`} />
                     </label>
-                    <button onClick={createRound} disabled={busy || needsRecord || !closesAt} className={secondary}>
+                    <Button variant="secondary" size="md" onClick={createRound} disabled={busy || needsRecord || !closesAt}>
                         Create {roundLabel} round
-                    </button>
-                    {needsRecord && <p className="text-xs text-amber-400">Record results first.</p>}
-                </div>
+                    </Button>
+                    {needsRecord && <p className="text-footnote text-warn">Record results first.</p>}
+                </Card>
             )}
 
-            {notice && <p className="text-xs text-green-400">{notice}</p>}
-            {actionError && <p className="text-xs text-red-400">{actionError}</p>}
+            {notice && <p role="status" className="text-footnote text-success">{notice}</p>}
+            {actionError && <p role="alert" className="text-footnote text-danger">{actionError}</p>}
 
-            {views.length === 0 && <p className="text-sm text-amber-100/60">No categories on this ballot.</p>}
-            {views.map((v) => {
-                const badge = BADGE[badgeFor(v, data.roundByCategory)]
-                const open = expanded.has(v.category_id)
-                return (
-                    <div key={v.category_id} className="bg-zinc-800/60 rounded-2xl p-3">
-                        <div className="flex justify-between items-start gap-2">
-                            <b className="text-sm">
-                                {v.number}. {v.name}
-                            </b>
-                            <span className={`text-[10px] font-bold rounded-full px-2 py-0.5 whitespace-nowrap ${badge.className}`}>{badge.label}</span>
-                        </div>
-                        {v.recordedWinnerId && (
-                            <p className="text-xs text-amber-100/60 mt-1">
-                                Recorded: {name(v.recordedWinnerId)}
-                                {v.recordedBy ? ` · ${DECIDED_BY[v.recordedBy]}` : ""}
-                            </p>
-                        )}
-                        {v.tally.ranked.length === 0 && <p className="text-xs text-amber-100/60 mt-2">No votes.</p>}
-                        <div className="mt-2 space-y-1">
-                            {[...v.shown, ...(open ? v.more : [])].map((r) => (
-                                <div key={r.nominee_id} className="flex items-center gap-3 text-sm">
-                                    <span className="flex-1">{name(r.nominee_id)}</span>
-                                    <span className="font-bold tabular-nums">{r.votes}</span>
-                                    <span className="text-xs text-amber-100/60 w-6 text-right">#{r.rank}</span>
-                                </div>
-                            ))}
-                        </div>
-                        {v.more.length > 0 && (
-                            <button onClick={() => toggle(v.category_id)} className="text-xs text-amber-100/60 mt-2">
-                                {open ? "Show less ▴" : `+ ${v.more.length} more ▾`}
-                            </button>
-                        )}
-                        {v.manualOptions.length > 0 && (
-                            <div className="flex gap-2 mt-3">
-                                <select
-                                    value={picks[v.category_id] ?? ""}
-                                    onChange={(e) => setPicks((p) => ({ ...p, [v.category_id]: e.target.value }))}
-                                    className="flex-1 min-w-0 bg-zinc-900 text-[#fffadd] border border-amber-100/20 rounded-xl px-2 py-2 text-sm"
-                                >
-                                    <option value="">Pick the winner...</option>
-                                    {v.manualOptions.map((id) => (
-                                        <option key={id} value={id}>
-                                            {name(id)}
-                                        </option>
-                                    ))}
-                                </select>
-                                <button onClick={() => recordManual(v)} disabled={busy || !picks[v.category_id]} className={primary}>
-                                    Record winner
-                                </button>
+            {views.length === 0 && <p className="text-callout text-label-2">No categories on this ballot.</p>}
+            <div className="grid gap-4 xl:grid-cols-2">
+                {views.map((v) => {
+                    const badge = BADGE[badgeFor(v, data.roundByCategory)]
+                    const open = expanded.has(v.category_id)
+                    const podium = podiumFor(v)
+                    return (
+                        <Card as="section" key={v.category_id}>
+                            <div className="flex items-start justify-between gap-2">
+                                <h4 className="text-headline">
+                                    {v.number}. {v.name}
+                                </h4>
+                                <Chip tone={badge.tone}>{badge.label}</Chip>
                             </div>
-                        )}
-                    </div>
-                )
-            })}
+                            {v.recordedWinnerId && (
+                                <p className="mt-1 text-footnote text-label-2">
+                                    Recorded: {name(v.recordedWinnerId)}
+                                    {v.recordedBy ? ` · ${DECIDED_BY[v.recordedBy]}` : ""}
+                                </p>
+                            )}
+                            {podium.length > 0 && (
+                                <div className="mt-3">
+                                    <Podium items={podium} variant="card" />
+                                </div>
+                            )}
+                            {v.tally.ranked.length === 0 && <p className="mt-2 text-footnote text-label-2">No votes.</p>}
+                            {v.tally.ranked.length > 0 && (
+                                <table className="mt-3 w-full text-callout">
+                                    <caption className="sr-only">Votes for {v.name}</caption>
+                                    <thead className="max-lg:sr-only">
+                                        <tr className="text-left text-footnote text-label-2">
+                                            <th scope="col" className="w-14 py-1 font-normal">Rank</th>
+                                            <th scope="col" className="py-1 font-normal">Nominee</th>
+                                            <th scope="col" className="w-16 py-1 text-right font-normal">Votes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-sep">
+                                        {[...v.shown, ...(open ? v.more : [])].map((r) => (
+                                            <tr key={r.nominee_id}>
+                                                <td className="w-14 py-2 text-label-2 tabular-nums">#{r.rank}</td>
+                                                <td className="py-2">{name(r.nominee_id)}</td>
+                                                <td className="w-16 py-2 text-right font-bold tabular-nums">{r.votes}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                            {v.more.length > 0 && (
+                                <Button variant="plain" size="sm" className="mt-2" onClick={() => toggle(v.category_id)} icon={open ? <ChevronUp aria-hidden className="size-4" /> : <ChevronDown aria-hidden className="size-4" />}>
+                                    {open ? "Show less" : `${v.more.length} more`}
+                                </Button>
+                            )}
+                            {v.manualOptions.length > 0 && (
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    <select
+                                        aria-label={`Winner for ${v.name}`}
+                                        value={picks[v.category_id] ?? ""}
+                                        onChange={(e) => setPicks((p) => ({ ...p, [v.category_id]: e.target.value }))}
+                                        className={`${fieldCls} min-w-0 flex-1`}
+                                    >
+                                        <option value="">Pick the winner...</option>
+                                        {v.manualOptions.map((id) => (
+                                            <option key={id} value={id}>
+                                                {name(id)}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <Button variant="primary" size="md" onClick={() => recordManual(v)} disabled={busy || !picks[v.category_id]}>
+                                        Record winner
+                                    </Button>
+                                </div>
+                            )}
+                        </Card>
+                    )
+                })}
+            </div>
         </div>
     )
 }

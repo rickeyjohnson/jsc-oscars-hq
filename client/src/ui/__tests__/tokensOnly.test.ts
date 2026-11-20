@@ -25,6 +25,13 @@ const MIGRATED = ["components/OscarLogo.tsx", "components/ProfileSetup.tsx", "pa
     "pages/results/YouCard.tsx",
     "pages/committee/ReleasePage.tsx",
     "pages/SubmitBallotPage.tsx",
+    "pages/committee/ManageBallotsPage.tsx",
+    "pages/committee/BallotAdminPage.tsx",
+    "pages/committee/MemberNamesPage.tsx",
+    "components/committee/TallyPanel.tsx",
+    "components/committee/CompletionPanel.tsx",
+    "components/committee/ExportCsvButton.tsx",
+    "components/committee/StatusChip.tsx",
 ]
 // Directories scanned wholesale (tests excluded: they legitimately hold literal values).
 const SCANNED_DIRS = ["ui", "dev"]
@@ -70,6 +77,17 @@ describe("tokens only", () => {
                     for (const r of RULES) if (r.re.test(line)) hits.push(`${rel(f)}:${i + 1} ${r.name}: ${line.trim()}`)
                 })
         }
+        expect(hits.join("\n")).toBe("")
+    })
+})
+
+describe("no tiny text", () => {
+    it("migrated code uses the type scale, not text-[10px]/[11px]", () => {
+        const hits: string[] = []
+        for (const f of MIGRATED.map((m) => join(src, m)))
+            readFileSync(f, "utf8").split("\n").forEach((l, i) => {
+                if (/text-\[1[01]px\]/.test(l)) hits.push(`${rel(f)}:${i + 1}`)
+            })
         expect(hits.join("\n")).toBe("")
     })
 })

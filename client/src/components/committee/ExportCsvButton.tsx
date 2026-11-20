@@ -1,8 +1,12 @@
 import { useState } from "react"
+import { Download } from "lucide-react"
+import { Button } from "../../ui/Button"
 import { fetchBallotDetail } from "../../api/ballots"
 import { fetchMembers } from "../../api/members"
 import { fetchAllVotes } from "../../api/votes"
 import { buildBallotCsv, csvFileName, riskyNomineeNames } from "../../lib/exportCsv"
+
+const EXPORT_FAILED = "Couldn't export the CSV. Check your connection and try again."
 
 type Props = { ballotId: string; ballotName: string }
 
@@ -32,7 +36,8 @@ const ExportCsvButton = ({ ballotId, ballotName }: Props) => {
             a.remove()
             setTimeout(() => URL.revokeObjectURL(url), 1000)
         } catch (e) {
-            setError(e instanceof Error ? e.message : "Could not export CSV")
+            console.error(e)
+            setError(EXPORT_FAILED)
         } finally {
             setBusy(false)
         }
@@ -40,13 +45,11 @@ const ExportCsvButton = ({ ballotId, ballotName }: Props) => {
 
     return (
         <div className="flex flex-col items-end gap-1">
-            <button type="button" onClick={exportCsv} disabled={busy} className="bg-[#302f2d] text-[#fffadd] rounded-full text-xs px-3 py-1.5 disabled:opacity-50">
-                {busy ? "Exporting..." : "⬇ Export CSV"}
-            </button>
-            {risky.length > 0 && (
-                <span className="text-xs text-amber-300">Heads up: nominee "{risky[0]}" will be read as blank by oscars.py.</span>
-            )}
-            {error && <span role="alert" className="text-xs text-red-400">{error}</span>}
+            <Button variant="secondary" size="sm" onClick={exportCsv} loading={busy} loadingLabel="Exporting…" icon={<Download aria-hidden className="size-4" />}>
+                Export CSV
+            </Button>
+            {risky.length > 0 && <span className="text-footnote font-bold">Heads up: nominee "{risky[0]}" will be read as blank by oscars.py.</span>}
+            {error && <span role="alert" className="text-footnote font-bold">{error}</span>}
         </div>
     )
 }

@@ -1,15 +1,34 @@
+import { CircleDot, Clock, Lock, Pencil, Trophy } from "lucide-react"
+import type { ReactNode } from "react"
+import { Chip } from "../../ui/Chip"
+import type { ChipTone } from "../../ui/logic/variants"
+import { statusPebble } from "./statusPebble"
 import type { ChipStatus } from "../../lib/voting"
 
-const STYLES: Record<ChipStatus, string> = {
-    open: "bg-[#14532d] text-[#bbf7d0]",
-    draft: "bg-zinc-700 text-zinc-200",
-    closed: "bg-[#7f1d1d] text-[#fecaca]",
-    ended: "bg-amber-900 text-amber-200",
-    released: "bg-amber-100/20 text-amber-100",
+const ICON: Record<ChipStatus, ReactNode> = {
+    open: <CircleDot aria-hidden className="size-3.5" />,
+    draft: <Pencil aria-hidden className="size-3.5" />,
+    closed: <Lock aria-hidden className="size-3.5" />,
+    ended: <Clock aria-hidden className="size-3.5" />,
+    released: <Trophy aria-hidden className="size-3.5" />,
 }
 
-const StatusChip = ({ status, label }: { status: ChipStatus; label?: string }) => (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase ${STYLES[status]}`}>{label ?? status}</span>
-)
+// onColor: a dark pill for sitting on a block painted in the same status pebble.
+const StatusChip = ({ status, label, onColor }: { status: ChipStatus; label?: string; onColor?: boolean }) => {
+    if (onColor)
+        return (
+            <span className="inline-flex h-6 items-center gap-1 whitespace-nowrap rounded-full bg-bg px-2.5 text-caption-1 font-bold text-label">
+                {ICON[status]}
+                <span className="capitalize">{label ?? status}</span>
+            </span>
+        )
+    const pebble = statusPebble(status)
+    const tone: ChipTone = pebble && pebble !== "grape" ? pebble : status === "ended" ? "warn" : "neutral"
+    return (
+        <Chip tone={tone} icon={ICON[status]}>
+            <span className="capitalize">{label ?? status}</span>
+        </Chip>
+    )
+}
 
 export default StatusChip
