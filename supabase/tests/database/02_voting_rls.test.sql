@@ -12,7 +12,7 @@ grant select on public.__ids to authenticated, anon;
 create function public.__id(p_k text) returns uuid language sql stable security definer set search_path = '' as
   $$ select v from public.__ids where k = p_k $$;
 
-insert into public.__tap(line) select plan(65);
+insert into public.__tap(line) select plan(71);
 
 -- ---------------------------------------------------------------- setup (as postgres)
 insert into public.__ids values ('rickey', tests.create_user('Rickey')), ('kadin', tests.create_user('Kadin')),
@@ -154,6 +154,24 @@ insert into public.__tap(line) select is((select count(*)::int from ballots wher
 -- committee self-vote rule still applies in the committee round
 insert into round_nominees (ballot_id, category_id, nominee_id) values (public.__id('R'), public.__id('E'), public.__id('n_rickey'));
 insert into public.__tap(line) select throws_ok($$ insert into votes(ballot_id,category_id,nominee_id) values (public.__id('R'),public.__id('E'),public.__id('n_rickey')) $$, '42501', null, 'committee self-vote rejected in committee round');
+
+-- ---------------------------------------------------------------- fix round 1
+-- group name collision: committee hand-makes an unlinked "Kadin, Micah" group
+insert into nominees (category_id, display_name, type, member_ids) values (public.__id('G'), 'Kadin, Micah', 'group', '{}');
+select tests.clear_authentication();
+select tests.authenticate_as(public.__id('micah'));
+insert into public.__tap(line) select throws_ok($$ select add_nominee(public.__id('G'), '', array[public.__id('micah_m'), public.__id('kadin_m')]) $$, 'P0001', 'a different nominee with this name already exists', 'add_nominee refuses name collision with differently linked row');
+-- reset unlinks Nick: his earlier votes are deleted, others stay
+select tests.clear_authentication();
+select tests.authenticate_as(public.__id('rickey'));
+insert into public.__tap(line) select lives_ok($$ select reset_member_claim('Nick') $$, 'committee resets Nick');
+insert into public.__tap(line) select is((select count(*)::int from votes where voter_id = public.__id('nick')), 0, 'reset deletes the unlinked account''s votes');
+insert into public.__tap(line) select is((select count(*)::int from votes where voter_id = public.__id('micah')), 2, 'reset keeps other members'' votes');
+-- the unlinked account still has a session
+select tests.clear_authentication();
+select tests.authenticate_as(public.__id('nick'));
+insert into public.__tap(line) select throws_ok($$ insert into votes(ballot_id,category_id,nominee_id) values (public.__id('M'),public.__id('E'),public.__id('n_nick')) $$, '42501', null, 'unlinked account cannot vote (not even for itself)');
+insert into public.__tap(line) select throws_ok($$ select add_nominee(public.__id('P'), 'Zed', '{}') $$, 'P0001', 'account is not linked to a member', 'unlinked account cannot add_nominee');
 
 -- ---------------------------------------------------------------- release, then Micah
 select tests.clear_authentication();
