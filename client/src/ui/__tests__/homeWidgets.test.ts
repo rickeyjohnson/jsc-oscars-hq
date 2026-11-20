@@ -27,6 +27,6 @@ describe("resolveWidgets", () => {
         expect(out[0]).toBe("quickActions")
     })
     it("registry flags admin-only widgets", () => {
-        expect(WIDGETS.filter((w) => w.adminOnly).map((w) => w.id)).toEqual(["notVoted", "attention", "quickActions"])
+        expect(WIDGETS.filter((w) => w.adminOnly).map((w) => w.id)).toEqual(["notVoted", "attention", "ballotHealth", "tiebreak", "revealReadiness", "quickActions"])
     })
 })
