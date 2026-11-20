@@ -42,3 +42,11 @@ end $$;
 
 grant usage on schema tests to anon, authenticated;
 grant execute on all functions in schema tests to anon, authenticated;
+
+-- Task 2: promote a user to committee (runs as postgres; the guard trigger only blocks client roles)
+create or replace function tests.make_committee(p_user uuid) returns void
+language plpgsql as $$
+begin
+  update public.profiles set is_committee = true where user_id = p_user;
+end $$;
+revoke execute on function tests.make_committee(uuid) from public, anon, authenticated;
