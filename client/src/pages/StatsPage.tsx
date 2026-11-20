@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import NavigationBar from "../components/NavigationBar"
 import NavigationTabs from "../components/NavigationTabs"
 import Podium from "../components/Podium"
@@ -6,6 +6,7 @@ import { fetchCurrentSeason } from "../api/ballots"
 import { fetchSeasonResults } from "../api/results"
 import { fetchMemberAvatars, fetchMembers } from "../api/members"
 import { useUserData } from "../context/UserContenxt"
+import { ordinal } from "../lib/resultsView"
 import { nomineeStats } from "../lib/stats"
 import { leaderboard, myCategories, type LeaderRow, type MyCategory } from "../lib/leaderboard"
 import type { Nominee, Season } from "../types"
@@ -36,10 +37,13 @@ const StatsPage = () => {
     const [showAll, setShowAll] = useState(false)
     const [showNominated, setShowNominated] = useState(false)
 
+    const seq = useRef(0)
     const run = useCallback(async () => {
+        const mine = ++seq.current
         setLoad({ state: "loading" })
         try {
             const season = await fetchCurrentSeason()
+            if (mine !== seq.current) return
             if (!season || season.results_released_at == null) {
                 setLoad({ state: "hidden" })
                 return
@@ -58,8 +62,10 @@ const StatsPage = () => {
                 const row = rows.find((r) => r.member_id === member.id)
                 if (row) you = { name: member.name, row, ...myCategories(categories, results, member.id, members) }
             }
+            if (mine !== seq.current) return
             setLoad({ state: "ready", season, rows, avatars, you })
         } catch (e) {
+            if (mine !== seq.current) return
             console.error("Error loading stats: ", e)
             setLoad({ state: "error" })
         }
@@ -70,7 +76,7 @@ const StatsPage = () => {
         void run()
     }, [run, userLoading])
 
-    if (load.state === "loading") return <Shell><p className="text-center text-amber-100/60 pt-10">Loading...</p></Shell>
+    if (load.state === "loading") return <Shell><p role="status" className="text-center text-amber-100/60 pt-10">Loading...</p></Shell>
     if (load.state === "error") {
         return (
             <Shell>
@@ -86,8 +92,9 @@ const StatsPage = () => {
     }
 
     const { season, rows, avatars, you } = load
-    const top = rows.slice(0, 3)
-    const rest = rows.slice(3)
+    const hasWins = rows.length > 0 && rows[0].wins > 0
+    const top = hasWins ? rows.slice(0, 3) : []
+    const rest = hasWins ? rows.slice(3) : rows
     const shown = showAll ? rest : rest.slice(0, VISIBLE)
     const hidden = rest.length - shown.length
 
@@ -100,24 +107,29 @@ const StatsPage = () => {
                     <h2 className="text-lg font-bold">Season leaders</h2>
                     <span className="text-xs rounded-full bg-amber-100/10 border border-amber-100/20 px-2 py-0.5">{season.name}</span>
                 </div>
+                {!hasWins && <p className="text-sm text-amber-100/60 mt-3">No wins yet.</p>}
                 {top.length > 0 && (
                     <Podium
                         items={top.map((r, i) => ({
                             key: r.member_id,
                             slot: (i + 1) as 1 | 2 | 3,
                             name: r.name,
-                            sub: r.tied ? `${winsText(r.wins)} · tied ${r.rank}` : winsText(r.wins),
+                            sub: winsText(r.wins),
+                            tag: r.tied ? `tied ${ordinal(r.rank)}` : null,
                             avatarUrl: avatars[r.member_id] ?? null,
                         }))}
                     />
                 )}
                 {rest.length > 0 && (
                     <>
-                        <div className="text-[10px] text-amber-100/60 mt-3 text-right">Wins · Nominations · Win %</div>
-                        <ul className="space-y-1.5 mt-1 list-none p-0">
+                        <div aria-hidden="true" className="text-[10px] text-amber-100/60 mt-3 text-right">Wins · Nominations · Win %</div>
+                        <ol start={hasWins ? 4 : 1} className="space-y-1.5 mt-1 list-none p-0">
                             {shown.map((r) => (
                                 <li key={r.member_id} className="flex items-center gap-2 bg-[#3f3f46] rounded-lg px-3 py-1.5 text-sm">
-                                    <span className="w-6 text-xs text-amber-100/70">{rankLabel(r)}</span>
+                                    <span className="w-6 text-xs text-amber-100/70">
+                                        <span aria-hidden="true">{rankLabel(r)}</span>
+                                        <span className="sr-only">{r.tied ? `tied ${ordinal(r.rank)}` : ordinal(r.rank)}: </span>
+                                    </span>
                                     {avatars[r.member_id] ? (
                                         <span
                                             aria-hidden="true"
@@ -125,13 +137,14 @@ const StatsPage = () => {
                                             style={{ backgroundColor: "#71717a", backgroundImage: `url("${encodeURI(avatars[r.member_id] as string)}")` }}
                                         />
                                     ) : (
-                                        <span aria-hidden="true" className="w-6 h-6 rounded-full bg-zinc-500 shrink-0" />
+                                        <span aria-hidden="true" className="w-6 h-6 shrink-0" />
                                     )}
                                     <span className="flex-1 min-w-0 break-words">{r.name}</span>
-                                    <span className="text-xs text-amber-100/70 whitespace-nowrap">{`${r.wins} · ${r.noms} · ${r.rate}%`}</span>
+                                    <span aria-hidden="true" className="text-xs text-amber-100/70 whitespace-nowrap">{`${r.wins} · ${r.noms} · ${r.rate}%`}</span>
+                                    <span className="sr-only">{`${r.wins} ${r.wins === 1 ? "win" : "wins"}, ${r.noms} ${r.noms === 1 ? "nomination" : "nominations"}, ${r.rate} percent`}</span>
                                 </li>
                             ))}
-                        </ul>
+                        </ol>
                         {rest.length > VISIBLE && (
                             <button className="mt-2 text-xs underline text-amber-100/80" aria-expanded={showAll} onClick={() => setShowAll((v) => !v)}>
                                 {showAll ? "Show fewer ▴" : `+ ${hidden} more ▾`}

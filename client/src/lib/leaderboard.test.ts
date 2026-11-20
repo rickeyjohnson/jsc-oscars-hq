@@ -16,6 +16,10 @@ describe("leaderboard", () => {
     const rows = leaderboard({ "m-Micah": { wins: 2, noms: 3 }, "m-Nick": { wins: 2, noms: 2 }, "m-Rico": { wins: 1, noms: 4 }, "m-Evan": { wins: 0, noms: 1 } }, members)
     expect(rows.map(x => [x.name, x.rank, x.tied, x.rate])).toEqual([["Nick", 1, true, 100], ["Micah", 1, true, 67], ["Rico", 3, false, 25], ["Anthony", 4, true, 0], ["Evan", 4, true, 0]])
   })
+  it("ties at the podium boundary share a rank", () => {
+    const rows = leaderboard({ "m-Anthony": { wins: 5, noms: 5 }, "m-Evan": { wins: 4, noms: 5 }, "m-Micah": { wins: 3, noms: 4 }, "m-Nick": { wins: 3, noms: 6 }, "m-Rico": { wins: 2, noms: 2 } }, members)
+    expect(rows.map(r => [r.name, r.rank, r.tied])).toEqual([["Anthony", 1, false], ["Evan", 2, false], ["Micah", 3, true], ["Nick", 3, true], ["Rico", 5, false]])
+  })
   it("includes every member with no stats", () => {
     const rows = leaderboard({}, members)
     expect(rows).toHaveLength(5)
@@ -32,6 +36,12 @@ describe("myCategories", () => {
   it("is empty without results or when not nominated", () => {
     expect(myCategories([locs], {}, "m-Rico", members)).toEqual({ won: [], nominatedOnly: [] })
     expect(myCategories([duo], { duo: r("duo", "g-nick-rico", ["g-nick-rico"]) }, "m-Micah", members)).toEqual({ won: [], nominatedOnly: [] })
+  })
+  it("a member nominated alone and in the winning group counts one win", () => {
+    const c = cat("x", "Best X", [nom("n-rico", "Rico", ["m-Rico"]), nom("g-nick-rico", "Nick & Rico", ["m-Nick", "m-Rico"])])
+    const mine = myCategories([c], { x: r("x", "g-nick-rico", ["n-rico", "g-nick-rico"]) }, "m-Rico", members)
+    expect(mine.won.map(x => x.label)).toEqual(["Best X (with Nick)"])
+    expect(mine.nominatedOnly).toEqual([])
   })
   it("counts a winner outside nominee_ids", () => {
     expect(myCategories([locs], { locs: r("locs", "n-rico", []) }, "m-Rico", members).won.map(c => c.label)).toEqual(["Best Locs"])

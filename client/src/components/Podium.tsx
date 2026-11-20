@@ -1,6 +1,6 @@
 import { ordinal } from "../lib/resultsView"
 
-export type PodiumItem = { key: string; slot: 1 | 2 | 3; name: string; sub?: string | null; avatarUrl?: string | null }
+export type PodiumItem = { key: string; slot: 1 | 2 | 3; name: string; sub?: string | null; tag?: string | null; avatarUrl?: string | null }
 
 const BLOCK: Record<1 | 2 | 3, { height: number; bg: string; fg: string; avatar: number; order: number }> = {
     1: { height: 92, bg: "#FFC23D", fg: "#3b2a00", avatar: 38, order: 2 },
@@ -26,6 +26,7 @@ const Podium = ({ items }: { items: PodiumItem[] }) => (
                         {item.name}
                     </div>
                     {item.sub && <div className="text-[10px] text-amber-100/60">{item.sub}</div>}
+                    {item.tag && <div className="text-[10px] text-amber-100/80"><span className="rounded-full bg-zinc-900/60 px-1.5">{item.tag}</span></div>}
                     <div
                         aria-hidden="true"
                         className="mt-1 rounded-t-lg flex items-start justify-center pt-1.5"
