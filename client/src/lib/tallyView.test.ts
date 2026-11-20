@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest"
 import type { Category, Nominee, ResultRow } from "../types"
+import { attachPlaces } from "./places"
+import { manualResult } from "./rounds"
 import { tallyCategory } from "./tally"
-import { buildCategoryViews, recordPlan, summaryLine } from "./tallyView"
+import { buildCategoryViews, manualBase, recordPlan, summaryLine } from "./tallyView"
 
 const nom = (id: string, member_ids: string[] = []): Nominee => ({ id, display_name: id, type: "person", member_ids })
 const cat = (id: string, order: number, nominees: Nominee[]): Category => ({ id, name: "Cat " + id, description: "", order, nominee_mode: "everyone", allow_member_add: false, nominees })
@@ -97,5 +99,27 @@ describe("recordPlan places", () => {
     const plan = recordPlan("main", "M", views, { c1: res("c1", { decided_ballot_id: "T", winner_nominee_id: "B" }) }, new Set(["T"]))
     expect(plan.rows.map((r) => r.category_id)).not.toContain("c1")
     expect(plan.skipped).toContain("c1")
+  })
+})
+
+describe("places on committee and manual rows", () => {
+  const pl = (row: ResultRow) => row.places!.map((x) => [x.nominee_id, x.place, x.tied])
+  it("committee round: winner first, then the other main contenders, then the rest by main votes", () => {
+    const prev = res("c2", { decided_ballot_id: "T", nominee_ids: ["A", "B"], top3_nominee_ids: ["A", "B", "C"] })
+    const cViews = buildCategoryViews({ round: "committee", categories: [cat("c2", 1, [nom("A"), nom("B")])], mainCategories: main, votes: votes("c2", { A: 2, B: 1 }), results: { c2: prev }, committeeMemberIds: [] })
+    const plan = recordPlan("committee", "K", cViews, { c2: prev }, new Set(), { c2: tallyCategory("c2", mainVotes) })
+    expect(plan.rows[0]).toMatchObject({ category_id: "c2", winner_nominee_id: "A", decided_by: "committee_vote" })
+    expect(pl(plan.rows[0])).toEqual([["A", 1, false], ["B", 2, false], ["C", 3, false]])
+  })
+  it("manual pick on the main ballot: winner first, the other tied leaders share a place", () => {
+    const m4 = [cat("c4", 0, [nom("A"), nom("B"), nom("C"), nom("D")])]
+    const v4 = votes("c4", { A: 2, B: 2, C: 2, D: 1 })
+    const [v] = buildCategoryViews({ round: "main", categories: m4, mainCategories: m4, votes: v4, results: {}, committeeMemberIds: [] })
+    const row = attachPlaces(manualResult(manualBase("main", "M", v, undefined), "C", "M"), tallyCategory("c4", v4), null)
+    expect(row).toMatchObject({ category_id: "c4", winner_nominee_id: "C", decided_by: "manual" })
+    const places = pl(row)
+    expect(places[0]).toEqual(["C", 1, false])
+    expect(places.slice(1, 3).sort()).toEqual([["A", 2, true], ["B", 2, true]])
+    expect(places[3]).toEqual(["D", 4, false])
   })
 })

@@ -186,8 +186,10 @@ const TallyPanel = ({ ballot }: Props) => {
                 }
             }
             const updates = backfillPlaces(missingPlaces, data.mainTallies, roundTallies)
-            await updatePlaces(updates)
-            return `Filled podium places for ${updates.length} ${updates.length === 1 ? "category" : "categories"}.`
+            const filled = await updatePlaces(updates)
+            const skipped = updates.length - filled
+            const note = skipped > 0 ? ` ${skipped} already had places recorded since this page loaded.` : ""
+            return `Filled podium places for ${filled} ${filled === 1 ? "category" : "categories"}.${note}`
         })
 
     const toggle = (id: string) =>

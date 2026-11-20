@@ -24,12 +24,17 @@ export const upsertResults = async (rows: ResultRow[]): Promise<void> => {
     if (error) throw error
 }
 
-// Committee only. Writes podium places onto already recorded rows; touches no other column.
-export const updatePlaces = async (rows: { category_id: string; places: Place[] }[]): Promise<void> => {
+// Committee only. Fills podium places on recorded rows whose places are still null (never
+// overwrites places written since the panel loaded); touches no other column.
+// Returns how many rows were actually filled.
+export const updatePlaces = async (rows: { category_id: string; places: Place[] }[]): Promise<number> => {
+    let filled = 0
     for (const { category_id, places } of rows) {
-        const { error } = await supabase.from("results").update({ places }).eq("category_id", category_id)
+        const { data, error } = await supabase.from("results").update({ places }).eq("category_id", category_id).is("places", null).select("category_id")
         if (error) throw error
+        filled += data?.length ?? 0
     }
+    return filled
 }
 
 // Committee only. Reveals the season's results to members and marks its finished ballots released.
