@@ -22,9 +22,11 @@ import { useState } from "react"
 import UserManagementModal from "../components/UserManagementModal"
 import JokeGeneratorModal from "../components/JokeGeneratorModal"
 import EditProfileModal from "../components/EditProfileModal"
+import { useNavigate } from "react-router-dom"
 
 const ProfilePage = () => {
     const { profile } = useUserData()
+    const navigate = useNavigate()
     const [openManageOscarModal, setOpenManageOscarModal] = useState(false)
     const [openUserManagement, setOpenUserManagement] = useState(false)
     const [openJokeGenerator, setOpenJokeGenerator] = useState(false)
@@ -132,6 +134,7 @@ const ProfilePage = () => {
                                     variant="gradient"
                                     textColor="text-zinc-900"
                                     iconColor="text-zinc-900"
+                                    onClick={() => navigate("/app/profile/ballots/create")}
                                 />
                                 <ProfilePageButton
                                     label="Manage Ballots"

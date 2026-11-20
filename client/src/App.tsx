@@ -11,6 +11,7 @@ import WithAuth from "./components/WithAuth"
 import ResetPassword from "./pages/ResetPassword"
 import ComfirmedEmailPage from "./pages/ComfirmedEmailPage"
 import { UserDataProvider } from "./context/UserContenxt"
+import CreateBallotTemplate from "./pages/CreateBallotTemplate"
 
 const App = () => {
     const ProtectedHomePage = WithAuth(HomePage)
@@ -53,11 +54,21 @@ const App = () => {
                         </UserDataProvider>
                     }
                 />
+                
                 <Route
                     path="/app/profile"
                     element={
                         <UserDataProvider>
                             <ProtectedProfilePage />
+                        </UserDataProvider>
+                    }
+                />
+
+                <Route
+                    path="/app/profile/ballots/create"
+                    element={
+                        <UserDataProvider>
+                            <CreateBallotTemplate />
                         </UserDataProvider>
                     }
                 />

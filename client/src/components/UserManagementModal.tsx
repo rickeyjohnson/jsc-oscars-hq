@@ -3,7 +3,7 @@ import Modal, {
     ModalBody,
     ModalFooter,
     ModalHeader,
-} from "../../components/Modal"
+} from "../components/Modal"
 
 const users = [
     { id: "1", name: "Rickey", role: "committee" },
