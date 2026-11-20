@@ -3,7 +3,7 @@ import type { Category, Nominee, ResultRow } from "../types"
 import { attachPlaces } from "./places"
 import { manualResult } from "./rounds"
 import { tallyCategory } from "./tally"
-import { buildCategoryViews, manualBase, recordPlan, summaryLine } from "./tallyView"
+import { badgeFor, buildCategoryViews, manualBase, recordPlan, summaryLine } from "./tallyView"
 
 const nom = (id: string, member_ids: string[] = []): Nominee => ({ id, display_name: id, type: "person", member_ids })
 const cat = (id: string, order: number, nominees: Nominee[]): Category => ({ id, name: "Cat " + id, description: "", order, nominee_mode: "everyone", allow_member_add: false, nominees })
@@ -121,5 +121,17 @@ describe("places on committee and manual rows", () => {
     expect(places[0]).toEqual(["C", 1, false])
     expect(places.slice(1, 3).sort()).toEqual([["A", 2, true], ["B", 2, true]])
     expect(places[3]).toEqual(["D", 4, false])
+  })
+})
+
+describe("badgeFor", () => {
+  const view = buildCategoryViews({ round: "main", categories: main, mainCategories: main, votes: mainVotes, results: {}, committeeMemberIds: [] })[1]
+  it("shows in_<round> for a tie that already has a round", () => {
+    expect(badgeFor({ ...view, badge: "tiebreak" }, { c2: "tiebreak" })).toBe("in_tiebreak")
+    expect(badgeFor({ ...view, badge: "tiebreak" }, { c2: "committee" })).toBe("in_committee")
+  })
+  it("leaves other badges alone", () => {
+    expect(badgeFor({ ...view, badge: "tiebreak" }, {})).toBe("tiebreak")
+    expect(badgeFor({ ...view, badge: "winner" }, { c2: "tiebreak" })).toBe("winner")
   })
 })

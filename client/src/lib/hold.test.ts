@@ -37,4 +37,13 @@ describe("holdReducer", () => {
     expect(holdReducer(h, { type: "move", pointerId: 7, x: 99, y: 99 })).toBe(h)
     expect(holdReducer(HOLD_IDLE, { type: "tick", t: 5000 })).toBe(HOLD_IDLE)
   })
+  it("a repeated down from the same pointer (key auto-repeat) neither cancels nor restarts", () => {
+    const h = down(HOLD_IDLE, 0, -1)
+    expect(holdReducer(h, { type: "down", t: 500, pointerId: -1, x: 0, y: 0 })).toBe(h)
+    expect(holdReducer(holdReducer(h, { type: "down", t: 500, pointerId: -1, x: 0, y: 0 }), { type: "tick", t: 3000 }).phase).toBe("done")
+  })
+  it("a move of exactly MOVE_TOLERANCE_PX holds; just past it cancels", () => {
+    expect(holdReducer(down(HOLD_IDLE), { type: "move", pointerId: 1, x: 10, y: 0 }).phase).toBe("holding")
+    expect(holdReducer(down(HOLD_IDLE), { type: "move", pointerId: 1, x: 10.01, y: 0 }).phase).toBe("idle")
+  })
 })

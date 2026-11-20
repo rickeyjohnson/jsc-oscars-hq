@@ -30,6 +30,12 @@ describe("releaseChecks", () => {
     expect(r.ready).toBe(true)
     expect(r.checks[1]).toEqual({ id: "no_round_open", ok: true, label: "No tiebreak or committee round open" })
   })
+  it("an open ballot that ended under 60 seconds ago is not yet closed (browser clock skew)", () => {
+    const fresh = b("F", "main", "open", "2026-12-04T18:59:30Z")
+    const old = b("G", "main", "open", "2026-12-04T18:59:00Z")
+    expect(releaseChecks({ ballots: [fresh], mainCategoryIds: ["c1"], results: { c1: res("c1", "A") } }, now).checks[0].ok).toBe(false)
+    expect(releaseChecks({ ballots: [old], mainCategoryIds: ["c1"], results: { c1: res("c1", "A") } }, now).checks[0].ok).toBe(true)
+  })
   it("an open main ballot still in its window is not closed", () => {
     const O = b("O", "main", "open", "2026-12-05T00:00:00Z")
     expect(releaseChecks({ ballots: [M, O], mainCategoryIds: ["c1"], results: { c1: res("c1", "A") } }, now).checks[0]).toEqual({ id: "ballots_closed", ok: false, label: "1 of 2 ballots closed" })
@@ -67,6 +73,11 @@ describe("runRelease", () => {
   it("surfaces a season update that saved no row", async () => {
     const calls: string[] = []
     await expect(runRelease(fakeIO(readyStatus, calls, { marked: false }), "S", now)).rejects.toThrow("Release did not save. Check you are signed in as committee.")
+  })
+  it("says already released when the season was released concurrently", async () => {
+    const calls: string[] = []
+    const io = { ...fakeIO(readyStatus, calls, { marked: false }), async load() { calls.push("load"); return calls.length > 3 ? { ...readyStatus, season: { ...season, results_released_at: "2026-12-04T19:00:01Z" } } : readyStatus } }
+    await expect(runRelease(io, "S", now)).rejects.toThrow("Results are already released")
   })
   it("does not mark the season when releasing ballots fails", async () => {
     const calls: string[] = []

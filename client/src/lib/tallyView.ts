@@ -4,6 +4,14 @@ import { nextStep, resultForRound, type NextStep } from "./rounds"
 import { tallyCategory, type CategoryTally, type RankedNominee } from "./tally"
 
 export type Badge = "winner" | "tiebreak" | "committee" | "manual"
+export type BadgeKey = Badge | "in_tiebreak" | "in_committee"
+
+// A main-ballot tie badge becomes "in_<round>" once a round ballot already contains that category.
+export function badgeFor(v: CategoryView, roundByCategory: Record<string, "tiebreak" | "committee">): BadgeKey {
+    const round = roundByCategory[v.category_id]
+    if ((v.badge === "tiebreak" || v.badge === "committee") && round) return `in_${round}`
+    return v.badge
+}
 
 export type CategoryView = {
     category_id: string

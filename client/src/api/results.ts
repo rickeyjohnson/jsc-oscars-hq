@@ -61,7 +61,7 @@ const realReleaseIO: ReleaseIO = {
         const closed = await supabase.from("ballots").update({ status: "released" }).eq("season_id", seasonId).eq("status", "closed")
         if (closed.error) throw closed.error
         // open ballots whose window has ended count as closed
-        const ended = await supabase.from("ballots").update({ status: "released" }).eq("season_id", seasonId).eq("status", "open").lte("closes_at", nowIso)
+        const ended = await supabase.from("ballots").update({ status: "released" }).eq("season_id", seasonId).eq("status", "open").lte("closes_at", new Date(Date.parse(nowIso) - 60_000).toISOString())
         if (ended.error) throw ended.error
     },
     async markSeasonReleased(seasonId, nowIso) {

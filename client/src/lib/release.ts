@@ -8,9 +8,12 @@ export type ReleaseIO = {
     markSeasonReleased(seasonId: string, nowIso: string): Promise<boolean>
 }
 
-// closed/released, or open with its window over. Drafts never count as ended.
+// Slack for the browser clock being ahead of the server's.
+const CLOCK_SKEW_MS = 60_000
+
+// closed/released, or open with its window over (by at least CLOCK_SKEW_MS). Drafts never count as ended.
 const hasEnded = (b: Ballot, now: Date): boolean =>
-    b.status === "closed" || b.status === "released" || (b.status === "open" && new Date(b.closes_at).getTime() <= now.getTime())
+    b.status === "closed" || b.status === "released" || (b.status === "open" && new Date(b.closes_at).getTime() <= now.getTime() - CLOCK_SKEW_MS)
 
 // Drafts are ignored everywhere.
 export function releaseChecks(s: Omit<ReleaseStatus, "season">, now: Date): { checks: ReleaseCheck[]; ready: boolean } {
@@ -45,5 +48,10 @@ export async function runRelease(io: ReleaseIO, seasonId: string, now: Date): Pr
     const nowIso = now.toISOString()
     await io.releaseBallots(seasonId, nowIso)
     const saved = await io.markSeasonReleased(seasonId, nowIso)
-    if (!saved) throw new Error("Release did not save. Check you are signed in as committee.")
+    if (!saved) {
+        // Someone else may have released in between; re-read before blaming permissions.
+        const after = await io.load(seasonId)
+        if (after.season.results_released_at) throw new Error("Results are already released")
+        throw new Error("Release did not save. Check you are signed in as committee.")
+    }
 }

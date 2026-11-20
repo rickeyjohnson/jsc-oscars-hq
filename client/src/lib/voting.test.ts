@@ -129,3 +129,10 @@ describe("chipStatus", () => {
         expect(chipStatus({ status: "closed", closes_at: "2026-11-22T00:00:00Z" }, now)).toBe("closed")
     })
 })
+
+describe("nextUnvotedIndex from before the first card", () => {
+    it("reaches index 0 when nothing is active yet", () => {
+        expect(nextUnvotedIndex(["a", "b", "c"], {}, -1)).toBe(0)
+        expect(nextUnvotedIndex(["a", "b", "c"], { a: "x" }, -1)).toBe(1)
+    })
+})
