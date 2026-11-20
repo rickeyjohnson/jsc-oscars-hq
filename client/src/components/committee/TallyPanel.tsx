@@ -7,7 +7,7 @@ import { fetchAllVotes } from "../../api/votes"
 import { attachPlaces, backfillPlaces } from "../../lib/places"
 import { manualResult, roundEntries } from "../../lib/rounds"
 import { tallyCategory, type CategoryTally } from "../../lib/tally"
-import { buildCategoryViews, manualBase, recordPlan, ROUND_ORDER, summaryLine, type Badge, type CategoryView } from "../../lib/tallyView"
+import { badgeFor, buildCategoryViews, manualBase, recordPlan, ROUND_ORDER, summaryLine, type BadgeKey, type CategoryView } from "../../lib/tallyView"
 import { toUtcIso } from "../../lib/time"
 import { chipStatus } from "../../lib/voting"
 import type { Ballot, BallotDetail, ResultRow, VoteRow } from "../../types"
@@ -23,13 +23,17 @@ type Loaded = {
     results: Record<string, ResultRow>
     committeeMemberIds: string[]
     rounds: Ballot[]
+    // category -> the later round (tiebreak/committee) that contains it; committee wins over tiebreak
+    roundByCategory: Record<string, "tiebreak" | "committee">
 }
 
-const BADGE: Record<Badge, { label: string; className: string }> = {
+const BADGE: Record<BadgeKey, { label: string; className: string }> = {
     winner: { label: "Winner", className: "bg-[#fffadd] text-black" },
     tiebreak: { label: "Tiebreak needed", className: "bg-[#78350f] text-[#fde68a]" },
     committee: { label: "Committee vote needed", className: "bg-[#1e3a8a] text-[#bfdbfe]" },
     manual: { label: "Manual pick needed", className: "bg-[#7f1d1d] text-[#fecaca]" },
+    in_tiebreak: { label: "In tiebreak", className: "bg-[#78350f] text-[#fde68a]" },
+    in_committee: { label: "In committee round", className: "bg-[#1e3a8a] text-[#bfdbfe]" },
 }
 const DECIDED_BY: Record<string, string> = { votes: "votes", tiebreak: "tiebreak", committee_vote: "committee vote", manual: "manual pick" }
 
@@ -71,7 +75,10 @@ const TallyPanel = ({ ballot }: Props) => {
                 mainId === ballot.id ? [detail, votes] : await Promise.all([fetchBallotDetail(mainId), fetchAllVotes(mainId)])
             const mainTallies = Object.fromEntries(main.categories.map((c) => [c.id, tallyCategory(c.id, mainVotes)]))
             const rows = await fetchResults(detail.categories.map((c) => c.id))
-            setData({ detail, main, votes, mainTallies, committeeMemberIds, rounds, results: Object.fromEntries(rows.map((r) => [r.category_id, r])) })
+            const roundByCategory: Record<string, "tiebreak" | "committee"> = {}
+            const roundDetails = await Promise.all([...rounds].sort((a, b) => ROUND_ORDER[a.round] - ROUND_ORDER[b.round]).map(async (rb) => ({ rb, d: await fetchBallotDetail(rb.id) })))
+            for (const { rb, d } of roundDetails) if (rb.round !== "main") for (const c of d.categories) roundByCategory[c.id] = rb.round
+            setData({ detail, main, votes, mainTallies, committeeMemberIds, rounds, roundByCategory, results: Object.fromEntries(rows.map((r) => [r.category_id, r])) })
         } catch (e) {
             setLoadError(errText(e, "Could not load the tally"))
         }
@@ -208,6 +215,9 @@ const TallyPanel = ({ ballot }: Props) => {
                 </Link>
             )}
             <p className="text-xs text-amber-100/60">{summaryLine(views)}</p>
+            {data.committeeMemberIds.length === 0 && (
+                <p className="text-xs text-amber-400">No committee members found. Every tie left after a tiebreak will need a manual pick. Check profiles.is_committee.</p>
+            )}
 
             <div className="flex flex-wrap gap-2 items-center">
                 <button onClick={recordAll} disabled={busy || views.length === 0} className={primary}>
@@ -248,7 +258,7 @@ const TallyPanel = ({ ballot }: Props) => {
 
             {views.length === 0 && <p className="text-sm text-amber-100/60">No categories on this ballot.</p>}
             {views.map((v) => {
-                const badge = BADGE[v.badge]
+                const badge = BADGE[badgeFor(v, data.roundByCategory)]
                 const open = expanded.has(v.category_id)
                 return (
                     <div key={v.category_id} className="bg-zinc-800/60 rounded-2xl p-3">

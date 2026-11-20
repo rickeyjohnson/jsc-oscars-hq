@@ -29,8 +29,9 @@ export const saveBallotDraft = async (form: BallotFormData, members: Member[], b
         const { data: existing, error: readError } = await supabase.from("ballots").select("status").eq("id", id).single()
         if (readError) throw readError
         assertDraft(existing.status as BallotStatus)
-        const { error } = await supabase.from("ballots").update(fields).eq("id", id)
+        const { data: updated, error } = await supabase.from("ballots").update(fields).eq("id", id).eq("status", "draft").select("id")
         if (error) throw error
+        if (!updated || updated.length === 0) throw new Error("Only draft ballots can be rewritten")
         const { error: delError } = await supabase.from("categories").delete().eq("ballot_id", id)
         if (delError) throw delError
     } else {
@@ -197,8 +198,10 @@ export const createRoundBallot = async (
 
     const { error: rnError } = await supabase.from("round_nominees").insert(rows.map((r) => ({ ...r, ballot_id: id })))
     if (rnError) {
-        await supabase.from("ballots").delete().eq("id", id) // best effort
-        throw rnError
+        const { error: delError } = await supabase.from("ballots").delete().eq("id", id)
+        throw new Error(
+            `Couldn't save the round's nominees (${rnError.message}). ${delError ? `The half-made round ballot ${id} is still there; delete it in Manage Ballots.` : "The round was removed; try again."}`,
+        )
     }
     return id
 }

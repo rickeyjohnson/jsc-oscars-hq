@@ -45,7 +45,9 @@ const BallotAdminPage = ({ resultsAction, resultsBody }: Props) => {
     }, [load])
 
     const changeStatus = async (status: "open" | "closed", message: string) => {
-        if (!ballotId || !window.confirm(message)) return
+        if (!ballotId) return
+        if (status === "open" && blockers.length > 0) return
+        if (!window.confirm(message)) return
         setBusy(true)
         setActionError(null)
         try {
