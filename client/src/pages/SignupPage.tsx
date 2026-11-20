@@ -64,7 +64,7 @@ const SignupPage = () => {
         setSignupError("")
 
         // supabase signup
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: {
@@ -83,6 +83,13 @@ const SignupPage = () => {
             return
         }
 
+        if (data.session) {
+            // Email confirmation is off: the user is already signed in.
+            navigate("/app")
+            return
+        }
+
+        // Email confirmation is on: no session until the link is clicked.
         setShowVerifyEmailModal(true)
     }
 

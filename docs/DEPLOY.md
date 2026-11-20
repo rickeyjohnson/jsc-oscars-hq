@@ -22,14 +22,15 @@ Dashboard -> Authentication -> URL Configuration:
 1. Site URL = `https://<app>.vercel.app`.
 2. Redirect URLs: add `https://<app>.vercel.app/**`; keep `http://localhost:5173/**` for dev.
 
-Dashboard -> Authentication -> Providers -> Email -> "Confirm email":
-- ON: each signup gets an email; the link goes to `/signup/confirmed`. Password reset emails link to `/login/reset`. Safer (proves the address is real) but Supabase's built-in mail sender is heavily rate limited (a few emails per hour), so 14 signups plus resets will likely get throttled.
-- OFF: signup logs the user in immediately, no email, no limit problem. Consequence: anyone could sign up with a typo or someone else's address (the member-name dropdown still limits who can claim a name). Password reset still needs email.
-- Your decision. Options: (a) custom SMTP (Resend, Postmark, etc.; Authentication -> SMTP Settings) and keep confirmation on, or (b) turn confirmation off for launch. Pick before the dry run so you test the real flow.
+Dashboard -> Authentication -> Providers -> Email: turn OFF "Confirm email". Decision: Confirm email = OFF for launch.
+- Signup logs the user in immediately (no email, no rate limit problem) and the app goes straight to `/app`, where the profile photo setup appears.
+- Anyone could sign up with a typo or someone else's address; the member-name dropdown still limits who can claim a name.
+- Password reset still sends an email (links to `/login/reset`) and Supabase's built-in sender is heavily rate limited (a few emails per hour). The committee should be ready to reset a claim (delete the user / unlink the member in the dashboard) or help someone who forgets their password.
+- Optional later upgrade: custom SMTP (Resend, Postmark, etc.; Authentication -> SMTP Settings), which also allows turning confirmation back on. The client handles both modes.
 
 ## 3. Create the committee
 
-1. Rickey and Kadin each sign up in the deployed app, choosing "Rickey" and "Kadin" from the name dropdown (confirm email first if enabled).
+1. Rickey and Kadin each sign up in the deployed app, choosing "Rickey" and "Kadin" from the name dropdown .
 2. Supabase -> SQL Editor, run the contents of `supabase/manual/set_committee.sql`. It sets `is_committee = true` for exactly the accounts linked to members named Rickey and Kadin, and false for everyone else.
 3. Verify:
    ```sql
