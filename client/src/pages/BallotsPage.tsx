@@ -12,13 +12,22 @@ const BallotsPage = () => {
     const [selected, setSelected] = useState<Filter>("All")
     const [ballots, setBallots] = useState<BallotSummary[] | null>(null)
     const [error, setError] = useState<string | null>(null)
+    const [reloadKey, setReloadKey] = useState(0)
     const now = new Date()
 
     useEffect(() => {
+        let cancelled = false
         fetchBallotSummaries()
-            .then(setBallots)
-            .catch((e) => setError(e instanceof Error ? e.message : "Could not load ballots"))
-    }, [])
+            .then((b) => { if (!cancelled) setBallots(b) })
+            .catch((e) => { if (!cancelled) setError(e instanceof Error ? e.message : "Could not load ballots") })
+        return () => { cancelled = true }
+    }, [reloadKey])
+
+    const retry = () => {
+        setError(null)
+        setBallots(null)
+        setReloadKey((k) => k + 1)
+    }
 
     const baseClasses = "px-4 py-2 rounded-full text-sm whitespace-nowrap border transition-colors"
     const selectedClasses = "bg-amber-100 text-zinc-900 font-bold"
@@ -46,7 +55,12 @@ const BallotsPage = () => {
                         </div>
 
                         <div className="space-y-4">
-                            {error && <div className="text-center text-red-400">{error}</div>}
+                            {error && (
+                                <div className="space-y-3 text-center text-red-400">
+                                    <p>{error}</p>
+                                    <button onClick={retry} className="rounded-full bg-amber-100 px-4 py-2 text-sm font-bold text-zinc-900">Retry</button>
+                                </div>
+                            )}
                             {!error && ballots === null && <div className="text-center text-amber-100/60">Loading...</div>}
                             {ballots !== null && filtered.map((b) => <BallotCard key={b.id} ballot={b} now={now} />)}
                             {ballots !== null && filtered.length === 0 && <div className="text-center">No ballots</div>}

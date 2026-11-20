@@ -75,23 +75,27 @@ const ProfileSetup = ({ onComplete, onSkip }: ProfileSetupProps) => {
         setLoading(true)
         setUploadError("")
 
-        const url = await uploadImage(image!)
-        if (!url) return
+        try {
+            const url = await uploadImage(image!)
+            if (!url) return
 
-        const { error } = await supabase
-            .from("profiles")
-            .update({ image_url: url })
-            .eq("user_id", user?.id ?? "")
+            const { error } = await supabase
+                .from("profiles")
+                .update({ image_url: url })
+                .eq("user_id", user?.id ?? "")
 
-        setLoading(false)
+            if (error) {
+                console.error("error inserting profile image: ", error.message)
+                setUploadError("Couldn't save your photo. Try again, or skip for now.")
+                return
+            }
 
-        if (error) {
-            console.error("error inserting profile image: ", error.message)
+            setStep((prev) => prev + 1)
+        } catch {
             setUploadError("Couldn't save your photo. Try again, or skip for now.")
-            return
+        } finally {
+            setLoading(false)
         }
-
-        setStep((prev) => prev + 1)
     }
 
     useEffect(() => {

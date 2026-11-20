@@ -42,7 +42,7 @@ const HomePage = () => {
     }
 
     const handleProfileSetupComplete = () => {
-        setProfileSetupComplete(false)
+        setProfileSetupComplete(true)
     }
 
     useEffect(() => {
