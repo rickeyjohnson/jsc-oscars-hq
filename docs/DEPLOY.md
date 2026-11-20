@@ -89,6 +89,7 @@ select count(*) from votes;       -- 0 before the real ballot opens
 - [ ] Confirm all 14 have accounts (`select m.name, p.user_id is not null ...` or the committee completion panel).
 - [ ] Nov 25-26: publish the real ballot, closing time set deliberately (entered in local time, stored UTC; double check on the ballot page).
 - [ ] Re-run section 4 counts (no leftover test votes) just before publishing.
+- [ ] Run supabase/manual/wipe_test_data.sql if you ever ran the test seed (see docs/TESTING.md)
 - [ ] Committee recovery (forgot password, wrong name, or a pranked claim): Supabase Dashboard -> Authentication -> Users -> delete that user (their profile and votes are removed; the member name is freed). Then run in the SQL editor `update public.members set user_id = null, claimed_at = null where name = '<Name>';` to clear the claim time, and ask them to sign up again.
 - [ ] When closed: tally, resolve ties, Export CSV, run oscars.py.
 
