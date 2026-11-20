@@ -40,4 +40,8 @@ describe("validateBallotForPublish", () => {
     it("duplicates", () => {
         expect(validateBallotForPublish({ ...validForm, categories: [cat({ name: "A" }), cat({ name: "a" })] })).toContain('Duplicate category name "a"')
     })
+    it("duplicate nominees", () => {
+        const c = cat({ name: "P", nominee_mode: "preset", nominees: [nom("Pizza"), nom("pizza")] })
+        expect(validateBallotForPublish({ ...validForm, categories: [c] })).toContain('Category "P" has duplicate nominee "pizza"')
+    })
 })

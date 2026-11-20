@@ -9,6 +9,10 @@ export const fetchSeasons = async (): Promise<Season[]> => {
     return (data ?? []) as Season[]
 }
 
+export const assertDraft = (status: BallotStatus): void => {
+    if (status !== "draft") throw new Error("Only draft ballots can be rewritten")
+}
+
 // Saves the form as a draft (insert or update) and rewrites its categories and nominees.
 export const saveBallotDraft = async (form: BallotFormData, members: Member[], ballotId?: string): Promise<string> => {
     const fields = {
@@ -20,6 +24,9 @@ export const saveBallotDraft = async (form: BallotFormData, members: Member[], b
     }
     let id = ballotId
     if (id) {
+        const { data: existing, error: readError } = await supabase.from("ballots").select("status").eq("id", id).single()
+        if (readError) throw readError
+        assertDraft(existing.status as BallotStatus)
         const { error } = await supabase.from("ballots").update(fields).eq("id", id)
         if (error) throw error
         const { error: delError } = await supabase.from("categories").delete().eq("ballot_id", id)

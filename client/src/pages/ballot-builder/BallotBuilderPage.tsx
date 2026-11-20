@@ -33,8 +33,8 @@ const BallotBuilderPage = () => {
     const navigate = useNavigate()
 
     useEffect(() => {
-        fetchSeasons().then(setSeasons).catch(() => setErrors(["Could not load seasons"]))
-        fetchMembers().then(setMembers).catch(() => setErrors(["Could not load members"]))
+        fetchSeasons().then(setSeasons).catch(() => setErrors((p) => [...p, "Could not load seasons"]))
+        fetchMembers().then(setMembers).catch(() => setErrors((p) => [...p, "Could not load members"]))
     }, [])
 
     const handleSave = async (publish: boolean) => {
@@ -54,7 +54,8 @@ const BallotBuilderPage = () => {
             setBallotId(id)
             if (publish) {
                 await setBallotStatus(id, "open")
-                navigate(`/app/profile/ballots/${id}`)
+                // TODO(Task 11): navigate to /app/profile/ballots/${id}
+                navigate("/app/profile")
             } else {
                 setNotice("Draft saved")
             }
@@ -65,7 +66,10 @@ const BallotBuilderPage = () => {
         }
     }
 
-    const setCategories = (categories: Category[]) => setFormData((prev) => ({ ...prev, categories }))
+    const setCategories = (categories: Category[]) => {
+        setNotice("")
+        setFormData((prev) => ({ ...prev, categories }))
+    }
 
     const handleSaveCategory = (category: Category) => {
         if (editIndex === null) setCategories([...formData.categories, category])
@@ -94,7 +98,7 @@ const BallotBuilderPage = () => {
 
             <div className="px-4 py-6 max-w-3xl mx-auto space-y-8">
                 <section className="bg-zinc-900/50 rounded-3xl p-6 border border-white/5 shadow-xl shadow-black/20">
-                    <BallotBasicInfo formData={formData} setFormData={setFormData} seasons={seasons} />
+                    <BallotBasicInfo formData={formData} setFormData={(d) => { setNotice(""); setFormData(d) }} seasons={seasons} />
                 </section>
 
                 <section>

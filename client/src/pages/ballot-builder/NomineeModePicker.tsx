@@ -18,6 +18,7 @@ const MODES: { value: NomineeMode; label: string }[] = [
 const NomineeModePicker: React.FC<Props> = ({ category, members, onChange }) => {
     const [custom, setCustom] = useState("")
     const [secondary, setSecondary] = useState("")
+    const [dupError, setDupError] = useState("")
 
     const setMode = (nominee_mode: NomineeMode) => {
         if (nominee_mode === category.nominee_mode) return
@@ -40,6 +41,11 @@ const NomineeModePicker: React.FC<Props> = ({ category, members, onChange }) => 
     const addCustom = () => {
         const name = custom.trim()
         if (!name) return
+        if (category.nominees.some((n) => n.display_name.toLowerCase() === name.toLowerCase())) {
+            setDupError(`"${name}" is already an option`)
+            return
+        }
+        setDupError("")
         const match = members.find((m) => m.name.toLowerCase() === name.toLowerCase())
         onChange({
             ...category,
@@ -104,6 +110,7 @@ const NomineeModePicker: React.FC<Props> = ({ category, members, onChange }) => 
                         <input className={input} value={secondary} onChange={(e) => setSecondary(e.target.value)} placeholder="Detail (optional)" aria-label="Option detail" />
                         <button type="button" onClick={addCustom} className="px-3 bg-[#fffadd] text-black rounded-lg text-xs font-bold">Add</button>
                     </div>
+                    {dupError && <p role="alert" className="text-xs text-red-300">{dupError}</p>}
                     <ul className="space-y-1">
                         {category.nominees.map((n) => (
                             <li key={n.id} className="flex items-center justify-between bg-[#27272a] rounded-lg px-3 py-2 text-sm text-amber-100">

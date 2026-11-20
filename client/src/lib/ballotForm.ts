@@ -35,6 +35,12 @@ export const validateBallotForPublish = (form: BallotFormData): string[] => {
         if (seen.has(key)) errors.push(`Duplicate category name "${c.name}"`)
         seen.add(key)
         const needsNominees = c.nominee_mode === "subset" || (c.nominee_mode === "preset" && !c.allow_member_add)
+        const names = new Set<string>()
+        for (const n of buildNomineeRows(c, [])) {
+            const k = n.display_name.trim().toLowerCase()
+            if (names.has(k)) errors.push(`Category "${c.name}" has duplicate nominee "${n.display_name}"`)
+            names.add(k)
+        }
         if (needsNominees && c.nominees.length === 0) errors.push(`Category "${c.name}" needs at least one nominee`)
     }
     return errors
