@@ -6,21 +6,26 @@ import { supabase } from "../supabaseClient"
 const ResetPassword = () => {
     const [newPassword, setNewPassword] = useState("")
     const [loading, setLoading] = useState(false)
+    const [error, setError] = useState("")
     const navigate = useNavigate()
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
         setLoading(true)
-        const { error } = await supabase.auth.updateUser({
+        setError("")
+        const { error: updateError } = await supabase.auth.updateUser({
             password: newPassword,
         })
 
-        if (error) {
-            console.error("error reseting password: ", error.message)
+        setLoading(false)
+
+        if (updateError) {
+            console.error("error reseting password: ", updateError.message)
+            setError(updateError.message)
+            return
         }
 
-        setLoading(false)
         navigate("/app")
     }
 
@@ -71,6 +76,11 @@ const ResetPassword = () => {
                     >
                         {!loading ? "Reset Password" : <LoaderCircle className="animate-spin w-5 h-5"/>}
                     </button>
+                    {error && (
+                        <p role="alert" className="text-red-400 text-sm mb-4">
+                            {error}
+                        </p>
+                    )}
                 </form>
             </div>
         </div>

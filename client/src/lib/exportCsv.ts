@@ -40,3 +40,8 @@ export const csvFileName = (ballotName: string): string => {
     const clean = ballotName.replace(/[\\/:*?"<>|\u0000-\u001f]/g, "-").trim()
     return `${clean || "ballot"}.csv`
 }
+
+// Names that oscars.py (pandas) would read as blank/NaN.
+const BLANK_LIKE = /^(na|n\/a|none|null|nan|nil|#n\/a|-nan|<na>)$/i
+export const riskyNomineeNames = (names: string[]): string[] =>
+    [...new Set(names.map((n) => n.trim()).filter((n) => BLANK_LIKE.test(n)))]

@@ -5,6 +5,7 @@ import { Mail, Lock, LoaderCircle } from "lucide-react"
 import { supabase } from "../supabaseClient"
 import { useAuth } from "../context/AuthContext"
 import { authRedirectUrl } from "../lib/siteUrl"
+import { loginErrorText } from "../lib/authErrors"
 
 interface LoginData {
     email: string
@@ -14,23 +15,28 @@ interface LoginData {
 const ForgotPasswordModal = ({ closeModal }: { closeModal: () => void }) => {
     const [forgotPasswordEmail, setForgotPasswordEmail] = useState("")
     const [loading, setLoading] = useState(false)
+    const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null)
 
     const handleForgotPassword = async (e: React.FormEvent) => {
         e.preventDefault()
 
         setLoading(true)
+        setMessage(null)
 
         const { error } = await supabase.auth.resetPasswordForEmail(
             forgotPasswordEmail,
             { redirectTo: authRedirectUrl("/login/reset") }
         )
 
+        setLoading(false)
+
         if (error) {
             console.error("error reseting password:", error.message)
+            setMessage({ text: error.message, ok: false })
             return
         }
 
-        setLoading(false)
+        setMessage({ text: "If that email has an account, we sent a reset link.", ok: true })
     }
 
     return (
@@ -68,8 +74,18 @@ const ForgotPasswordModal = ({ closeModal }: { closeModal: () => void }) => {
                     </div>
                 </div>
 
+                {message && (
+                    <p role="alert" className={`text-sm mb-4 ${message.ok ? "text-[#fffadd]/80" : "text-red-400"}`}>
+                        {message.text}
+                    </p>
+                )}
+                <p className="text-xs text-[#fffadd]/50 mb-4">
+                    Not getting emails? Ask a committee member to reset your account.
+                </p>
+
                 <div className="flex gap-3">
                     <button
+                        type="button"
                         onClick={closeModal}
                         className="flex-1 py-3 bg-amber-100/10 text-[#fffadd] rounded-xl font-medium hover:bg-amber-100/20 transition"
                     >
@@ -95,6 +111,8 @@ const LoginPage = () => {
     })
     const [showForgotPasswordModal, setShowForgotPasswordModal] =
         useState(false)
+    const [loginError, setLoginError] = useState("")
+    const [loginLoading, setLoginLoading] = useState(false)
     const navigate = useNavigate()
 
     const handleChange = (
@@ -110,16 +128,22 @@ const LoginPage = () => {
         e.preventDefault()
         const { email, password } = loginData
 
+        setLoginError("")
+        setLoginLoading(true)
+
         const { error } = await supabase.auth.signInWithPassword({
             email,
             password,
         })
+
+        setLoginLoading(false)
 
         if (error) {
             console.error(
                 "an error has occured while logging in: ",
                 error.message
             )
+            setLoginError(loginErrorText(error.message))
             return
         }
 
@@ -205,13 +229,22 @@ const LoginPage = () => {
                         >
                             Forgot password?
                         </button>
+                        <p className="text-xs text-[#fffadd]/50 mt-1">
+                            Not getting emails? Ask a committee member to reset your account.
+                        </p>
                     </div>
                     <button
                         type="submit"
-                        className="w-full bg-[#fffadd] rounded-full text-zinc-900 py-4 font-bold hover:bg-[#fffadd]/80 transition mb-4"
+                        disabled={loginLoading}
+                        className="w-full bg-[#fffadd] rounded-full text-zinc-900 py-4 font-bold hover:bg-[#fffadd]/80 transition mb-4 disabled:opacity-60"
                     >
-                        Login
+                        {loginLoading ? "Logging in..." : "Login"}
                     </button>
+                    {loginError && (
+                        <p role="alert" className="text-red-400 text-sm mb-4">
+                            {loginError}
+                        </p>
+                    )}
                 </form>
                 <p className="text-center text-[#fffadd]/60">
                     Don't have an account?{" "}

@@ -1,3 +1,4 @@
+import { signupErrorText } from "../lib/authErrors"
 import React, { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Mail, Lock, User, IdCard, LoaderCircle } from "lucide-react"
@@ -77,9 +78,7 @@ const SignupPage = () => {
 
         if (error) {
             console.error("error's signing up: ", error.message)
-            setSignupError(
-                "That name is already claimed or not on the list."
-            )
+            setSignupError(signupErrorText(error.message))
             return
         }
 

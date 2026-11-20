@@ -62,3 +62,10 @@ describe("exportCsv", () => {
         expect(out).toMatch(/^Langston\s+0\s+1\s+0\.0%$/m)
     })
 })
+
+import { riskyNomineeNames } from "./exportCsv"
+describe("riskyNomineeNames", () => {
+    it("flags names pandas reads as blank", () => {
+        expect(riskyNomineeNames([" NA ", "Nick", "N/A", "none", "NA", "Nathan"])).toEqual(["NA", "N/A", "none"])
+    })
+})
