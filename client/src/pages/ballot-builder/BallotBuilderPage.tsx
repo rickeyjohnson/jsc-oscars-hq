@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Link } from "react-router-dom"
 import { ChevronRight, Plus, Save } from "lucide-react"
 import NavigationBar from "../../components/NavigationBar"
@@ -22,6 +22,7 @@ const BallotBuilderPage = () => {
     const [modalOpen, setModalOpen] = useState(false)
     const [editIndex, setEditIndex] = useState<number | null>(null)
     const [importOpen, setImportOpen] = useState(false)
+    const importBtnRef = useRef<HTMLButtonElement>(null)
 
     // Minimal season source; a later task replaces this with an API module.
     useEffect(() => {
@@ -78,6 +79,7 @@ const BallotBuilderPage = () => {
                         <div className="flex gap-2">
                             <button
                                 type="button"
+                                ref={importBtnRef}
                                 onClick={() => setImportOpen(true)}
                                 className="px-4 py-2 bg-[#302f2d] text-[#fffadd] rounded-full text-sm font-bold hover:brightness-125 transition"
                             >
@@ -124,6 +126,7 @@ const BallotBuilderPage = () => {
             />
             <BulkImportPanel
                 isOpen={importOpen}
+                returnFocusRef={importBtnRef}
                 onClose={() => setImportOpen(false)}
                 existingNames={formData.categories.map((c) => c.name)}
                 onImport={(cats) => setCategories([...formData.categories, ...cats])}

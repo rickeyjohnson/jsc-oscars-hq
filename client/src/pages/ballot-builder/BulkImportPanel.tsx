@@ -8,32 +8,28 @@ interface BulkImportPanelProps {
     onClose: () => void
     existingNames: string[]
     onImport: (categories: Category[]) => void
+    returnFocusRef?: React.RefObject<HTMLElement | null>
 }
 
 // Bottom sheet for bulk category import.
-const BulkImportPanel: React.FC<BulkImportPanelProps> = ({ isOpen, onClose, existingNames, onImport }) => {
+const BulkImportPanel: React.FC<BulkImportPanelProps> = ({ isOpen, onClose, existingNames, onImport, returnFocusRef }) => {
     const [text, setText] = useState("")
     const [duplicates, setDuplicates] = useState<string[]>([])
     const fileRef = useRef<HTMLInputElement>(null)
 
-    const onCloseRef = useRef(onClose)
-    useEffect(() => {
-        onCloseRef.current = onClose
-    })
 
     useEffect(() => {
         if (!isOpen) return
-        const trigger = document.activeElement as HTMLElement | null
         const prevOverflow = document.body.style.overflow
         document.body.style.overflow = "hidden"
         const onKey = (e: KeyboardEvent) => {
-            if (e.key === "Escape") onCloseRef.current()
+            if (e.key === "Escape") closeRef.current()
         }
         document.addEventListener("keydown", onKey)
         return () => {
             document.body.style.overflow = prevOverflow
             document.removeEventListener("keydown", onKey)
-            trigger?.focus?.()
+            returnFocusRef?.current?.focus()
         }
     }, [isOpen])
 
@@ -45,6 +41,11 @@ const BulkImportPanel: React.FC<BulkImportPanelProps> = ({ isOpen, onClose, exis
         setDuplicates([])
         onClose()
     }
+
+    const closeRef = useRef(close)
+    useEffect(() => {
+        closeRef.current = close
+    })
 
     const handleImport = () => {
         const existing = new Set(existingNames.map((n) => n.trim().toLowerCase()))
