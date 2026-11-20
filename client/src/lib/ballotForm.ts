@@ -1,0 +1,41 @@
+import type { BallotFormData, Category, Member, NomineeType } from "../types"
+
+export type NomineeRow = { display_name: string; secondary_text: string | null; type: NomineeType; member_ids: string[] }
+
+export const buildNomineeRows = (category: Category, members: Member[]): NomineeRow[] => {
+    switch (category.nominee_mode) {
+        case "everyone":
+            return [...members]
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((m) => ({ display_name: m.name, secondary_text: null, type: "person" as const, member_ids: [m.id] }))
+        case "subset":
+        case "preset":
+            return category.nominees.map((n) => ({
+                display_name: n.display_name,
+                secondary_text: n.secondary_text ?? null,
+                type: n.type,
+                member_ids: n.member_ids,
+            }))
+        default:
+            return []
+    }
+}
+
+export const validateBallotForPublish = (form: BallotFormData): string[] => {
+    const errors: string[] = []
+    if (!form.name.trim()) errors.push("Ballot name is required")
+    if (!form.season_id) errors.push("Select a season")
+    if (!(new Date(form.closes_at).getTime() > new Date(form.opens_at).getTime())) {
+        errors.push("Closing time must be after opening time")
+    }
+    if (form.categories.length === 0) errors.push("Add at least one category")
+    const seen = new Set<string>()
+    for (const c of form.categories) {
+        const key = c.name.trim().toLowerCase()
+        if (seen.has(key)) errors.push(`Duplicate category name "${c.name}"`)
+        seen.add(key)
+        const needsNominees = c.nominee_mode === "subset" || (c.nominee_mode === "preset" && !c.allow_member_add)
+        if (needsNominees && c.nominees.length === 0) errors.push(`Category "${c.name}" needs at least one nominee`)
+    }
+    return errors
+}

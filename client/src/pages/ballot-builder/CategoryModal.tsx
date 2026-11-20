@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
-import type { Category } from "../../types"
+import type { Category, Member } from "../../types"
+import NomineeModePicker from "./NomineeModePicker"
 
 interface CategoryModalProps {
     isOpen: boolean
@@ -7,19 +8,26 @@ interface CategoryModalProps {
     onSave: (category: Category) => void
     initialData?: Category
     existingCategoriesCount: number
+    members: Member[]
 }
 
-// Nominee configuration UI moves in here in a later task.
 export const CategoryModal: React.FC<CategoryModalProps> = ({
-    isOpen, onClose, onSave, initialData, existingCategoriesCount,
+    isOpen, onClose, onSave, initialData, existingCategoriesCount, members,
 }) => {
     const [name, setName] = useState("")
     const [description, setDescription] = useState("")
+    const [nomineeConfig, setNomineeConfig] = useState<Category | null>(null)
 
     useEffect(() => {
         if (isOpen) {
             setName(initialData?.name ?? "")
             setDescription(initialData?.description ?? "")
+            setNomineeConfig(
+                initialData ?? {
+                    id: crypto.randomUUID(), name: "", description: "", order: existingCategoriesCount,
+                    nominee_mode: "everyone", allow_member_add: false, nominees: [],
+                },
+            )
         }
     }, [isOpen, initialData])
 
@@ -32,9 +40,9 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
             name: name.trim(),
             description: description.trim(),
             order: initialData?.order ?? existingCategoriesCount,
-            nominee_mode: initialData?.nominee_mode ?? "everyone",
-            allow_member_add: initialData?.allow_member_add ?? false,
-            nominees: initialData?.nominees ?? [],
+            nominee_mode: nomineeConfig?.nominee_mode ?? "everyone",
+            allow_member_add: nomineeConfig?.allow_member_add ?? false,
+            nominees: nomineeConfig?.nominees ?? [],
         })
         onClose()
     }
@@ -69,6 +77,12 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                             rows={2}
                         />
                     </div>
+                    {nomineeConfig && (
+                        <div>
+                            <label className="block text-sm font-bold mb-2 text-amber-100 uppercase tracking-wide">Nominees</label>
+                            <NomineeModePicker category={nomineeConfig} members={members} onChange={setNomineeConfig} />
+                        </div>
+                    )}
                 </div>
                 <div className="p-6 bg-zinc-900 border-t border-amber-100/5 flex gap-3">
                     <button onClick={onClose} className="flex-1 py-3.5 bg-zinc-800 text-amber-100/70 rounded-xl font-bold hover:bg-zinc-700 hover:text-amber-100 transition">
