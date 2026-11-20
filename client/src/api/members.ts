@@ -35,9 +35,13 @@ export const fetchMemberAvatars = async (): Promise<Record<string, string | null
 }
 
 // Committee-only RPC: unlinks the member and deletes that account's votes.
-export const resetMemberClaim = async (name: string): Promise<void> => {
-    const { error } = await supabase.rpc("reset_member_claim", { p_name: name })
-    if (error) throw error
+// expectedUserId guards against a stale list: the DB refuses if the name's claim changed.
+export const resetMemberClaim = async (name: string, expectedUserId: string): Promise<void> => {
+    const { error } = await supabase.rpc("reset_member_claim", { p_name: name, p_expected_user: expectedUserId })
+    if (error) {
+        if (error.message.includes("member claim changed")) throw new Error("This name was changed by someone else — refresh the list.")
+        throw error
+    }
 }
 
 export const countVotesBy = async (userId: string): Promise<number> => {

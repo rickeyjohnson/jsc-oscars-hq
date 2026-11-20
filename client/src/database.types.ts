@@ -408,7 +408,9 @@ export type Database = {
         Returns: boolean
       }
       is_committee: { Args: never; Returns: boolean }
-      reset_member_claim: { Args: { p_name: string }; Returns: undefined }
+      reset_member_claim:
+        | { Args: { p_name: string }; Returns: undefined }
+        | { Args: { p_expected_user: string; p_name: string }; Returns: undefined }
     }
     Enums: {
       ballot_round: "main" | "tiebreak" | "committee"

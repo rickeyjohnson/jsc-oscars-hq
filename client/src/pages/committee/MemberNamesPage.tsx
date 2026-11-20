@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Link } from "react-router-dom"
 import NavigationBar from "../../components/NavigationBar"
 import NavigationTabs from "../../components/NavigationTabs"
@@ -18,13 +18,17 @@ const MemberNamesPage = () => {
     const [confirm, setConfirm] = useState<Confirm | null>(null)
     const [busy, setBusy] = useState(false)
     const [notice, setNotice] = useState<string | null>(null)
+    const cancelRef = useRef<HTMLButtonElement>(null)
+    const myUserId = member?.user_id ?? null
 
     const load = useCallback(async () => {
         setLoadError(null)
         try {
             setMembers(await fetchMembers())
+            return true
         } catch (e) {
             setLoadError(msg(e, "Could not load members"))
+            return false
         }
     }, [])
 
@@ -32,7 +36,12 @@ const MemberNamesPage = () => {
         void load()
     }, [load])
 
+    useEffect(() => {
+        if (confirm) cancelRef.current?.focus()
+    }, [confirm?.row.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
     const open = async (row: MemberRow) => {
+        if (busy || !myUserId || !row.userId || row.userId === myUserId) return
         setNotice(null)
         setConfirm({ row, votes: null, error: null })
         try {
@@ -44,22 +53,27 @@ const MemberNamesPage = () => {
     }
 
     const doReset = async () => {
-        if (!confirm) return
+        if (busy || !confirm) return
         const { row } = confirm
+        if (!myUserId || !row.userId || row.userId === myUserId) return
         setBusy(true)
         try {
-            await resetMemberClaim(row.name)
-            setConfirm(null)
-            setNotice(`${row.name} can sign up again. Delete their login in Supabase → Authentication → Users.`)
-            await load()
+            await resetMemberClaim(row.name, row.userId)
         } catch (e) {
             setConfirm((c) => (c ? { ...c, error: msg(e, "Reset failed") } : c))
+            setBusy(false)
+            return
+        }
+        try {
+            setConfirm(null)
+            setNotice(`${row.name} can sign up again. Delete their login in Supabase → Authentication → Users.`)
+            if (!(await load())) setNotice(`Reset done, but the list couldn't refresh. ${row.name} can sign up again; delete their login in Supabase → Authentication → Users.`)
         } finally {
             setBusy(false)
         }
     }
 
-    const rows = members ? memberRows(members, member?.user_id ?? null) : []
+    const rows = members ? memberRows(members, myUserId) : []
 
     return (
         <div className="bg-zinc-900 min-h-screen text-[#fffadd] pb-24">
@@ -82,11 +96,12 @@ const MemberNamesPage = () => {
                             <span className={`flex-1 ${r.userId ? "" : "opacity-50"}`}>{r.name}</span>
                             <span className="text-[10px] rounded-full px-2 py-0.5 bg-[#3f3f46] border border-amber-100/20 whitespace-nowrap">{r.status}</span>
                             {r.userId && r.isYou && <span className="text-[11px] text-amber-100/60">You</span>}
-                            {r.userId && !r.isYou && (
+                            {r.userId && !r.isYou && myUserId && (
                                 <button
                                     onClick={() => void open(r)}
+                                    disabled={busy}
                                     aria-label={`Reset ${r.name}`}
-                                    className="bg-[#302f2d] text-[#fffadd] rounded-full px-3 py-[7px] text-[11px]"
+                                    className="bg-[#302f2d] text-[#fffadd] rounded-full px-3 py-[7px] text-[11px] disabled:opacity-50"
                                 >
                                     Reset
                                 </button>
@@ -96,7 +111,7 @@ const MemberNamesPage = () => {
                 </ul>
                 {members && <p className="text-[11px] text-amber-100/60 mt-3">You can't reset your own name; ask another committee member.</p>}
                 {confirm && (
-                    <div className="bg-[#27272a] rounded-[14px] p-3 mt-3 border border-[#7f1d1d]">
+                    <div role="group" aria-label={`Reset ${confirm.row.name}`} className="bg-[#27272a] rounded-[14px] p-3 mt-3 border border-[#7f1d1d]">
                         <b>Reset {confirm.row.name}?</b>
                         <div className="text-xs text-amber-100/60 mt-1 mb-2" aria-live="polite">
                             {confirm.votes === null && !confirm.error ? "Counting votes..." : confirm.votes !== null ? resetWarning(confirm.row.name, confirm.votes) : ""}
@@ -110,7 +125,7 @@ const MemberNamesPage = () => {
                             >
                                 {busy ? "Resetting…" : "Reset claim"}
                             </button>
-                            <button onClick={() => setConfirm(null)} disabled={busy} className="bg-[#302f2d] text-[#fffadd] rounded-full px-3 py-[7px] text-[11px] disabled:opacity-50">Cancel</button>
+                            <button ref={cancelRef} onClick={() => setConfirm(null)} disabled={busy} className="bg-[#302f2d] text-[#fffadd] rounded-full px-3 py-[7px] text-[11px] disabled:opacity-50">Cancel</button>
                         </div>
                     </div>
                 )}
