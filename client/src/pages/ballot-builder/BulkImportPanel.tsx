@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
-import { AnimatePresence, motion } from "motion/react"
+import { Sheet } from "../../ui/Sheet"
+import { Button } from "../../ui/Button"
 import { parseCategoryImport } from "../../lib/categoryImport"
 import type { Category } from "../../types"
 
@@ -18,19 +19,11 @@ const BulkImportPanel: React.FC<BulkImportPanelProps> = ({ isOpen, onClose, exis
     const fileRef = useRef<HTMLInputElement>(null)
 
 
+    // Sheet provides Escape, the body scroll lock and focus trapping; keep focus returning to the opener.
     useEffect(() => {
         if (!isOpen) return
-        const prevOverflow = document.body.style.overflow
-        document.body.style.overflow = "hidden"
-        const onKey = (e: KeyboardEvent) => {
-            if (e.key === "Escape") closeRef.current()
-        }
-        document.addEventListener("keydown", onKey)
-        return () => {
-            document.body.style.overflow = prevOverflow
-            document.removeEventListener("keydown", onKey)
-            returnFocusRef?.current?.focus()
-        }
+        return () => returnFocusRef?.current?.focus()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen])
 
     const parsed = parseCategoryImport(text)
@@ -41,11 +34,6 @@ const BulkImportPanel: React.FC<BulkImportPanelProps> = ({ isOpen, onClose, exis
         setDuplicates([])
         onClose()
     }
-
-    const closeRef = useRef(close)
-    useEffect(() => {
-        closeRef.current = close
-    })
 
     const handleImport = () => {
         const existing = new Set(existingNames.map((n) => n.trim().toLowerCase()))
@@ -80,70 +68,46 @@ const BulkImportPanel: React.FC<BulkImportPanelProps> = ({ isOpen, onClose, exis
     }
 
     return (
-        <AnimatePresence>
-            {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-end justify-center">
-                    <motion.div
-                        className="absolute inset-0 bg-black/60"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={close}
-                    />
-                    <motion.div
-                        className="relative w-full max-w-lg max-h-[85vh] overflow-y-auto bg-zinc-800 rounded-t-3xl p-5 pb-8 text-[#fffadd] shadow-2xl"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-label="Import categories"
-                        initial={{ y: "100%" }}
-                        animate={{ y: 0 }}
-                        exit={{ y: "100%" }}
-                        transition={{ type: "tween", duration: 0.25 }}
-                    >
-                        <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-[#fffadd]/20" />
-                        <h2 className="text-lg font-bold">Import categories</h2>
-                        <p className="text-xs text-[#fffadd]/60 mt-1 mb-3">
-                            One per line: Name | Description, or a CSV with name,description columns
-                        </p>
-                        <textarea
-                            value={text}
-                            onChange={(e) => {
-                                setText(e.target.value)
-                                setDuplicates([])
-                            }}
-                            rows={6}
-                            autoFocus
-                            className="w-full bg-zinc-900 border border-amber-100/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-100/30 placeholder-amber-100/20"
-                            placeholder={"Best Locs | Who has the best locs\nMegaphone Award | Loudest"}
-                        />
-                        {duplicates.length > 0 && (
-                            <p className="text-xs text-amber-400 mt-2">
-                                {duplicates.length} duplicate{duplicates.length === 1 ? "" : "s"} skipped:{" "}
-                                {duplicates.map((d) => `"${d}"`).join(", ")}
-                            </p>
-                        )}
-                        <div className="mt-4 flex gap-3">
-                            <button
-                                type="button"
-                                onClick={handleImport}
-                                disabled={count === 0}
-                                className="flex-1 py-3 rounded-full bg-[#fffadd] text-black font-bold disabled:opacity-40 disabled:cursor-not-allowed"
-                            >
-                                Import {count}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => fileRef.current?.click()}
-                                className="px-5 py-3 rounded-full bg-[#302f2d] text-[#fffadd] font-bold"
-                            >
-                                Choose file
-                            </button>
-                            <input ref={fileRef} type="file" accept=".txt,.csv" className="hidden" onChange={handleFile} />
-                        </div>
-                    </motion.div>
+        <Sheet
+            open={isOpen}
+            onClose={close}
+            title="Import categories"
+            detents={["large"]}
+            width="wide"
+            footer={
+                <div className="flex gap-3">
+                    <Button variant="tinted" onClick={close}>
+                        Cancel
+                    </Button>
+                    <Button variant="secondary" onClick={() => fileRef.current?.click()}>
+                        Choose file
+                    </Button>
+                    <Button variant="primary" fullWidth onClick={handleImport} disabled={count === 0}>
+                        Import {count}
+                    </Button>
                 </div>
+            }
+        >
+            <p className="text-footnote text-label-2 mb-3">One per line: Name | Description, or a CSV with name,description columns</p>
+            <textarea
+                value={text}
+                onChange={(e) => {
+                    setText(e.target.value)
+                    setDuplicates([])
+                }}
+                rows={6}
+                aria-label="Categories to import"
+                data-autofocus
+                className="bg-fill text-label placeholder:text-label-3 text-subhead w-full rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-accent"
+                placeholder={"Best Locs | Who has the best locs\nMegaphone Award | Loudest"}
+            />
+            {duplicates.length > 0 && (
+                <p className="text-footnote text-warn mt-2">
+                    {duplicates.length} duplicate{duplicates.length === 1 ? "" : "s"} skipped: {duplicates.map((d) => `"${d}"`).join(", ")}
+                </p>
             )}
-        </AnimatePresence>
+            <input ref={fileRef} type="file" accept=".txt,.csv" className="hidden" onChange={handleFile} />
+        </Sheet>
     )
 }
 

@@ -6,6 +6,8 @@ import { supabase } from "../supabaseClient"
 import { useAuth } from "../context/AuthContext"
 import { fetchAvailableMemberNames } from "../api/members"
 import { authRedirectUrl } from "../lib/siteUrl"
+import { Sheet } from "../ui/Sheet"
+import { Button } from "../ui/Button"
 
 type SignupDate = {
     email: string
@@ -15,16 +17,21 @@ type SignupDate = {
     password: string
 }
 
-const VerifyEmailModal = () => {
+const VerifyEmailModal = ({ open, onDone }: { open: boolean; onDone: () => void }) => {
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 h-screen">
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
-            <div className="relative flex flex-col justify-items items-center">
-                <LoaderCircle className="animate-spin w-10 h-10 mb-7" />
-                <p>Please verify email to continue</p>
-                {/* add resend email. option! */}
-            </div>
-        </div>
+        <Sheet
+            open={open}
+            onClose={onDone}
+            title="Check your email"
+            detents={["medium"]}
+            footer={
+                <Button variant="primary" fullWidth onClick={onDone}>
+                    Done
+                </Button>
+            }
+        >
+            <p className="text-callout text-label-2">Please verify email to continue. Open the link we sent you, then come back and log in.</p>
+        </Sheet>
     )
 }
 
@@ -110,7 +117,7 @@ const SignupPage = () => {
 
     return (
         <div className="min-h-screen bg-zinc-900 text-[#fffadd] flex items-center justify-center px-6 py-12">
-            {showVerifyEmailModal && <VerifyEmailModal />}
+            <VerifyEmailModal open={showVerifyEmailModal} onDone={() => setShowVerifyEmailModal(false)} />
             <div className="w-full max-w-md">
                 <Link to={"/"}>
                     <button className="mb-8 text-[#fffadd]/60 hover:text-[#fffadd] transition">

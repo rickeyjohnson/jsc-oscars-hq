@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest"
 const src = join(__dirname, "..", "..")
 
 // Files already moved onto tokens. Later tasks append here; legacy pages stay out until migrated.
-const MIGRATED = ["components/OscarLogo.tsx"]
+const MIGRATED = ["components/OscarLogo.tsx", "components/ProfileSetup.tsx", "pages/ballot-builder/BulkImportPanel.tsx"]
 // Directories scanned wholesale (tests excluded: they legitimately hold literal values).
 const SCANNED_DIRS = ["ui", "dev"]
 const EXCLUDED = ["ui/tokens.ts"]

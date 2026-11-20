@@ -1,18 +1,20 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { Mail, Lock, LoaderCircle } from "lucide-react"
+import { Mail, Lock } from "lucide-react"
 import { supabase } from "../supabaseClient"
 import { useAuth } from "../context/AuthContext"
 import { authRedirectUrl } from "../lib/siteUrl"
 import { loginErrorText } from "../lib/authErrors"
+import { Sheet } from "../ui/Sheet"
+import { Button } from "../ui/Button"
 
 interface LoginData {
     email: string
     password: string
 }
 
-const ForgotPasswordModal = ({ closeModal }: { closeModal: () => void }) => {
+const ForgotPasswordModal = ({ open, closeModal }: { open: boolean; closeModal: () => void }) => {
     const [forgotPasswordEmail, setForgotPasswordEmail] = useState("")
     const [loading, setLoading] = useState(false)
     const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null)
@@ -40,66 +42,44 @@ const ForgotPasswordModal = ({ closeModal }: { closeModal: () => void }) => {
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-            <div
-                className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-                onClick={closeModal}
-            ></div>
-            <form
-                className="relative bg-zinc-900 border border-amber-100/20 rounded-3xl p-8 max-w-md w-full"
-                onSubmit={handleForgotPassword}
-            >
-                <h2 className="text-2xl font-black text-[#fffadd] mb-2">
-                    Reset Password
-                </h2>
-                <p className="text-sm text-[#fffadd]/60 mb-6">
-                    Enter your email and we'll send you a reset link
-                </p>
-
-                <div className="mb-6">
-                    <label className="block text-sm font-medium mb-2">
-                        Email Address
-                    </label>
-                    <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#fffadd]/40" />
-                        <input
-                            type="email"
-                            value={forgotPasswordEmail}
-                            onChange={(e) =>
-                                setForgotPasswordEmail(e.target.value)
-                            }
-                            className="w-full bg-amber-100/5 border border-amber-100/10 rounded-xl px-12 py-4 focus:outline-none focus:border-amber-100/30 transition text-[#fffadd]"
-                            placeholder="you@example.com"
-                        />
-                    </div>
+        <Sheet
+            open={open}
+            onClose={closeModal}
+            title="Reset password"
+            detents={["medium"]}
+            footer={
+                <div className="flex gap-3">
+                    <Button variant="tinted" fullWidth onClick={closeModal}>
+                        Cancel
+                    </Button>
+                    <Button type="submit" form="forgot-password-form" variant="primary" fullWidth loading={loading} loadingLabel="Sending…">
+                        Send reset link
+                    </Button>
                 </div>
-
+            }
+        >
+            <form id="forgot-password-form" onSubmit={handleForgotPassword}>
+                <p className="text-callout text-label-2 mb-4">Enter your email and we'll send you a reset link.</p>
+                <label htmlFor="forgot-password-email" className="text-subhead mb-2 block font-medium">
+                    Email
+                </label>
+                <input
+                    id="forgot-password-email"
+                    type="email"
+                    autoComplete="email"
+                    value={forgotPasswordEmail}
+                    onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                    className="bg-fill text-label w-full rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-accent"
+                    placeholder="you@example.com"
+                />
                 {message && (
-                    <p role="alert" className={`text-sm mb-4 ${message.ok ? "text-[#fffadd]/80" : "text-red-400"}`}>
+                    <p role="alert" className={`text-footnote mt-3 ${message.ok ? "text-label-2" : "text-danger"}`}>
                         {message.text}
                     </p>
                 )}
-                <p className="text-xs text-[#fffadd]/50 mb-4">
-                    Not getting emails? Ask a committee member to reset your account.
-                </p>
-
-                <div className="flex gap-3">
-                    <button
-                        type="button"
-                        onClick={closeModal}
-                        className="flex-1 py-3 bg-amber-100/10 text-[#fffadd] rounded-xl font-medium hover:bg-amber-100/20 transition"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        className="flex-1 py-3 bg-amber-100 text-zinc-900 rounded-xl font-bold hover:bg-amber-200 transition flex items-center justify-center"
-                    >
-                        {!loading ? "Send Reset Link" : <LoaderCircle className="animate-spin w-5 h-5"/>}
-                    </button>
-                </div>
+                <p className="text-footnote text-label-3 mt-3">Not getting emails? Ask a committee member to reset your account.</p>
             </form>
-        </div>
+        </Sheet>
     )
 }
 
@@ -162,9 +142,7 @@ const LoginPage = () => {
 
     return (
         <div className="min-h-screen bg-zinc-900 text-[#fffadd] flex items-center justify-center px-6 py-12">
-            {showForgotPasswordModal && (
-                <ForgotPasswordModal closeModal={closeModal} />
-            )}
+            <ForgotPasswordModal open={showForgotPasswordModal} closeModal={closeModal} />
             <div className="w-full max-w-md">
                 <Link to={"/"}>
                     <button className="mb-8 text-[#fffadd]/60 hover:text-[#fffadd] transition">

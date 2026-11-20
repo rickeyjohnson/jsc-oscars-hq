@@ -101,9 +101,7 @@ const HomePage = () => {
 
             <NavigationTabs activeTab={"home"} />
 
-            {!profileSetupComplete && (
-                <ProfileSetup onComplete={handleProfileSetupComplete} onSkip={handleProfileSetupSkip} />
-            )}
+            <ProfileSetup open={!profileSetupComplete} onComplete={handleProfileSetupComplete} onSkip={handleProfileSetupSkip} />
         </div>
     )
 }
