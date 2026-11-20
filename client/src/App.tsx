@@ -16,6 +16,7 @@ import BallotBuilderPage from "./pages/ballot-builder/BallotBuilderPage"
 import VotePage from "./pages/VotePage"
 import ManageBallotsPage from "./pages/committee/ManageBallotsPage"
 import BallotAdminPage from "./pages/committee/BallotAdminPage"
+import SubmitBallotPage from "./pages/SubmitBallotPage"
 import ReleasePage from "./pages/committee/ReleasePage"
 import MemberNamesPage from "./pages/committee/MemberNamesPage"
 import { AppShell } from "./ui/AppShell"
@@ -55,6 +56,17 @@ const App = () => {
                                 <RequireCommittee>
                                     <ReleasePage />
                                 </RequireCommittee>
+                            </UserDataProvider>
+                        </RequireAuth>
+                    }
+                />
+
+                <Route
+                    path="/app/ballots/:ballotId/submit"
+                    element={
+                        <RequireAuth>
+                            <UserDataProvider>
+                                <SubmitBallotPage />
                             </UserDataProvider>
                         </RequireAuth>
                     }

@@ -14,5 +14,5 @@ export const COPY = {
     somethingWrong: "Something went wrong",
 } as const
 
-// Flipped on by Task 15 when /app/ballots/:id/submit exists.
-export const SUBMIT_ENABLED = false
+// Submit ballot screen exists (Task 15). Entry points show only for open ballots the member has voted in.
+export const SUBMIT_ENABLED = true

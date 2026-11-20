@@ -130,7 +130,7 @@ function PendingBallot({ ballot, now }: { ballot: BallotSummary; now: Date }) {
 
 function Pending({ state, now }: Props) {
     const pending = state.data ? pendingBallots(state.data.summaries, now) : []
-    const ready = state.data ? state.data.summaries.filter((b) => b.category_count > 0 && b.my_vote_count >= b.category_count && ballotCardStatus(b, b.category_count, b.my_vote_count, now) === "open") : []
+    const ready = state.data ? state.data.summaries.filter((b) => b.category_count > 0 && b.my_vote_count >= 1 && ballotCardStatus(b, b.category_count, b.my_vote_count, now) === "open") : []
     return (
         <Widget id="pending" status={baseStatus(state)} retry={state.reload} bare={pending.length > 0}>
             {pending.length > 0 ? (

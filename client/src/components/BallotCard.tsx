@@ -22,7 +22,7 @@ const BallotCard = ({ ballot, now }: { ballot: BallotSummary; now: Date }) => {
     const round = roundLabel(ballot.round)
     const color = p.pebble ? `${PEBBLE_CLASS[p.pebble].bg} ${PEBBLE_CLASS[p.pebble].text}` : "bg-surface text-label"
     const showStrip = p.status === "open" || p.status === "voted"
-    const canSubmit = SUBMIT_ENABLED && p.status === "voted"
+    const canSubmit = SUBMIT_ENABLED && (p.status === "voted" || p.status === "open") && ballot.my_vote_count >= 1
     return (
         <div className="flex flex-col gap-2">
             <Link
