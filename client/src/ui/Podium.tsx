@@ -15,7 +15,7 @@ const BLOCK: Record<1 | 2 | 3, { height: number; box: string; ring: AvatarRing; 
 }
 
 // DOM order is place order (1, 2, 3); the visual 2-1-3 layout comes from CSS `order`.
-export function Podium({ items, variant = "card", animate = false }: { items: PodiumItem[]; variant?: "card" | "hero"; animate?: boolean }) {
+export function Podium({ items, variant = "card", animate = false, onColor = false, faceRing }: { items: PodiumItem[]; variant?: "card" | "hero"; animate?: boolean; onColor?: boolean; faceRing?: "pebble" }) {
     const hero = variant === "hero"
     return (
         <ol className={`flex items-end justify-center list-none p-0 ${hero ? "gap-3" : "gap-2"}`}>
@@ -24,16 +24,16 @@ export function Podium({ items, variant = "card", animate = false }: { items: Po
                 const h = Math.round(b.height * (hero ? 1.4 : 1))
                 return (
                     <li key={item.key} className={`flex-1 min-w-0 text-center ${b.order}`}>
-                        {item.avatarUrl && (
+                        {(item.avatarUrl || faceRing) && (
                             <div className="mb-2 flex justify-center">
-                                <Avatar id={item.key} name={item.name} src={item.avatarUrl} size={hero ? b.heroAvatar : b.avatar} ring={b.ring} decorative />
+                                <Avatar id={item.key} name={item.name} src={item.avatarUrl} size={hero ? b.heroAvatar : b.avatar} ring={faceRing ?? b.ring} decorative />
                             </div>
                         )}
                         <div className={`${hero ? "text-callout" : "text-footnote"} break-words ${item.slot === 1 ? "font-bold" : ""}`}>
                             <span className="sr-only">{ordinal(item.slot)} place: </span>
                             {item.name}
                         </div>
-                        {item.sub && <div className="text-caption-1 text-label-2">{item.sub}</div>}
+                        {item.sub && <div className={`text-caption-1 ${onColor ? "" : "text-label-2"}`}>{item.sub}</div>}
                         {item.tag && (
                             <div className="mt-1">
                                 <Chip>{item.tag}</Chip>

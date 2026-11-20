@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react"
 import { countdownView } from "./logic/countdown"
 
-export function Countdown({ target }: { target: Date | null }) {
+/** `onColor`: smaller tile on a colored card (inherits the card's ink instead of dimmed label colors). */
+export function Countdown({ target, onColor = false }: { target: Date | null; onColor?: boolean }) {
     const [now, setNow] = useState(() => new Date())
     const ms = target?.getTime() ?? null
     const t = useMemo(() => (ms === null ? null : new Date(ms)), [ms])
@@ -20,10 +21,10 @@ export function Countdown({ target }: { target: Date | null }) {
     return (
         <div role="timer" aria-live="off" aria-label={view.ariaLabel}>
             <p aria-hidden className="flex items-baseline gap-2 font-display tabular-nums">
-                <span className="text-display">{view.main}</span>
-                <span className="text-title-2 text-label-2">{view.seconds}</span>
+                <span className={onColor ? "text-title-1" : "text-display"}>{view.main}</span>
+                <span className={onColor ? "text-title-3" : "text-title-2 text-label-2"}>{view.seconds}</span>
             </p>
-            <p aria-hidden className="mt-1 text-footnote text-label-2">{view.dateLabel}</p>
+            <p aria-hidden className={`mt-1 text-footnote ${onColor ? "" : "text-label-2"}`}>{view.dateLabel}</p>
         </div>
     )
 }

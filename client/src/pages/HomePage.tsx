@@ -4,6 +4,8 @@ import ProfileSetup from "../components/ProfileSetup"
 import { useAuth } from "../context/AuthContext"
 import { useUserData } from "../context/UserContenxt"
 import { supabase } from "../supabaseClient"
+import { Avatar } from "../ui/Avatar"
+import { Chip } from "../ui/Chip"
 import { Screen } from "../ui/Screen"
 import { Skeleton, SkeletonScreen } from "../ui/Skeleton"
 import { useToast } from "../ui/Toast"
@@ -22,7 +24,9 @@ const storage = (): Storage | null => {
     }
 }
 
-const HomeBody = ({ userId, isCommittee, name }: { userId: string; isCommittee: boolean; name: string }) => {
+const GRID = "grid grid-flow-dense grid-cols-1 items-start gap-3 lg:grid-cols-2 min-[1400px]:grid-cols-3"
+
+const HomeBody = ({ userId, isCommittee, name, memberId, imageUrl }: { userId: string; isCommittee: boolean; name: string; memberId?: string; imageUrl?: string | null }) => {
     const state = useHomeData(isCommittee)
     const toast = useToast()
     const [prefs, setPrefs] = useState<HomePrefs>(() => loadHomePrefs(storage(), userId, isCommittee))
@@ -31,6 +35,9 @@ const HomeBody = ({ userId, isCommittee, name }: { userId: string; isCommittee: 
     const widgets = useMemo(() => resolveWidgets(prefs, { isCommittee, released }), [prefs, isCommittee, released])
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const now = useMemo(() => new Date(), [state.data])
+
+    const memberWidgets = widgets.filter((w) => !w.adminOnly)
+    const committeeWidgets = isCommittee ? widgets.filter((w) => w.adminOnly) : []
 
     const change = (next: HomePrefs) => {
         setPrefs(next)
@@ -55,16 +62,32 @@ const HomeBody = ({ userId, isCommittee, name }: { userId: string; isCommittee: 
             }
         >
             <div className="mx-auto max-w-[1280px]">
-                <p className="mb-4 text-large-title">
-                    {name ? `Hey ${name}.` : "Hey."}
-                </p>
-                <div className="grid grid-flow-dense grid-cols-1 items-start gap-3 lg:grid-cols-2 min-[1400px]:grid-cols-3">
-                    {widgets.map((w) => (
+                <div className="mb-4 flex items-center gap-3">
+                    <Avatar id={memberId || name || userId} name={name || "You"} src={imageUrl} size={40} ring="pebble" decorative />
+                    <p className="text-large-title">{name ? `Hey ${name}.` : "Hey."}</p>
+                </div>
+                <div className={GRID}>
+                    {memberWidgets.map((w) => (
                         <div key={w.id} className={w.span === 2 ? "lg:col-span-2" : ""}>
-                            <HomeWidget id={w.id} state={state} now={now} />
+                            <HomeWidget id={w.id} state={state} now={now} memberId={memberId} />
                         </div>
                     ))}
                 </div>
+                {committeeWidgets.length > 0 && (
+                    <div role="group" aria-label="Committee" className="mt-8 border-t border-sep pt-5">
+                        <div className="mb-3 flex items-center gap-2">
+                            <p className="text-caption-2 uppercase tracking-wider text-label-2">Committee</p>
+                            <Chip>Committee</Chip>
+                        </div>
+                        <div className={GRID}>
+                            {committeeWidgets.map((w) => (
+                                <div key={w.id} className={w.span === 2 ? "lg:col-span-2" : ""}>
+                                    <HomeWidget id={w.id} state={state} now={now} memberId={memberId} />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
             <CustomizeHomeSheet open={customizing} onClose={() => setCustomizing(false)} prefs={prefs} isCommittee={isCommittee} onChange={change} />
         </Screen>
@@ -128,7 +151,7 @@ const HomePage = () => {
                     </SkeletonScreen>
                 </Screen>
             ) : (
-                <HomeBody userId={user?.id ?? ""} isCommittee={Boolean(profile?.is_committee)} name={firstName(member?.name ?? profile?.display_name)} />
+                <HomeBody userId={user?.id ?? ""} isCommittee={Boolean(profile?.is_committee)} name={firstName(member?.name ?? profile?.display_name)} memberId={member?.id} imageUrl={profile?.image_url} />
             )}
             <ProfileSetup open={!profileSetupComplete} onComplete={handleProfileSetupComplete} onSkip={handleProfileSetupSkip} />
         </>

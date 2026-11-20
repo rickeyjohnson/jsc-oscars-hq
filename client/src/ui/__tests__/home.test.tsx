@@ -165,3 +165,40 @@ describe("Home widgets", () => {
         expect(screen.queryByRole("heading", { name: "Leaderboard" })).toBeNull()
     })
 })
+
+describe("Home rework", () => {
+    it("members get no Committee section", () => {
+        renderHome()
+        expect(screen.queryByRole("group", { name: "Committee" })).toBeNull()
+    })
+    it("committee gets a separated Committee section holding only committee widgets", () => {
+        profile.is_committee = true
+        renderHome()
+        const sec = screen.getByRole("group", { name: "Committee" })
+        expect(within(sec).getByRole("region", { name: "Quick actions" })).toBeTruthy()
+        expect(within(sec).getByRole("region", { name: "Needs your attention" })).toBeTruthy()
+        expect(within(sec).queryByRole("region", { name: "Oscar night" })).toBeNull()
+        expect(screen.getByRole("region", { name: "Oscar night" })).toBeTruthy()
+    })
+    it("faces on Home carry pebble rings", () => {
+        profile.is_committee = true
+        hook.state = ready(data({ completion: { ballot: ballot(), members: [{ name: "Nick", voted: 0, total: 5, claimed: true }] } }))
+        const { container } = renderHome()
+        expect(container.querySelectorAll("[class*='ring-pebble-']").length).toBeGreaterThanOrEqual(2)
+    })
+    it("customize has drag handles and keeps keyboard Move up/down", () => {
+        renderHome()
+        fireEvent.click(screen.getByRole("button", { name: "Customize Home" }))
+        expect(screen.getByRole("button", { name: "Reorder Countdown" })).toBeTruthy()
+        expect(screen.getByRole("button", { name: "Move Countdown down" })).toBeTruthy()
+        expect(screen.getByRole("switch", { name: "Ballot closes" }).getAttribute("aria-checked")).toBe("false")
+    })
+    it("new widgets render when turned on", () => {
+        profile.is_committee = true
+        mem.set("jsc.home.v1.u1", JSON.stringify({ version: 1, order: ["ballotCloses", "ballotHealth", "tiebreak", "revealReadiness"], hidden: [] }))
+        hook.state = ready(data({ checks: [{ id: "winners", ok: true, label: "Winners decided" }] as never, completion: { ballot: ballot(), members: [{ name: "Nick", voted: 2, total: 5, claimed: true }] } }))
+        renderHome()
+        for (const n of ["Ballot closes", "Ballot health", "Tiebreak status", "Reveal readiness"]) expect(screen.getByRole("region", { name: n })).toBeTruthy()
+        expect((within(screen.getByRole("region", { name: "Reveal readiness" })).getByRole("link") as HTMLAnchorElement).getAttribute("href")).toBe("/app/profile/release")
+    })
+})
