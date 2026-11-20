@@ -45,3 +45,27 @@ export function manualResult(prev: ResultRow, winnerId: string, ballotId: string
     decided_by: "manual",
   }
 }
+
+export type RoundEntry = { category_id: string; nominee_ids: string[] }
+
+// Nominees for a new round ballot. tiebreak: the tied leaders of each category whose main
+// nextStep is "tiebreak". committee: the previous nominee list kept to the tiebreak leaders
+// (the caller passes only categories whose nextStep is "committee").
+export function roundEntries(tallies: CategoryTally[], step: NextStep, prevByCategory: Record<string, ResultRow>): RoundEntry[] {
+  if (step === "tiebreak") {
+    return tallies
+      .filter(t => nextStep("main", t, [], []) === "tiebreak")
+      .map(t => ({ category_id: t.category_id, nominee_ids: [...t.leader_ids] }))
+  }
+  if (step === "committee") {
+    return tallies
+      .filter(t => t.leader_ids.length > 1)
+      .map(t => {
+        const prev = prevByCategory[t.category_id]
+        const leaders = new Set(t.leader_ids)
+        const kept = prev ? prev.nominee_ids.filter(id => leaders.has(id)) : []
+        return { category_id: t.category_id, nominee_ids: kept.length > 1 ? kept : [...t.leader_ids] }
+      })
+  }
+  return []
+}

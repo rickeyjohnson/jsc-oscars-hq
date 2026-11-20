@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import type { Nominee } from "../types"
-import { manualResult, nextStep, resultForRound } from "./rounds"
+import { manualResult, nextStep, resultForRound, roundEntries } from "./rounds"
 import { tallyCategory } from "./tally"
 
 function v(counts: Record<string, number>) {
@@ -49,5 +49,24 @@ describe("manualResult", () => {
   it("sets the winner", () => {
     expect(manualResult(prev, "B", "T")).toEqual({ ...prev, decided_ballot_id: "T", winner_nominee_id: "B", decided_by: "manual" })
     expect(manualResult({ ...prev, nominee_ids: [], top3_nominee_ids: [] }, "Z", "M").nominee_ids).toEqual(["Z"])
+  })
+})
+
+describe("roundEntries", () => {
+  const cv = (cat: string, counts: Record<string, number>) =>
+    Object.entries(counts).flatMap(([nominee_id, n]) => Array.from({ length: n }, () => ({ category_id: cat, nominee_id })))
+  it("tiebreak: tied-first categories with their leaders", () => {
+    const tallies = [tallyCategory("c1", cv("c1", { A: 4, B: 4, C: 1 })), tallyCategory("c2", cv("c2", { A: 3, B: 1 }))]
+    expect(roundEntries(tallies, "tiebreak", {})).toEqual([{ category_id: "c1", nominee_ids: ["A", "B"] }])
+  })
+  it("tiebreak: skips categories with no votes", () => {
+    expect(roundEntries([tallyCategory("c1", [])], "tiebreak", {})).toEqual([])
+  })
+  it("committee: prev nominee_ids filtered to the tiebreak leaders", () => {
+    const t = tallyCategory("c", v({ B: 2, C: 2, A: 1 }), ["A", "B", "C"])
+    const p = { ...prev, nominee_ids: ["C", "A", "B"] }
+    expect(roundEntries([t], "committee", { c: p })).toEqual([{ category_id: "c", nominee_ids: ["C", "B"] }])
+    expect(roundEntries([tallyCategory("c", v({ B: 2, A: 1 }), ["A", "B"])], "committee", { c: p })).toEqual([])
+    expect(roundEntries([t], "committee", {})).toEqual([{ category_id: "c", nominee_ids: ["B", "C"] }])
   })
 })

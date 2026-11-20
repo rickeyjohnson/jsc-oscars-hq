@@ -3,6 +3,7 @@ import { buildNomineeRows } from "../lib/ballotForm"
 import { toUtcIso } from "../lib/time"
 import type { BallotSummary } from "../lib/voting"
 import type { Ballot, BallotDetail, BallotFormData, BallotStatus, Category, Member, Nominee, Season } from "../types"
+import type { RoundEntry } from "../lib/rounds"
 
 export const fetchSeasons = async (): Promise<Season[]> => {
     const { data, error } = await supabase.from("seasons").select("*").order("ceremony_at", { ascending: false })
@@ -152,4 +153,52 @@ export const fetchBallotSummaries = async (includeDrafts = false): Promise<Ballo
             my_vote_count: voted.get(b.id)?.size ?? 0,
         }
     })
+}
+
+// Round ballots (tiebreak / committee) linked to a main ballot, oldest first.
+export const fetchRoundBallots = async (mainId: string): Promise<Ballot[]> => {
+    const { data, error } = await supabase.from("ballots").select("*").eq("parent_ballot_id", mainId).order("created_at")
+    if (error) throw error
+    return (data ?? []) as Ballot[]
+}
+
+// Creates an open round ballot under the main ballot with only the given nominees.
+// Refuses a second round of the same kind; deletes the ballot again if its nominees fail to save.
+export const createRoundBallot = async (
+    main: Ballot,
+    round: "tiebreak" | "committee",
+    entries: RoundEntry[],
+    closesAt: string,
+): Promise<string> => {
+    if (main.round !== "main" || main.parent_ballot_id) throw new Error("Rounds must hang off the main ballot")
+    const rows = entries.flatMap((e) => e.nominee_ids.map((nominee_id) => ({ category_id: e.category_id, nominee_id })))
+    if (rows.length === 0) throw new Error("No categories need this round")
+    const opensAt = new Date().toISOString()
+    if (new Date(closesAt).getTime() <= Date.now()) throw new Error("The round must close in the future")
+
+    const existing = await fetchRoundBallots(main.id)
+    if (existing.some((b) => b.round === round)) throw new Error(`A ${round} round already exists for this ballot`)
+
+    const { data, error } = await supabase
+        .from("ballots")
+        .insert({
+            season_id: main.season_id,
+            parent_ballot_id: main.id,
+            name: `${main.name} – ${round === "tiebreak" ? "Tiebreak" : "Committee"}`,
+            round,
+            status: "open",
+            opens_at: opensAt,
+            closes_at: closesAt,
+        })
+        .select("id")
+        .single()
+    if (error) throw error
+    const id = data.id as string
+
+    const { error: rnError } = await supabase.from("round_nominees").insert(rows.map((r) => ({ ...r, ballot_id: id })))
+    if (rnError) {
+        await supabase.from("ballots").delete().eq("id", id) // best effort
+        throw rnError
+    }
+    return id
 }
