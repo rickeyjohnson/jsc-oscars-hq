@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext"
 
 type ProfileSetupProps = {
     onComplete: () => void
+    onSkip: () => void
 }
 
 const slides = [
@@ -32,7 +33,7 @@ const IMAGE_UPLOAD_SLIDE = slides.findIndex(
     (slide) => slide.title === "Add a profile photo"
 )
 
-const ProfileSetup = ({ onComplete }: ProfileSetupProps) => {
+const ProfileSetup = ({ onComplete, onSkip }: ProfileSetupProps) => {
     const { user } = useAuth()
     const [step, setStep] = useState(0)
     const [closing, setClosing] = useState(false)
@@ -40,8 +41,10 @@ const ProfileSetup = ({ onComplete }: ProfileSetupProps) => {
     const [image, setImage] = useState<File | null>(null)
     const [preview, setPreview] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
+    const [uploadError, setUploadError] = useState("")
 
     const handleImageUpload = (file: File) => {
+        setUploadError("")
         setImage(file)
         setPreview(URL.createObjectURL(file))
     }
@@ -56,6 +59,7 @@ const ProfileSetup = ({ onComplete }: ProfileSetupProps) => {
 
         if (error) {
             console.error("Error uploading image: ", error.message)
+            setUploadError("Couldn't upload your photo. Try again, or skip for now.")
             setLoading(false)
             return null
         }
@@ -69,6 +73,7 @@ const ProfileSetup = ({ onComplete }: ProfileSetupProps) => {
 
     const handleImageSubmission = async () => {
         setLoading(true)
+        setUploadError("")
 
         const url = await uploadImage(image!)
         if (!url) return
@@ -82,6 +87,8 @@ const ProfileSetup = ({ onComplete }: ProfileSetupProps) => {
 
         if (error) {
             console.error("error inserting profile image: ", error.message)
+            setUploadError("Couldn't save your photo. Try again, or skip for now.")
+            return
         }
 
         setStep((prev) => prev + 1)
@@ -210,6 +217,20 @@ const ProfileSetup = ({ onComplete }: ProfileSetupProps) => {
                                                 "Continue"
                                             )}
                                         </button>
+                                        {uploadError && (
+                                            <p role="alert" className="mt-3 text-sm text-red-400">
+                                                {uploadError}
+                                            </p>
+                                        )}
+                                        <div>
+                                            <button
+                                                type="button"
+                                                onClick={onSkip}
+                                                className="mt-4 text-sm text-[#fffadd]/60 hover:text-[#fffadd] transition"
+                                            >
+                                                Skip for now
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
                             </motion.div>

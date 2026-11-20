@@ -60,7 +60,7 @@ const ProfilePage = () => {
                         <div className="bg-amber-100/5 border border-amber-100/10 rounded-2xl p-4 text-center">
                             <Award className="w-6 h-6 text-amber-100 mx-auto mb-2" />
                             <div className="text-2xl font-black text-amber-100">
-                                18
+                                --
                             </div>
                             <div className="text-xs text-amber-100/60">
                                 Wins
@@ -69,7 +69,7 @@ const ProfilePage = () => {
                         <div className="bg-amber-100/5 border border-amber-100/10 rounded-2xl p-4 text-center">
                             <Target className="w-6 h-6 text-amber-100 mx-auto mb-2" />
                             <div className="text-2xl font-black text-amber-100">
-                                24
+                                --
                             </div>
                             <div className="text-xs text-amber-100/60">
                                 Votes
@@ -78,7 +78,7 @@ const ProfilePage = () => {
                         <div className="bg-amber-100/5 border border-amber-100/10 rounded-2xl p-4 text-center">
                             <TrendingUp className="w-6 h-6 text-amber-100 mx-auto mb-2" />
                             <div className="text-2xl font-black text-amber-100">
-                                75%
+                                --
                             </div>
                             <div className="text-xs text-amber-100/60">
                                 Rate

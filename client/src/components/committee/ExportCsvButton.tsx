@@ -2,7 +2,7 @@ import { useState } from "react"
 import { fetchBallotDetail } from "../../api/ballots"
 import { fetchMembers } from "../../api/members"
 import { fetchAllVotes } from "../../api/votes"
-import { buildBallotCsv, csvFileName } from "../../lib/exportCsv"
+import { buildBallotCsv, csvFileName, riskyNomineeNames } from "../../lib/exportCsv"
 
 type Props = { ballotId: string; ballotName: string }
 
@@ -10,6 +10,7 @@ type Props = { ballotId: string; ballotName: string }
 const ExportCsvButton = ({ ballotId, ballotName }: Props) => {
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [risky, setRisky] = useState<string[]>([])
 
     const exportCsv = async () => {
         setBusy(true)
@@ -18,6 +19,7 @@ const ExportCsvButton = ({ ballotId, ballotName }: Props) => {
             const [detail, members, votes] = await Promise.all([fetchBallotDetail(ballotId), fetchMembers(), fetchAllVotes(ballotId)])
             const nomineeNames: Record<string, string> = {}
             for (const c of detail.categories) for (const n of c.nominees) nomineeNames[n.id] = n.display_name
+            setRisky(riskyNomineeNames(Object.values(nomineeNames)))
             const voters = members.filter((m) => m.user_id).map((m) => ({ user_id: m.user_id as string, name: m.name }))
             const csv = buildBallotCsv({ categories: detail.categories.map((c) => ({ id: c.id, name: c.name })), voters, votes, nomineeNames })
 
@@ -28,7 +30,7 @@ const ExportCsvButton = ({ ballotId, ballotName }: Props) => {
             document.body.appendChild(a)
             a.click()
             a.remove()
-            URL.revokeObjectURL(url)
+            setTimeout(() => URL.revokeObjectURL(url), 1000)
         } catch (e) {
             setError(e instanceof Error ? e.message : "Could not export CSV")
         } finally {
@@ -38,10 +40,13 @@ const ExportCsvButton = ({ ballotId, ballotName }: Props) => {
 
     return (
         <div className="flex flex-col items-end gap-1">
-            <button onClick={exportCsv} disabled={busy} className="bg-[#302f2d] text-[#fffadd] rounded-full text-xs px-3 py-1.5 disabled:opacity-50">
+            <button type="button" onClick={exportCsv} disabled={busy} className="bg-[#302f2d] text-[#fffadd] rounded-full text-xs px-3 py-1.5 disabled:opacity-50">
                 {busy ? "Exporting..." : "⬇ Export CSV"}
             </button>
-            {error && <span className="text-xs text-red-400">{error}</span>}
+            {risky.length > 0 && (
+                <span className="text-xs text-amber-300">Heads up: nominee "{risky[0]}" will be read as blank by oscars.py.</span>
+            )}
+            {error && <span role="alert" className="text-xs text-red-400">{error}</span>}
         </div>
     )
 }

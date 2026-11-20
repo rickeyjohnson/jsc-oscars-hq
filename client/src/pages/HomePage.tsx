@@ -30,6 +30,16 @@ const HomePage = () => {
         fetchBallotSummaries().then(setBallots).catch((e) => { console.error("Error loading ballots: ", e); setBallotsError(true) })
     }, [reloadKey])
 
+    const skipKey = `jsc.profileSetupSkipped.${user?.id ?? ""}`
+    const handleProfileSetupSkip = () => {
+        try {
+            localStorage.setItem(skipKey, "1")
+        } catch {
+            // storage unavailable; skip lasts this session only
+        }
+        setProfileSetupComplete(true)
+    }
+
     const handleProfileSetupComplete = () => {
         setProfileSetupComplete(false)
     }
@@ -48,9 +58,16 @@ const HomePage = () => {
                     error.message
                 )
                 setProfileSetupComplete(true)
+                return
             }
 
-            setProfileSetupComplete(data?.image_url !== null)
+            let skipped = false
+            try {
+                skipped = localStorage.getItem(`jsc.profileSetupSkipped.${user?.id ?? ""}`) === "1"
+            } catch {
+                // ignore
+            }
+            setProfileSetupComplete(skipped || data?.image_url !== null)
         }
 
         isProfileComplete()
@@ -77,7 +94,7 @@ const HomePage = () => {
             <NavigationTabs activeTab={"home"} />
 
             {!profileSetupComplete && (
-                <ProfileSetup onComplete={handleProfileSetupComplete} />
+                <ProfileSetup onComplete={handleProfileSetupComplete} onSkip={handleProfileSetupSkip} />
             )}
         </div>
     )

@@ -7,7 +7,7 @@ import { fetchBallotDetail } from "../api/ballots"
 import { fetchMembers } from "../api/members"
 import { addNominee, castVote, clearVote, fetchMyVotes } from "../api/votes"
 import { useUserData } from "../context/UserContenxt"
-import { closesInLabel } from "../lib/time"
+import { closesInLabel, opensAtLabel } from "../lib/time"
 import { dashStates, findMatchingNominee, nextUnvotedIndex, selectableNominees, votedCount } from "../lib/voting"
 import type { BallotDetail, Member } from "../types"
 
@@ -186,7 +186,11 @@ const VotePage = () => {
                     </div>
                     <div className="mt-1 text-xs opacity-60">{voted} of {total} voted</div>
                 </div>
-                {readOnly && <div role="status" className="rounded-xl bg-[#3f3f46] p-2 text-center text-sm">Voting is closed</div>}
+                {readOnly && (
+                    <div role="status" className="rounded-xl bg-[#3f3f46] p-2 text-center text-sm">
+                        {ballot.status === "open" && now < new Date(ballot.opens_at).getTime() ? opensAtLabel(new Date(ballot.opens_at)) : "Voting is closed"}
+                    </div>
+                )}
 
                 {ballot.categories.map((c, i) => (
                     <CategoryVoteCard

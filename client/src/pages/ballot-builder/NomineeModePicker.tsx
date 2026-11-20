@@ -22,6 +22,7 @@ const NomineeModePicker: React.FC<Props> = ({ category, members, onChange }) => 
 
     const setMode = (nominee_mode: NomineeMode) => {
         if (nominee_mode === category.nominee_mode) return
+        if (category.nominees.length > 0 && !window.confirm("Switching mode clears this category's nominees. Continue?")) return
         // Nominee lists do not carry across modes.
         onChange({ ...category, nominee_mode, nominees: [], allow_member_add: nominee_mode === "preset" ? category.allow_member_add : false })
     }
