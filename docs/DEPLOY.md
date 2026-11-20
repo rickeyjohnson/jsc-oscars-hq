@@ -23,10 +23,11 @@ Dashboard -> Authentication -> URL Configuration:
 2. Redirect URLs: add `https://<app>.vercel.app/**`; keep `http://localhost:5173/**` for dev.
 
 Dashboard -> Authentication -> Providers -> Email: turn OFF "Confirm email". Decision: Confirm email = OFF for launch.
-- Signup logs the user in immediately (no email, no rate limit problem) and the app goes straight to `/app`, where the profile photo setup appears.
-- Anyone could sign up with a typo or someone else's address; the member-name dropdown still limits who can claim a name.
-- Password reset still sends an email (links to `/login/reset`) and Supabase's built-in sender is heavily rate limited (a few emails per hour). The committee should be ready to reset a claim (delete the user / unlink the member in the dashboard) or help someone who forgets their password.
-- Optional later upgrade: custom SMTP (Resend, Postmark, etc.; Authentication -> SMTP Settings), which also allows turning confirmation back on. The client handles both modes.
+- Signup logs the user in immediately (no email needed) and the app goes straight to `/app`, where the profile photo setup appears. The member-name dropdown still limits who can claim a name.
+- Supabase's built-in mailer only sends to project team members and is rate limited. So **password reset emails will NOT reach friends** unless you set up custom SMTP. Default plan: use the committee recovery procedure in section 7.
+- Optional upgrade: custom SMTP (e.g. Resend free tier; Authentication -> SMTP Settings). Then reset emails work, and confirmation could be turned back on. The client handles both modes.
+
+Dashboard -> Storage -> `profile-pics` bucket: set max file size to 5 MB and allowed MIME types to `image/*`.
 
 ## 3. Create the committee
 
@@ -88,13 +89,14 @@ select count(*) from votes;       -- 0 before the real ballot opens
 - [ ] Confirm all 14 have accounts (`select m.name, p.user_id is not null ...` or the committee completion panel).
 - [ ] Nov 25-26: publish the real ballot, closing time set deliberately (entered in local time, stored UTC; double check on the ballot page).
 - [ ] Re-run section 4 counts (no leftover test votes) just before publishing.
-- [ ] Tell everyone how to reset a password (`/login`, "forgot password").
+- [ ] Committee recovery (forgot password, wrong name, or a pranked claim): Supabase Dashboard -> Authentication -> Users -> delete that user (their profile and votes are removed; the member name is freed). Then run in the SQL editor `update public.members set user_id = null, claimed_at = null where name = '<Name>';` to clear the claim time, and ask them to sign up again.
 - [ ] When closed: tally, resolve ties, Export CSV, run oscars.py.
 
 ## 8. Limitations and troubleshooting
 
 - Supabase free projects pause after about a week of inactivity. Check the project is Active in the dashboard the day before voting week, and open the app yourself first. Restore from the dashboard if paused.
-- Email rate limits (section 2) are the likeliest signup problem. Symptom: "email rate limit exceeded". Fix: SMTP or confirmation off.
+- With confirmation OFF, signup needs no email. Reset emails only work with custom SMTP (section 2); otherwise use the recovery procedure in section 7.
+- Known limitation: `nominees.created_by` (who added a write-in option) is readable by signed-in members before results are released. Acceptable for 14 friends; fix later with a migration.
 - Blank page / "Invalid API key": env vars wrong or not redeployed. Check Vercel env vars and redeploy.
 - Confirmation/reset link goes to localhost or errors: Site URL / Redirect URLs (section 2) or `VITE_SITE_URL` are wrong.
 - 404 on refresh of a deep link: `client/vercel.json` missing from the deployed Root Directory.
