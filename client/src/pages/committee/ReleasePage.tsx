@@ -3,9 +3,9 @@ import { Link } from "react-router-dom"
 import { fetchCurrentSeason } from "../../api/ballots"
 import { fetchReleaseStatus, releaseSeasonResults } from "../../api/results"
 import { HOLD_IDLE, holdProgress, holdReducer, type HoldEvent, type HoldState } from "../../lib/hold"
+import { HoldButton } from "../../ui/HoldButton"
 import { releaseChecks, type ReleaseCheck } from "../../lib/release"
 
-const KEY_POINTER_ID = -1 // never collides with real pointer ids
 const CHECK_REFRESH_MS = 30_000
 
 // `done` is terminal in holdReducer, so a failed release needs an explicit reset to retry.
@@ -148,6 +148,9 @@ const ReleasePage = () => {
             <HoldButton
                 ready={ready}
                 busy={busy}
+                label="Hold to release"
+                busyLabel="Releasing…"
+                hint="Press and hold for 3 seconds"
                 progress={progress}
                 onDown={down}
                 onMove={(id, x, y) => dispatch({ type: "move", pointerId: id, x, y })}
@@ -160,51 +163,9 @@ const ReleasePage = () => {
                 </ul>
             )}
             {releaseError && <div role="alert" className="text-red-400 text-center text-sm">{releaseError}</div>}
-            <div className="text-center text-xs text-amber-100/60">Press and hold for 3 seconds</div>
             <div className="text-center"><Link to="/app/profile" className="text-amber-100/60">← Not yet, take me back</Link></div>
         </Page>
     )
 }
-
-type HoldButtonProps = {
-    ready: boolean
-    busy: boolean
-    progress: number
-    onDown: (pointerId: number, x: number, y: number) => void
-    onMove: (pointerId: number, x: number, y: number) => void
-    onUp: (pointerId: number) => void
-    onCancel: () => void
-}
-const HoldButton = ({ ready, busy, progress, onDown, onMove, onUp, onCancel }: HoldButtonProps) => (
-    <button
-        type="button"
-        aria-disabled={!ready || busy}
-        className={`relative overflow-hidden w-full h-12 rounded-full bg-[#27272a] border border-[#fffadd]/30 text-[#fffadd] font-bold select-none ${ready ? "" : "opacity-50"}`}
-        style={{ touchAction: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none" }}
-        onContextMenu={(e) => e.preventDefault()}
-        onPointerDown={(e) => {
-            if (e.pointerType === "mouse" && e.button !== 0) return
-            e.currentTarget.setPointerCapture?.(e.pointerId)
-            onDown(e.pointerId, e.clientX, e.clientY)
-        }}
-        onPointerMove={(e) => onMove(e.pointerId, e.clientX, e.clientY)}
-        onPointerUp={(e) => onUp(e.pointerId)}
-        onPointerCancel={onCancel}
-        onPointerLeave={onCancel}
-        onKeyDown={(e) => {
-            if ((e.key === " " || e.key === "Enter") && !e.repeat) {
-                e.preventDefault()
-                onDown(KEY_POINTER_ID, 0, 0)
-            }
-        }}
-        onKeyUp={(e) => {
-            if (e.key === " " || e.key === "Enter") onUp(KEY_POINTER_ID)
-        }}
-        onBlur={onCancel}
-    >
-        <span className="absolute inset-y-0 left-0 bg-[#fffadd]/20 pointer-events-none" style={{ width: `${progress * 100}%` }} />
-        <span className="relative">{busy ? "Releasing…" : "Hold to release"}</span>
-    </button>
-)
 
 export default ReleasePage

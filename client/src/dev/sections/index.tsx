@@ -3,6 +3,7 @@ import Foundations from "./Foundations"
 import Type from "./Type"
 import Logo from "./Logo"
 import PrimitivesA from "./PrimitivesA"
+import PrimitivesB from "./PrimitivesB"
 
 export type GallerySection = { id: string; title: string; Component: ComponentType }
 
@@ -20,5 +21,6 @@ export const SECTIONS: GallerySection[] = [
     { id: "type", title: "Type", Component: Type },
     { id: "logo", title: "Logo", Component: Logo },
     { id: "primitives-a", title: "Primitives A", Component: PrimitivesA },
+    { id: "primitives-b", title: "Primitives B", Component: PrimitivesB },
     ...UPCOMING.map((t) => ({ id: t.toLowerCase().replace(/[^a-z]+/g, "-"), title: t, Component: placeholder(t) })),
 ]
