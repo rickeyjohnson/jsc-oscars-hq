@@ -65,9 +65,9 @@ const BallotBuilderPage = () => {
                 </section>
 
                 <section>
-                    <div className="flex items-end justify-between mb-4 px-2">
-                        <div>
-                            <h2 className="text-xl font-bold text-amber-100 flex items-center gap-2">
+                    <div className="flex flex-wrap items-end justify-between gap-2 mb-4 px-2">
+                        <div className="min-w-0">
+                            <h2 className="text-lg sm:text-xl font-bold text-amber-100 flex items-center gap-2">
                                 Category count
                                 <span className="text-sm font-normal text-amber-100/40 bg-white/5 px-2 py-0.5 rounded-full">
                                     {formData.categories.length}

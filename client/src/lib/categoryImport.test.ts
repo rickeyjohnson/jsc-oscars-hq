@@ -19,4 +19,14 @@ describe("parseCategoryImport", () => {
     it("reports case-insensitive duplicates", () => {
         expect(parseCategoryImport("Best Locs|x\nbest locs|y")).toEqual({ categories: [{ name: "Best Locs", description: "x" }], duplicates: ["best locs"] })
     })
+    it("strips a BOM before the csv header", () => {
+        expect(parseCategoryImport("\uFEFFname,description\nA,b").categories).toEqual([{ name: "A", description: "b" }])
+    })
+    it("parses csv mode with CRLF", () => {
+        expect(parseCategoryImport("name,description\r\nA,b\r\nC,d\r\n").categories)
+            .toEqual([{ name: "A", description: "b" }, { name: "C", description: "d" }])
+    })
+    it("returns nothing for empty input", () => {
+        expect(parseCategoryImport("")).toEqual({ categories: [], duplicates: [] })
+    })
 })

@@ -2,11 +2,12 @@ import { parseCsv } from "./csv"
 
 export type ImportedCategory = { name: string; description: string }
 
-export function parseCategoryImport(text: string): {
+export function parseCategoryImport(input: string): {
     categories: ImportedCategory[]
     duplicates: string[]
 }
 {
+    const text = input.replace(/^\uFEFF/, "")
     const lines = text.split(/\r\n|\r|\n/)
     const first = lines.find((l) => l.trim() !== "")
     const csvMode = first !== undefined && first.trim().toLowerCase().startsWith("name,description")

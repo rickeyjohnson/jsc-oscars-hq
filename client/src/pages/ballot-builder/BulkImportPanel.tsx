@@ -1,4 +1,4 @@
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion } from "motion/react"
 import { parseCategoryImport } from "../../lib/categoryImport"
 import type { Category } from "../../types"
@@ -15,6 +15,27 @@ const BulkImportPanel: React.FC<BulkImportPanelProps> = ({ isOpen, onClose, exis
     const [text, setText] = useState("")
     const [duplicates, setDuplicates] = useState<string[]>([])
     const fileRef = useRef<HTMLInputElement>(null)
+
+    const onCloseRef = useRef(onClose)
+    useEffect(() => {
+        onCloseRef.current = onClose
+    })
+
+    useEffect(() => {
+        if (!isOpen) return
+        const trigger = document.activeElement as HTMLElement | null
+        const prevOverflow = document.body.style.overflow
+        document.body.style.overflow = "hidden"
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "Escape") onCloseRef.current()
+        }
+        document.addEventListener("keydown", onKey)
+        return () => {
+            document.body.style.overflow = prevOverflow
+            document.removeEventListener("keydown", onKey)
+            trigger?.focus?.()
+        }
+    }, [isOpen])
 
     const parsed = parseCategoryImport(text)
     const count = parsed.categories.length
@@ -50,7 +71,10 @@ const BulkImportPanel: React.FC<BulkImportPanelProps> = ({ isOpen, onClose, exis
 
     const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
-        if (file) setText(await file.text())
+        if (file) {
+            setText(await file.text())
+            setDuplicates([])
+        }
         e.target.value = ""
     }
 
@@ -66,7 +90,10 @@ const BulkImportPanel: React.FC<BulkImportPanelProps> = ({ isOpen, onClose, exis
                         onClick={close}
                     />
                     <motion.div
-                        className="relative w-full max-w-lg bg-zinc-800 rounded-t-3xl p-5 pb-8 text-[#fffadd] shadow-2xl"
+                        className="relative w-full max-w-lg max-h-[85vh] overflow-y-auto bg-zinc-800 rounded-t-3xl p-5 pb-8 text-[#fffadd] shadow-2xl"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label="Import categories"
                         initial={{ y: "100%" }}
                         animate={{ y: 0 }}
                         exit={{ y: "100%" }}
@@ -84,6 +111,7 @@ const BulkImportPanel: React.FC<BulkImportPanelProps> = ({ isOpen, onClose, exis
                                 setDuplicates([])
                             }}
                             rows={6}
+                            autoFocus
                             className="w-full bg-zinc-900 border border-amber-100/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-100/30 placeholder-amber-100/20"
                             placeholder={"Best Locs | Who has the best locs\nMegaphone Award | Loudest"}
                         />
