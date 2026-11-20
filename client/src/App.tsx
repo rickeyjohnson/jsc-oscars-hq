@@ -22,76 +22,79 @@ import MemberNamesPage from "./pages/committee/MemberNamesPage"
 import { AppShell } from "./ui/AppShell"
 import { RequireAuth } from "./ui/RequireAuth"
 import { NotFound } from "./ui/NotFound"
+import { ConfirmProvider } from "./ui/ConfirmProvider"
 
 // Dev-only: the constant folds to null in production builds, so the gallery is tree-shaken out.
 const DesignGallery = import.meta.env.DEV ? lazy(() => import("./dev/DesignGallery")) : null
 
 const App = () => {
     return (
-        <Routes>
-            <Route path="/" element={<LandingPage />} />
-            {DesignGallery && (
+        <ConfirmProvider>
+            <Routes>
+                <Route path="/" element={<LandingPage />} />
+                {DesignGallery && (
+                    <Route
+                        path="/dev/design"
+                        element={
+                            <Suspense fallback={null}>
+                                <DesignGallery />
+                            </Suspense>
+                        }
+                    />
+                )}
+                <Route path="/signup" element={<SignupPage />} />
+                <Route path="/signup/confirmed" element={<ComfirmedEmailPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/login/reset" element={<ResetPassword />} />
+
+                {/* Full-bleed, no shell. UX gate only; RLS is the real protection for committee actions. */}
                 <Route
-                    path="/dev/design"
+                    path="/app/profile/release"
                     element={
-                        <Suspense fallback={null}>
-                            <DesignGallery />
-                        </Suspense>
+                        <RequireAuth>
+                            <UserDataProvider>
+                                <RequireCommittee>
+                                    <ReleasePage />
+                                </RequireCommittee>
+                            </UserDataProvider>
+                        </RequireAuth>
                     }
                 />
-            )}
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/signup/confirmed" element={<ComfirmedEmailPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/login/reset" element={<ResetPassword />} />
 
-            {/* Full-bleed, no shell. UX gate only; RLS is the real protection for committee actions. */}
-            <Route
-                path="/app/profile/release"
-                element={
-                    <RequireAuth>
-                        <UserDataProvider>
-                            <RequireCommittee>
-                                <ReleasePage />
-                            </RequireCommittee>
-                        </UserDataProvider>
-                    </RequireAuth>
-                }
-            />
-
-            <Route
-                path="/app"
-                element={
-                    <RequireAuth>
-                        <UserDataProvider>
-                            <AppShell />
-                        </UserDataProvider>
-                    </RequireAuth>
-                }
-            >
-                <Route index element={<HomePage />} />
-                <Route path="ballots" element={<BallotsPage />} />
-                <Route path="ballots/:ballotId" element={<VotePage />} />
-                <Route path="results" element={<ResultsPage />} />
-                {/* Stats folds into Results in a later task; keep the route working until then. */}
-                <Route path="stats" element={<StatsPage />} />
-                <Route path="profile" element={<ProfilePage />} />
                 <Route
+                    path="/app"
                     element={
-                        <RequireCommittee>
-                            <Outlet />
-                        </RequireCommittee>
+                        <RequireAuth>
+                            <UserDataProvider>
+                                <AppShell />
+                            </UserDataProvider>
+                        </RequireAuth>
                     }
                 >
-                    <Route path="profile/ballots/create" element={<BallotBuilderPage />} />
-                    <Route path="profile/ballots" element={<ManageBallotsPage />} />
-                    <Route path="profile/ballots/:ballotId" element={<BallotAdminPage />} />
-                    <Route path="profile/members" element={<MemberNamesPage />} />
+                    <Route index element={<HomePage />} />
+                    <Route path="ballots" element={<BallotsPage />} />
+                    <Route path="ballots/:ballotId" element={<VotePage />} />
+                    <Route path="results" element={<ResultsPage />} />
+                    {/* Stats folds into Results in a later task; keep the route working until then. */}
+                    <Route path="stats" element={<StatsPage />} />
+                    <Route path="profile" element={<ProfilePage />} />
+                    <Route
+                        element={
+                            <RequireCommittee>
+                                <Outlet />
+                            </RequireCommittee>
+                        }
+                    >
+                        <Route path="profile/ballots/create" element={<BallotBuilderPage />} />
+                        <Route path="profile/ballots" element={<ManageBallotsPage />} />
+                        <Route path="profile/ballots/:ballotId" element={<BallotAdminPage />} />
+                        <Route path="profile/members" element={<MemberNamesPage />} />
+                    </Route>
+                    <Route path="*" element={<NotFound />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-        </Routes>
+            </Routes>
+        </ConfirmProvider>
     )
 }
 

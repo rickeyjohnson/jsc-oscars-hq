@@ -10,6 +10,7 @@ import { tallyCategory, type CategoryTally } from "../../lib/tally"
 import { badgeFor, buildCategoryViews, manualBase, recordPlan, ROUND_ORDER, summaryLine, type BadgeKey, type CategoryView } from "../../lib/tallyView"
 import { toUtcIso } from "../../lib/time"
 import { chipStatus } from "../../lib/voting"
+import { useConfirm } from "../../ui/ConfirmProvider"
 import type { Ballot, BallotDetail, ResultRow, VoteRow } from "../../types"
 
 type Props = { ballot: Ballot }
@@ -48,6 +49,7 @@ const secondarySmall = "bg-[#302f2d] text-[#fffadd] rounded-full text-xs px-3 py
 // Committee-only tally of a finished ballot: per category ranks and vote counts, next step,
 // Record results, the next round, and manual picks.
 const TallyPanel = ({ ballot }: Props) => {
+    const confirm = useConfirm()
     const status = chipStatus(ballot, new Date())
     const ended = status === "ended" || status === "closed" || status === "released"
     const mainId = ballot.round === "main" ? ballot.id : (ballot.parent_ballot_id ?? ballot.id)
@@ -141,7 +143,7 @@ const TallyPanel = ({ ballot }: Props) => {
             const plan = recordPlan(ballot.round, ballot.id, views, data.results, later, data.mainTallies)
             if (plan.overwrites.length > 0) {
                 const list = plan.overwrites.map(catName).join(", ")
-                if (!window.confirm(`This changes an already recorded winner in: ${list}. Continue?`)) return null
+                if (!(await confirm({ title: "Replace recorded winners?", message: `This changes an already recorded winner in: ${list}.`, confirmLabel: "Replace" }))) return null
             }
             await upsertResults(plan.rows)
             const kept = plan.skipped.length > 0 ? ` Kept ${plan.skipped.length} decided by a later round or by hand.` : ""
@@ -160,7 +162,7 @@ const TallyPanel = ({ ballot }: Props) => {
             if (!closesAt) throw new Error("Pick when the round closes")
             const main: Ballot = data.main
             const n = entries.length
-            if (!window.confirm(`Create a ${roundLabel} round with ${n} ${n === 1 ? "category" : "categories"}? It opens for voting right away.`)) return null
+            if (!(await confirm({ title: `Create a ${roundLabel} round?`, message: `${n} ${n === 1 ? "category" : "categories"}. It opens for voting right away.`, confirmLabel: "Create round" }))) return null
             await createRoundBallot(main, nextRound, entries, toUtcIso(closesAt))
             return `Created the ${roundLabel} round.`
         })
@@ -171,7 +173,7 @@ const TallyPanel = ({ ballot }: Props) => {
             if (!pick) throw new Error("Pick a winner first")
             const existing = data.results[v.category_id]
             if (existing?.winner_nominee_id && existing.winner_nominee_id !== pick) {
-                if (!window.confirm(`${v.name} already has a recorded winner (${name(existing.winner_nominee_id)}). Replace it?`)) return null
+                if (!(await confirm({ title: `Replace the winner for ${v.name}?`, message: `${v.name} already has a recorded winner (${name(existing.winner_nominee_id)}).`, confirmLabel: "Replace", destructive: true }))) return null
             }
             const row = manualResult(manualBase(ballot.round, ballot.id, v, existing), pick, ballot.id)
             await upsertResults([attachPlaces(row, data.mainTallies[v.category_id] ?? v.tally, ballot.round === "main" ? null : v.tally)])

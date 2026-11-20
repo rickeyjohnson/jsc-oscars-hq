@@ -5,6 +5,7 @@ import Logo from "./Logo"
 import PrimitivesA from "./PrimitivesA"
 import PrimitivesB from "./PrimitivesB"
 import Shell from "./Shell"
+import Sheets from "./Sheets"
 
 export type GallerySection = { id: string; title: string; Component: ComponentType }
 
@@ -15,7 +16,7 @@ function placeholder(name: string): ComponentType {
 }
 
 // Later tasks replace a placeholder with the real section.
-const UPCOMING = ["Inputs", "Sheets and dialogs", "Motion", "Feedback"]
+const UPCOMING = ["Inputs", "Motion", "Feedback"]
 
 export const SECTIONS: GallerySection[] = [
     { id: "foundations", title: "Foundations", Component: Foundations },
@@ -24,5 +25,6 @@ export const SECTIONS: GallerySection[] = [
     { id: "primitives-a", title: "Primitives A", Component: PrimitivesA },
     { id: "primitives-b", title: "Primitives B", Component: PrimitivesB },
     { id: "navigation", title: "Navigation", Component: Shell },
+    { id: "sheets-and-dialogs", title: "Sheets and dialogs", Component: Sheets },
     ...UPCOMING.map((t) => ({ id: t.toLowerCase().replace(/[^a-z]+/g, "-"), title: t, Component: placeholder(t) })),
 ]

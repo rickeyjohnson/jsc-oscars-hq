@@ -11,6 +11,7 @@ import { fetchMembers } from "../../api/members"
 import { fetchAllVotes } from "../../api/votes"
 import { publishBlockers } from "../../lib/ballotForm"
 import { completionByMember, chipStatus, type BallotSummary, type MemberCompletion } from "../../lib/voting"
+import { useConfirm } from "../../ui/ConfirmProvider"
 import { closesInLabel } from "../../lib/time"
 
 // resultsAction / resultsBody override the default Export CSV button and TallyPanel.
@@ -18,6 +19,7 @@ type Props = { resultsAction?: ReactNode; resultsBody?: ReactNode }
 
 const BallotAdminPage = ({ resultsAction, resultsBody }: Props) => {
     const { ballotId } = useParams()
+    const confirm = useConfirm()
     const [ballot, setBallot] = useState<BallotSummary | null>(null)
     const [rows, setRows] = useState<MemberCompletion[]>([])
     const [error, setError] = useState<string | null>(null)
@@ -44,10 +46,10 @@ const BallotAdminPage = ({ resultsAction, resultsBody }: Props) => {
         load()
     }, [load])
 
-    const changeStatus = async (status: "open" | "closed", message: string) => {
+    const changeStatus = async (status: "open" | "closed", ask: { title: string; message: string; confirmLabel: string; destructive?: boolean }) => {
         if (!ballotId) return
         if (status === "open" && blockers.length > 0) return
-        if (!window.confirm(message)) return
+        if (!(await confirm(ask))) return
         setBusy(true)
         setActionError(null)
         try {
@@ -83,7 +85,7 @@ const BallotAdminPage = ({ resultsAction, resultsBody }: Props) => {
                         {ballot.status === "open" && (
                             <button
                                 disabled={busy}
-                                onClick={() => changeStatus("closed", "Close voting now? Votes can no longer be changed.")}
+                                onClick={() => changeStatus("closed", { title: `Close voting for ${ballot.name}?`, message: "Votes can no longer be changed.", confirmLabel: "Close voting", destructive: true })}
                                 className="w-full bg-red-600 text-white font-bold rounded-2xl p-4 disabled:opacity-50"
                             >
                                 Close now
@@ -92,7 +94,7 @@ const BallotAdminPage = ({ resultsAction, resultsBody }: Props) => {
                         {ballot.status === "draft" && (
                             <button
                                 disabled={busy || blockers.length > 0}
-                                onClick={() => changeStatus("open", "Publish this ballot? Members will be able to vote.")}
+                                onClick={() => changeStatus("open", { title: "Publish this ballot?", message: "Members will be able to vote.", confirmLabel: "Publish" })}
                                 className="w-full bg-amber-100 text-zinc-900 font-bold rounded-2xl p-4 disabled:opacity-50"
                             >
                                 Publish

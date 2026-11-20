@@ -1,5 +1,8 @@
-import { AnimatePresence, motion } from "motion/react"
-import type { ReactNode } from "react"
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
+import { Sheet } from "../ui/Sheet"
+
+// Compat adapter: same exports and props, now rendered by the shared Sheet.
+const TitleContext = createContext<(t: string) => void>(() => {})
 
 interface ModalProps {
     isOpen: boolean
@@ -29,6 +32,8 @@ export const ModalHeader = ({
     description,
     width = "w-[60%]",
 }: ModalHeaderProps) => {
+    const setTitle = useContext(TitleContext)
+    useEffect(() => setTitle(title), [title, setTitle])
     return (
         <div className={`${width}`}>
             <h2 className="text-lg font-semibold text-amber-100 mb-1">
@@ -51,34 +56,19 @@ export const ModalFooter = ({ children }: ModalFooterProps) => {
     return <div className="flex items-center justify-end gap-3">{children}</div>
 }
 
+const WIDE = /max-w-(xl|2xl|3xl|4xl|5xl|6xl|7xl)$/
+
 const Modal = ({
     isOpen,
     onClose,
     children,
     maxWidth = "max-w-lg",
 }: ModalProps) => {
-    if (!isOpen) return null
-
+    const [title, setTitle] = useState("Dialog")
     return (
-        <AnimatePresence>
-            <div className="fixed inset-0 z-50 flex items-center justify-center">
-                <motion.div
-                    className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    onClick={onClose}
-                />
-                <motion.div
-                    className={`relative w-full ${maxWidth} mx-4 bg-zinc-900 border border-amber-100/10 shadow-xl p-8 rounded-3xl max-h-[80vh]`}
-                    initial={{ opacity: 0, scale: 0.96 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.96 }}
-                >
-                    {children}
-                </motion.div>
-            </div>
-        </AnimatePresence>
+        <Sheet open={isOpen} onClose={onClose} title={title} detents={["large"]} width={WIDE.test(maxWidth) ? "wide" : "default"} hideTitle>
+            <TitleContext.Provider value={setTitle}>{children}</TitleContext.Provider>
+        </Sheet>
     )
 }
 

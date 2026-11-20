@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from "motion/react"
+import { ConfirmSheet } from "../ui/ConfirmSheet"
 
 interface DeleteConfirmModalProps {
     isOpen: boolean
@@ -9,8 +9,7 @@ interface DeleteConfirmModalProps {
     confirmText?: string
 }
 
-// TODO: make this look prettier (like profile setup)
-
+// Compat adapter: same props, now rendered by the shared ConfirmSheet.
 const DeleteConfirmationModal = ({
     isOpen,
     onClose,
@@ -18,61 +17,19 @@ const DeleteConfirmationModal = ({
     title = "Delete Item",
     description = "Are you sure you want to delete this? This action cannot be undone.",
     confirmText = "Delete",
-}: DeleteConfirmModalProps) => {
-    if (!isOpen) return null
-
-    return (
-        <>
-            <AnimatePresence>
-                <motion.div
-                    key="deletition-confirmation-container"
-                    initial={{ y: 0, opacity: 1 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{
-                        y: "-110%",
-                        opacity: 0,
-                        scale: 0.96,
-                        filter: "blur(6px)",
-                        transition: {
-                            duration: 1.25,
-                            ease: [0.22, 1, 0.36, 1],
-                        },
-                    }}
-                    className="fixed inset-0 z-50 flex items-center justify-center p-6 h-screen"
-                >
-                    <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-                    <motion.div
-                        className={`relative w-full max-w-[80vw] flex items-center justify-center flex-col`}
-                        initial={{ opacity: 0, scale: 0.96 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.96 }}
-                    >
-                        <h2 className="font-bold">{title}</h2>
-                        <p className="text-[#fffadd]/60 mt-2">{description}</p>
-
-                        <div className="flex mt-4 gap-4">
-                            <button
-                                onClick={onClose}
-                                className="h-full rounded-full border border-[#fffadd]/20 bg-amber-100/5 flex items-center justify-center overflow-hidden hover:border-[#fffadd]/40 transition p-4"
-                            >
-                                Cancel
-                            </button>
-
-                            <button
-                                onClick={() => {
-                                    onConfirm()
-                                    onClose()
-                                }}
-                                className="h-full rounded-full border border-[#fffadd]/20 flex items-center justify-center overflow-hidden hover:border-[#fffadd]/40 transition bg-red-500 text-amber-100 font-bold hover:bg-red-600 transition p-4"
-                            >
-                                {confirmText}
-                            </button>
-                        </div>
-                    </motion.div>
-                </motion.div>
-            </AnimatePresence>
-        </>
-    )
-}
+}: DeleteConfirmModalProps) => (
+    <ConfirmSheet
+        open={isOpen}
+        title={title}
+        message={description}
+        confirmLabel={confirmText}
+        destructive
+        onCancel={onClose}
+        onConfirm={() => {
+            onConfirm()
+            onClose()
+        }}
+    />
+)
 
 export default DeleteConfirmationModal
