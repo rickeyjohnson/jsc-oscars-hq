@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { Mail, Lock, LoaderCircle } from "lucide-react"
 import { supabase } from "../supabaseClient"
 import { useAuth } from "../context/AuthContext"
+import { authRedirectUrl } from "../lib/siteUrl"
 
 interface LoginData {
     email: string
@@ -21,7 +22,7 @@ const ForgotPasswordModal = ({ closeModal }: { closeModal: () => void }) => {
 
         const { error } = await supabase.auth.resetPasswordForEmail(
             forgotPasswordEmail,
-            { redirectTo: "http://localhost:5173/login/reset" }
+            { redirectTo: authRedirectUrl("/login/reset") }
         )
 
         if (error) {

@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom"
 import { Mail, Lock, User, IdCard, LoaderCircle } from "lucide-react"
 import { supabase } from "../supabaseClient"
 import { useAuth } from "../context/AuthContext"
+import { fetchAvailableMemberNames } from "../api/members"
+import { authRedirectUrl } from "../lib/siteUrl"
 
 type SignupDate = {
     email: string
@@ -29,6 +31,8 @@ const SignupPage = () => {
     const { user } = useAuth()
     const [showVerifyEmailModal, setShowVerifyEmailModal] = useState(false)
     const [loader, setLoader] = useState(false)
+    const [memberNames, setMemberNames] = useState<string[]>([])
+    const [signupError, setSignupError] = useState("")
     const [signupData, setSignupData] = useState<SignupDate>({
         email: "",
         name: "",
@@ -55,23 +59,15 @@ const SignupPage = () => {
         const password = signupData.password
         const username = signupData.username
         const name = signupData.name
-        let is_committee = false
-
-        if (name === "rickey" || name === "kadin") {
-            is_committee = true
-        }
+        setSignupError("")
 
         // supabase signup
         const { error } = await supabase.auth.signUp({
             email,
             password,
             options: {
-                data: {
-                    username,
-                    name,
-                    is_committee,
-                },
-                emailRedirectTo: "http://localhost:5173/signup/confirmed",
+                data: { username, member_name: name },
+                emailRedirectTo: authRedirectUrl("/signup/confirmed"),
             },
         })
 
@@ -79,11 +75,20 @@ const SignupPage = () => {
 
         if (error) {
             console.error("error's signing up: ", error.message)
+            setSignupError(
+                "That name is already claimed or not on the list."
+            )
             return
         }
 
         setShowVerifyEmailModal(true)
     }
+
+    useEffect(() => {
+        fetchAvailableMemberNames()
+            .then(setMemberNames)
+            .catch((err) => console.error("error loading names: ", err))
+    }, [])
 
     useEffect(() => {
         if (user && user?.email_confirmed_at) {
@@ -133,27 +138,11 @@ const SignupPage = () => {
                                         <option value="" disabled hidden>
                                             New Nick
                                         </option>
-                                        <option value="anthony">Anthony</option>
-                                        <option value="dakarai">Dakarai</option>
-                                        <option value="demichael">
-                                            Demichael
-                                        </option>
-                                        <option value="evan">Evan</option>
-                                        <option value="john">
-                                            John Sampson
-                                        </option>
-                                        <option value="jonathan">
-                                            Jonathan Madden
-                                        </option>
-                                        <option value="justin">Justin</option>
-                                        <option value="kadin">Kadin</option>
-                                        <option value="langston">
-                                            Langston
-                                        </option>
-                                        <option value="micah">Micah</option>
-                                        <option value="nick">Nick</option>
-                                        <option value="rickey">Rickey</option>
-                                        <option value="tj">TJ</option>
+                                        {memberNames.map((n) => (
+                                            <option key={n} value={n}>
+                                                {n}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>
@@ -220,6 +209,11 @@ const SignupPage = () => {
                             "Create Account"
                         )}
                     </button>
+                    {signupError && (
+                        <p className="text-red-400 text-sm mb-4">
+                            {signupError}
+                        </p>
+                    )}
                 </form>
 
                 <p className="text-center text-[#fffadd]/60">
