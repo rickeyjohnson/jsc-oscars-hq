@@ -13,7 +13,7 @@ import ResetPassword from "./pages/ResetPassword"
 import ComfirmedEmailPage from "./pages/ComfirmedEmailPage"
 import { UserDataProvider } from "./context/UserContenxt"
 import RequireCommittee from "./components/RequireCommittee"
-import CreateBallotTemplate from "./pages/CreateBallotTemplate"
+import BallotBuilderPage from "./pages/ballot-builder/BallotBuilderPage"
 
 const App = () => {
     const ProtectedHomePage = WithAuth(HomePage)
@@ -78,7 +78,7 @@ const App = () => {
 
                 <Route
                     path="/app/profile/ballots/create"
-                    element={committeeRoute(<CreateBallotTemplate />)}
+                    element={committeeRoute(<BallotBuilderPage />)}
                 />
 
                 <Route path="*" element={<div>404 Not Found</div>} />
