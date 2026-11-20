@@ -86,11 +86,11 @@ export default function Foundations() {
             <div>
                 <Heading>Contrast pairs (dark palette, live)</Heading>
                 <div className="grid gap-2 md:grid-cols-2">
-                    {CONTRAST_PAIRS.map((pair) => {
+                    {CONTRAST_PAIRS.map((pair, idx) => {
                         const ratio = contrastRatio(valueOf(pair.fg), valueOf(pair.bg))
                         const ok = ratio >= pair.min
                         return (
-                            <div key={`${pair.fg}|${pair.bg}`} className="flex items-center gap-3 rounded-control p-2 min-w-0" style={{ background: varOf(pair.bg) }}>
+                            <div key={`${idx}|${pair.fg}|${pair.bg}`} className="flex items-center gap-3 rounded-control p-2 min-w-0" style={{ background: varOf(pair.bg) }}>
                                 <span className="text-headline shrink-0" style={{ color: varOf(pair.fg) }}>
                                     Aa
                                 </span>

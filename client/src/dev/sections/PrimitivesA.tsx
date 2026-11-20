@@ -1,4 +1,3 @@
-import { MemoryRouter } from "react-router-dom"
 import { Inbox, Plus } from "lucide-react"
 import { useState, type ReactNode } from "react"
 import { Button } from "../../ui/Button"
@@ -38,7 +37,7 @@ const STATES: { label: string; props: Record<string, unknown> }[] = [
 export default function PrimitivesA() {
     const [on, setOn] = useState(false)
     return (
-        <MemoryRouter>
+        <>
             <div className="space-y-10">
                 <div>
                     <H>Buttons (variant x size x state)</H>
@@ -166,6 +165,6 @@ export default function PrimitivesA() {
                     </div>
                 </div>
             </div>
-        </MemoryRouter>
+        </>
     )
 }

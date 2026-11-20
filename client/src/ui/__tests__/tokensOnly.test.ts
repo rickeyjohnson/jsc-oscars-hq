@@ -53,3 +53,14 @@ describe("tokens only", () => {
         expect(hits.join("\n")).toBe("")
     })
 })
+
+describe("no nested routers", () => {
+    it("ui and dev never create a Router (the app provides one)", () => {
+        const hits: string[] = []
+        for (const f of ["ui", "dev"].flatMap((d) => walk(join(src, d))))
+            readFileSync(f, "utf8").split("\n").forEach((l, i) => {
+                if (/\b(BrowserRouter|MemoryRouter|HashRouter|createBrowserRouter)\b/.test(l)) hits.push(`${rel(f)}:${i + 1}`)
+            })
+        expect(hits.join("\n")).toBe("")
+    })
+})
