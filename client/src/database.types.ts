@@ -222,6 +222,7 @@ export type Database = {
           decided_ballot_id: string
           decided_by: Database["public"]["Enums"]["decided_by"] | null
           nominee_ids: string[]
+          places: Json | null
           top3_nominee_ids: string[]
           updated_at: string
           winner_nominee_id: string | null
@@ -231,6 +232,7 @@ export type Database = {
           decided_ballot_id: string
           decided_by?: Database["public"]["Enums"]["decided_by"] | null
           nominee_ids?: string[]
+          places?: Json | null
           top3_nominee_ids?: string[]
           updated_at?: string
           winner_nominee_id?: string | null
@@ -240,6 +242,7 @@ export type Database = {
           decided_ballot_id?: string
           decided_by?: Database["public"]["Enums"]["decided_by"] | null
           nominee_ids?: string[]
+          places?: Json | null
           top3_nominee_ids?: string[]
           updated_at?: string
           winner_nominee_id?: string | null
