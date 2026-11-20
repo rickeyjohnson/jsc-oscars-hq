@@ -1,6 +1,6 @@
 # Deploy and launch checklist (JSC Oscars)
 
-Supabase project: `fsuczxowirmsxtmzzsys` (migrations already applied). Never paste secrets into chat, the repo, or `client/.env.example`.
+Supabase project: `fsuczxowirmsxtmzzsys` (see section 4 for which migrations are applied). Never paste secrets into chat, the repo, or `client/.env.example`.
 
 ## 1. Vercel
 
@@ -39,18 +39,34 @@ Dashboard -> Storage -> `profile-pics` bucket: set max file size to 5 MB and all
    ```
    Only Rickey and Kadin should be `true`. Sign out and in again so the app picks it up.
 
-## 4. Database cleanup (MUST happen before voting opens)
+## 4. Database migrations, tests and cleanup (MUST happen before voting opens)
 
-After the last DB test run:
+Apply every file in `supabase/migrations/` in this order (dashboard SQL editor or MCP `apply_migration`):
+1. `20261119000000_remote_schema.sql` - applied.
+2. `20261120000100_members_and_roles.sql` - applied.
+3. `20261120000200_voting.sql` - applied.
+4. `20261120000300_voting_fixes.sql` - applied.
+5. `20261121000100_results_places.sql` - applied via MCP.
+6. `20261121000200_reset_claim_guards.sql` - NOT applied: paste it in the dashboard SQL editor. Member-name Reset fails until then.
+
+DB tests (`supabase/tests/database/`, run in the dashboard SQL editor; the `tests` schema from `000-setup-tests-hooks.test.sql` must exist; run 000 first if it was dropped). Each file prints TAP lines:
+- `02_voting_rls.test.sql` -> `1..71`
+- `03_results_places.test.sql` -> `1..8`
+- `04_reset_claim_guards.test.sql` -> `1..10` (needs migration 6)
+- (`01_members_roles.test.sql` -> `1..12`)
+All lines should be `ok`.
+
+Only AFTER the last test run:
 ```sql
 drop schema tests cascade;
 drop extension if exists pgtap;
 ```
-Then confirm no test data:
+Then confirm no test data (run `supabase/manual/wipe_test_data.sql` first if you used the seed):
 ```sql
 select count(*) from ballots;     -- 0 (or only your real/dry-run ballot)
 select count(*) from auth.users;  -- only real people (Rickey, Kadin, plus real signups); no test@/example addresses
 select count(*) from votes;       -- 0 before the real ballot opens
+select count(*) from seasons where results_released_at is not null;  -- 0 before the ceremony
 ```
 
 ## 5. Secrets hygiene
@@ -75,11 +91,13 @@ select count(*) from votes;       -- 0 before the real ballot opens
    cd ~/repos/jsc-oscars && ./venv/bin/python oscars.py
    ```
    (Edit the script's input filename if it is hard-coded.) Confirm it runs and the winners look right.
-6. Tie test: make a 2-2 tie style result (or edit votes via a second test ballot). On the committee tally view create a tiebreak round, vote in it, close it, record the winner. Also try the manual pick.
-7. Cleanup: Supabase -> Table Editor -> `ballots` -> delete the test ballot (cascades). Verify:
+6. Release, results and stats (use a throwaway season state; undo in step 8): Record results for each category, resolve ties, use `Fill in podium places` if shown, then Profile -> Release results (checklist green, `Hold to release` for 3 s). As a member check the Results page (podiums, no vote counts) and the Stats page. Releasing marks the real season released: undo with `update seasons set results_released_at = null where name = 'JSC Oscars Fall 2026'; update ballots set status = 'closed' where status = 'released';`.
+7. Tie test: make a 2-2 tie style result (or edit votes via a second test ballot). On the committee tally view create a tiebreak round, vote in it, close it, record the winner. Also try the manual pick.
+8. Cleanup: Supabase -> Table Editor -> `ballots` -> delete the test ballot (cascades). Verify:
    ```sql
    select count(*) from votes;  -- 0
    select count(*) from ballots; -- 0
+   select count(*) from seasons where results_released_at is not null; -- 0
    ```
    Keep the two real accounts.
 
@@ -90,14 +108,21 @@ select count(*) from votes;       -- 0 before the real ballot opens
 - [ ] Nov 25-26: publish the real ballot, closing time set deliberately (entered in local time, stored UTC; double check on the ballot page).
 - [ ] Re-run section 4 counts (no leftover test votes) just before publishing.
 - [ ] Run supabase/manual/wipe_test_data.sql if you ever ran the test seed (see docs/TESTING.md)
-- [ ] Committee recovery (forgot password, wrong name, or a pranked claim): Supabase Dashboard -> Authentication -> Users -> delete that user (their profile and votes are removed; the member name is freed). Then run in the SQL editor `update public.members set user_id = null, claimed_at = null where name = '<Name>';` to clear the claim time, and ask them to sign up again.
-- [ ] When closed: tally, resolve ties, Export CSV, run oscars.py.
+- [ ] Committee recovery (forgot password, wrong name, or a pranked claim): in the app, Member names -> Reset that member (frees the name, removes their votes; you cannot reset yourself). Then delete their login in Supabase Dashboard -> Authentication -> Users, and ask them to sign up again.
+- [ ] Ceremony flow: close the ballot -> Record results -> tiebreak / committee round / manual pick for ties -> if any category was recorded before the places migration, main ballot -> `Fill in podium places` -> Profile -> Release results (checklist, `Hold to release` 3 s) -> members open Results. Also Export CSV and run oscars.py.
+- Release went wrong: `Not ready` errors list the reason; fix it and retry. A half-done release (ballots `released` but season not) is safe; retrying finishes it. Undoing a real release is SQL only (`update seasons set results_released_at = null where name = 'JSC Oscars Fall 2026';`) and members may already have seen winners.
 
 ## 8. Limitations and troubleshooting
 
 - Supabase free projects pause after about a week of inactivity. Check the project is Active in the dashboard the day before voting week, and open the app yourself first. Restore from the dashboard if paused.
 - With confirmation OFF, signup needs no email. Reset emails only work with custom SMTP (section 2); otherwise use the recovery procedure in section 7.
-- Known limitation: `nominees.created_by` (who added a write-in option) is readable by signed-in members before results are released. Acceptable for 14 friends; fix later with a migration.
+- Known limitations / needs migration later (acceptable for 14 friends):
+  - `nominees.created_by` (who added a write-in) is readable by signed-in members before release.
+  - Round lineage is not constrained in the DB (tiebreak/committee parent and round combinations).
+  - `ballot_is_open` uses `now()` (transaction time); `clock_timestamp()` would be stricter.
+  - Release is client-side in several writes; a `release_season` RPC would make it atomic.
+  - `results.decided_ballot_id` is `on delete cascade`; should be `restrict` so deleting a round cannot erase results.
+  - Missing partial unique index on `(parent_ballot_id, round)` to stop duplicate rounds.
 - Blank page / "Invalid API key": env vars wrong or not redeployed. Check Vercel env vars and redeploy.
 - Confirmation/reset link goes to localhost or errors: Site URL / Redirect URLs (section 2) or `VITE_SITE_URL` are wrong.
 - 404 on refresh of a deep link: `client/vercel.json` missing from the deployed Root Directory.
