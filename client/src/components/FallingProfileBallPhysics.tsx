@@ -12,10 +12,13 @@ import {
     Events,
 } from "matter-js"
 import { settledLayout } from "../ui/logic/settle"
+import { ballRingColor } from "../ui/logic/landingBalls"
 
 const BALL_COUNT = 13
 const BALL_RADIUS = 40
 const WALL_THICKNESS = 200
+const RING_WIDTH = 3
+const RING_GAP = 2
 
 // The fixed layer is sized by the browser (inset-0 tracks the dynamic viewport), so measure it instead of window.inner*.
 const measure = (el: HTMLElement) => {
@@ -78,6 +81,7 @@ const FallingProfileBallsPhysics: React.FC = () => {
             const img = new Image()
             img.src = "/sidechatters/" + (index + 1) + ".jpg"
             body.avatar = img
+            body.ringColor = ballRingColor(index)
 
             return body
         })
@@ -110,6 +114,7 @@ const FallingProfileBallsPhysics: React.FC = () => {
             balls.forEach(
                 (ball: {
                     avatar: any
+                    ringColor: string
                     position: { x: any; y: any }
                     angle: any
                 }) => {
@@ -122,16 +127,21 @@ const FallingProfileBallsPhysics: React.FC = () => {
                     ctx.rotate(ball.angle)
 
                     ctx.beginPath()
-                    ctx.arc(0, 0, BALL_RADIUS, 0, Math.PI * 2)
+                    // Photo sits inside a pebble-colored ring with a small transparent gap.
+                    const photoR = BALL_RADIUS - RING_WIDTH - RING_GAP
+                    ctx.arc(0, 0, photoR, 0, Math.PI * 2)
                     ctx.clip()
 
-                    ctx.drawImage(
-                        ball.avatar,
-                        -BALL_RADIUS,
-                        -BALL_RADIUS,
-                        BALL_RADIUS * 2,
-                        BALL_RADIUS * 2
-                    )
+                    ctx.drawImage(ball.avatar, -photoR, -photoR, photoR * 2, photoR * 2)
+                    ctx.restore()
+
+                    ctx.save()
+                    ctx.translate(x, y)
+                    ctx.beginPath()
+                    ctx.arc(0, 0, BALL_RADIUS - RING_WIDTH / 2, 0, Math.PI * 2)
+                    ctx.lineWidth = RING_WIDTH
+                    ctx.strokeStyle = ball.ringColor
+                    ctx.stroke()
 
                     ctx.restore()
                 }

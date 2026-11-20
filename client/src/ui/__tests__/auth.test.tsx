@@ -14,7 +14,7 @@ vi.mock("../../supabaseClient", () => ({
     supabase: { auth: { signInWithPassword: (...a: unknown[]) => signIn(...a), signUp: (...a: unknown[]) => signUp(...a), resetPasswordForEmail: vi.fn(), updateUser: vi.fn() } },
 }))
 vi.mock("../../context/AuthContext", () => ({ useAuth: () => ({ session: null, user: null }) }))
-vi.mock("../../api/members", () => ({ fetchAvailableMemberNames: () => fetchNames() }))
+vi.mock("../../api/members", () => ({ fetchMemberNameStatus: async () => (await fetchNames()).map((name: string) => ({ name, taken: false })) }))
 vi.mock("../../components/FallingProfileBallPhysics", () => ({ default: () => <div data-testid="balls" /> }))
 vi.mock("react-router-dom", async (orig) => ({ ...(await orig<typeof import("react-router-dom")>()), useNavigate: () => navigate }))
 
@@ -59,7 +59,7 @@ describe("Landing", () => {
         expect(start.getAttribute("href")).toBe("/signup")
         expect(start.querySelector("button")).toBeNull()
         expect(screen.getByRole("link", { name: "Log in" }).getAttribute("href")).toBe("/login")
-        expect(screen.getByText("Be there or be ...")).toBeTruthy()
+        expect(screen.queryByText("Be there or be ...")).toBeNull()
     })
     it("uses no cursive font in the source", () => {
         const src = readFileSync(join(__dirname, "../../pages/LandingPage.tsx"), "utf8")

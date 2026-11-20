@@ -9,6 +9,8 @@ import { Sheet } from "../ui/Sheet"
 import { Button } from "../ui/Button"
 import { AuthLayout } from "../ui/AuthLayout"
 import { TextField } from "../ui/TextField"
+import { GoogleButton } from "../ui/GoogleButton"
+import { googleAuthEnabled, signInWithGoogle } from "../lib/googleAuth"
 
 interface LoginData {
     email: string
@@ -93,6 +95,9 @@ const LoginPage = () => {
     const [loginError, setLoginError] = useState("")
     const [loginLoading, setLoginLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
+    const google = googleAuthEnabled()
+    const [useEmail, setUseEmail] = useState(false)
+    const [googleLoading, setGoogleLoading] = useState(false)
     const navigate = useNavigate()
 
     const handleChange = (
@@ -130,6 +135,17 @@ const LoginPage = () => {
         navigate("/app")
     }
 
+    const handleGoogle = async () => {
+        setLoginError("")
+        setGoogleLoading(true)
+        const { error } = await signInWithGoogle()
+        if (error) {
+            console.error("google sign-in failed: ", error.message)
+            setLoginError(loginErrorText(error.message))
+            setGoogleLoading(false)
+        }
+    }
+
     const closeModal = () => {
         setShowForgotPasswordModal(false)
     }
@@ -143,6 +159,23 @@ const LoginPage = () => {
     return (
         <AuthLayout title="Welcome back." subtitle="Log in to vote.">
             <ForgotPasswordModal open={showForgotPasswordModal} closeModal={closeModal} />
+            {google && (
+                <div className="mt-6 flex flex-col items-center gap-3">
+                    <GoogleButton onClick={handleGoogle} loading={googleLoading} />
+                    {!useEmail && (
+                        <button type="button" onClick={() => setUseEmail(true)} className="text-callout text-label-2 hover:text-label min-h-11 px-3">
+                            or <span className="text-label font-bold">use email instead</span>
+                        </button>
+                    )}
+                    {!useEmail && loginError && (
+                        <p role="alert" className="text-subhead text-danger">
+                            {loginError}
+                        </p>
+                    )}
+                </div>
+            )}
+            {(!google || useEmail) && (
+            <div className={google ? "mt-6" : undefined}>
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <TextField
                     label="Email"
@@ -191,6 +224,10 @@ const LoginPage = () => {
                     Forgot password?
                 </Button>
                 <p className="text-footnote text-label-3">Not getting emails? Ask a committee member to reset your account.</p>
+            </div>
+            </div>
+            )}
+            <div className="mt-4 flex flex-col items-center gap-1 text-center">
                 <p className="text-callout text-label-2 mt-3">
                     New here?{" "}
                     <Link to="/signup" className="text-label inline-flex min-h-11 items-center font-bold underline">

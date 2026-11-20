@@ -1,8 +1,7 @@
 import type { ReactNode } from "react"
 import { Link } from "react-router-dom"
-import OscarLogo from "../components/OscarLogo"
 
-/** Standalone auth screen (no shell): back link, small logo, then a column that becomes a centered card from 1024px. */
+/** Standalone auth screen (no shell): back link, title, then a column that becomes a centered card from 1024px. */
 export function AuthLayout({ title, subtitle, step, back = "/", children }: { title: string; subtitle?: string; step?: string; back?: string | null; children: ReactNode }) {
     return (
         <div className="bg-bg text-label min-h-dvh lg:flex lg:items-center lg:justify-center">
@@ -17,10 +16,7 @@ export function AuthLayout({ title, subtitle, step, back = "/", children }: { ti
                     )}
                     {step && <span className="text-footnote text-label-2">{step}</span>}
                 </div>
-                <div className="my-4 flex justify-start">
-                    <OscarLogo size="small" decorative />
-                </div>
-                <h1 className="text-display mb-1">{title}</h1>
+                <h1 className="text-display mt-8 mb-1">{title}</h1>
                 {subtitle && <p className="text-callout text-label-2 mb-5">{subtitle}</p>}
                 {children}
             </div>
