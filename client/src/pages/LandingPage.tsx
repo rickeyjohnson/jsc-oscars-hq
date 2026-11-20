@@ -16,7 +16,7 @@ const LandingPage = () => {
                         </button>
                     </Link>
                     <Link to={"/signup"}>
-                        <button className="px-8 py-4 rounded-full bg-[#fffadd] text-black hover:bg-[#e6e6e6] font-medium font-poppins inline-flex items-center gap-2 group">
+                        <button className="px-8 py-4 rounded-full bg-[#fffadd] text-black hover:bg-[#e6e6e6] font-medium inline-flex items-center gap-2 group">
                             Get Started{" "}
                             <ChevronRight className="group-hover:translate-x-1 transition" />
                         </button>

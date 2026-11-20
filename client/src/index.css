@@ -1,61 +1,286 @@
 @import "tailwindcss";
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800;900&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=WindSong:wght@400;500&display=swap");
+
+/* Century Gothic as "CG" at its real weights. Light is the wordmark only. */
+@font-face {
+    font-family: "CG";
+    src: url("/fonts/CenturyGothic/CenturyGothicPaneuropeanLight.woff2") format("woff2");
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
 
 @font-face {
-    font-family: "CenturyGothicRegular";
-    src: url("/fonts/CenturyGothic/CenturyGothicPaneuropeanRegular.woff2")
-        format("woff2");
+    font-family: "CG";
+    src: url("/fonts/CenturyGothic/CenturyGothicPaneuropeanRegular.woff2") format("woff2");
     font-weight: 400;
     font-style: normal;
     font-display: swap;
 }
 
 @font-face {
-    font-family: "CenturyGothicThin";
-    src: url("/fonts/CenturyGothic/CenturyGothicPaneuropeanLight.woff2")
-        format("woff2");
-    font-weight: 100;
-    font-style: thin;
+    font-family: "CG";
+    src: url("/fonts/CenturyGothic/centurygothic_bold.ttf") format("truetype");
+    font-weight: 700;
+    font-style: normal;
     font-display: swap;
 }
 
-@layer components {
-    .font-oscars-regular {
-        font-family: "CenturyGothicRegular", sans-serif;
-    }
+/* BELLABOO SLOT: @font-face { font-family: "Bellaboo"; src: url("/fonts/Bellaboo/Bellaboo.woff2") format("woff2"); font-weight: 400; font-display: swap; } — enable when the file exists and its web license is confirmed */
 
-    .font-oscars-thin {
-        font-family: "CenturyGothicThin", sans-serif;
-    }
-
-    .font-windsong-regular {
-        font-family: "WindSong", sans-serif;
-        font-weight: 400;
-        font-style: normal;
-    }
-
-    .font-windsong-medium {
-        font-family: "WindSong", sans-serif;
-        font-weight: 500;
-        font-style: normal;
-    }
-}
-
-@layer base {
-    html {
-        font-family: "Poppins", sans-serif;
-    }
-}
-
+/* Dark only. A light set would be a second block under @media (prefers-color-scheme: light). */
 :root {
-    background: oklch(21% 0.006 285.885);
-    button {
-        transform: scale(1);
-        transition: transform 0.1s ease-out;
-    }
+    color-scheme: dark;
+    --bg: #18181B;
+    --surface: #27272A;
+    --surface-2: #3F3F46;
+    --elevated: #2C2C31;
+    --label: #FFFADD;
+    --label-2: rgb(255 250 221 / .68);
+    --label-3: rgb(255 250 221 / .40);
+    --fill: rgb(255 250 221 / .10);
+    --sep: rgb(255 250 221 / .12);
+    --strip-off: rgb(255 250 221 / .20);
+    --inverse: #FFFADD;
+    --on-inverse: #18181B;
+    --accent: #E6C77A;
+    --on-accent: #1A1304;
+    --danger: #FF7A73;
+    --success: #30D158;
+    --warn: #FFB340;
+    --lime-deep: #4FA832;
+    --gold: #FFC23D;
+    --on-gold: #3B2A00;
+    --silver: #9DB4D0;
+    --on-silver: #17263A;
+    --bronze: #E8803A;
+    --on-bronze: #2B1204;
+    --pebble-strawberry: #FF4F9A;
+    --on-pebble-strawberry: #1A1204;
+    --pebble-cherry: #FF5148;
+    --on-pebble-cherry: #1A1204;
+    --pebble-tangerine: #FF8A3D;
+    --on-pebble-tangerine: #1A1204;
+    --pebble-lemon: #FFD23F;
+    --on-pebble-lemon: #1A1204;
+    --pebble-lime: #7ED957;
+    --on-pebble-lime: #1A1204;
+    --pebble-sky: #3DB8FF;
+    --on-pebble-sky: #1A1204;
+    --pebble-grape: #8B5CF6;
+    --on-pebble-grape: #1A1204;
+}
 
-    button:active {
-        transform: scale(0.95);
+@theme inline {
+    --color-bg: var(--bg);
+    --color-surface: var(--surface);
+    --color-surface-2: var(--surface-2);
+    --color-elevated: var(--elevated);
+    --color-label: var(--label);
+    --color-label-2: var(--label-2);
+    --color-label-3: var(--label-3);
+    --color-fill: var(--fill);
+    --color-sep: var(--sep);
+    --color-strip-off: var(--strip-off);
+    --color-inverse: var(--inverse);
+    --color-on-inverse: var(--on-inverse);
+    --color-accent: var(--accent);
+    --color-on-accent: var(--on-accent);
+    --color-danger: var(--danger);
+    --color-success: var(--success);
+    --color-warn: var(--warn);
+    --color-lime-deep: var(--lime-deep);
+    --color-gold: var(--gold);
+    --color-on-gold: var(--on-gold);
+    --color-silver: var(--silver);
+    --color-on-silver: var(--on-silver);
+    --color-bronze: var(--bronze);
+    --color-on-bronze: var(--on-bronze);
+    --color-pebble-strawberry: var(--pebble-strawberry);
+    --color-on-pebble-strawberry: var(--on-pebble-strawberry);
+    --color-pebble-cherry: var(--pebble-cherry);
+    --color-on-pebble-cherry: var(--on-pebble-cherry);
+    --color-pebble-tangerine: var(--pebble-tangerine);
+    --color-on-pebble-tangerine: var(--on-pebble-tangerine);
+    --color-pebble-lemon: var(--pebble-lemon);
+    --color-on-pebble-lemon: var(--on-pebble-lemon);
+    --color-pebble-lime: var(--pebble-lime);
+    --color-on-pebble-lime: var(--on-pebble-lime);
+    --color-pebble-sky: var(--pebble-sky);
+    --color-on-pebble-sky: var(--on-pebble-sky);
+    --color-pebble-grape: var(--pebble-grape);
+    --color-on-pebble-grape: var(--on-pebble-grape);
+
+    --font-brand: "CG", "Century Gothic", sans-serif;
+    --font-sans: "CG", "Century Gothic", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-display: "Bellaboo", "CG", "Century Gothic", system-ui, sans-serif;
+
+    --text-display: 2.75rem;
+    --text-display--line-height: 1.0;
+    --text-display--font-weight: 700;
+    --text-large-title: 1.882rem;
+    --text-large-title--line-height: 1.15;
+    --text-large-title--font-weight: 700;
+    --text-title-1: 1.529rem;
+    --text-title-1--line-height: 1.2;
+    --text-title-1--font-weight: 700;
+    --text-title-2: 1.235rem;
+    --text-title-2--line-height: 1.25;
+    --text-title-2--font-weight: 700;
+    --text-title-3: 1.118rem;
+    --text-title-3--line-height: 1.25;
+    --text-title-3--font-weight: 700;
+    --text-headline: 1rem;
+    --text-headline--line-height: 1.3;
+    --text-headline--font-weight: 700;
+    --text-body: 1rem;
+    --text-body--line-height: 1.45;
+    --text-body--font-weight: 400;
+    --text-callout: 0.941rem;
+    --text-callout--line-height: 1.4;
+    --text-callout--font-weight: 400;
+    --text-subhead: 0.882rem;
+    --text-subhead--line-height: 1.4;
+    --text-subhead--font-weight: 400;
+    --text-footnote: 0.765rem;
+    --text-footnote--line-height: 1.4;
+    --text-footnote--font-weight: 400;
+    --text-caption-1: 0.706rem;
+    --text-caption-1--line-height: 1.35;
+    --text-caption-1--font-weight: 400;
+    --text-caption-2: 0.647rem;
+    --text-caption-2--line-height: 1.2;
+    --text-caption-2--font-weight: 700;
+
+    --radius-control: 16px;
+    --radius-card: 24px;
+    --radius-sheet: 28px;
+
+    --shadow-e1: none;
+    --shadow-e2: 0 8px 32px rgb(0 0 0 / 0.45);
+
+    --breakpoint-3xl: 87.5rem;
+}
+
+/* Materials: functional layer only (bars, sheets, scrims). */
+@utility material-bar {
+    background: rgb(24 24 27 / 0.78);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    backdrop-filter: blur(24px) saturate(1.4);
+    box-shadow: inset 0 0.5px 0 rgb(255 250 221 / 0.1), 0 0 0 0.5px var(--sep), var(--shadow-e2);
+}
+
+@utility material-sheet {
+    background: rgb(44 44 49 / 0.9);
+    -webkit-backdrop-filter: blur(32px) saturate(1.3);
+    backdrop-filter: blur(32px) saturate(1.3);
+    box-shadow: inset 0 0.5px 0 rgb(255 250 221 / 0.1), 0 0 0 0.5px var(--sep), var(--shadow-e2);
+}
+
+@utility material-scrim {
+    background: rgb(0 0 0 / 0.55);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+
+@utility pt-safe {
+    padding-top: env(safe-area-inset-top);
+}
+
+@utility pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+@utility px-gutter {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    @media (min-width: 768px) {
+        padding-left: max(24px, env(safe-area-inset-left));
+        padding-right: max(24px, env(safe-area-inset-right));
     }
+    @media (min-width: 1024px) {
+        padding-left: max(32px, env(safe-area-inset-left));
+        padding-right: max(32px, env(safe-area-inset-right));
+    }
+}
+
+@utility prose-width {
+    max-width: 65ch;
+}
+
+/* Opaque fallbacks (unlayered, so they win over utilities). */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .material-bar,
+    .material-sheet {
+        background: var(--surface);
+        box-shadow: 0 0 0 1px var(--sep);
+    }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+    .material-bar,
+    .material-sheet {
+        background: var(--surface);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        box-shadow: 0 0 0 1px var(--sep);
+    }
+}
+
+html {
+    background: var(--bg);
+    color: var(--label);
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+}
+
+/* iOS Safari: root size follows the person's text-size setting. */
+@supports (font: -apple-system-body) {
+    html {
+        font: -apple-system-body;
+        font-family: var(--font-sans);
+    }
+}
+
+body {
+    min-height: 100dvh;
+}
+
+/* Two-tone focus ring: dark gap, accent ring (readable on dark and on pebbles). */
+:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px var(--bg);
+}
+
+.skeleton {
+    background: var(--surface-2);
+    animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+    50% {
+        opacity: 0.5;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skeleton {
+        animation: none;
+    }
+}
+
+[data-reduce-motion] .skeleton {
+    animation: none;
+}
+
+/* Kept for legacy pages and the wordmark. */
+.font-oscars-regular {
+    font-family: var(--font-brand);
+    font-weight: 400;
+}
+
+.font-oscars-thin {
+    font-family: var(--font-brand);
+    font-weight: 300;
 }

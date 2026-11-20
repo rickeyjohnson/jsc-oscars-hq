@@ -16,7 +16,7 @@ type Load =
     | { state: "ready"; season: Season; cards: ResultCard[]; avatars: Record<string, string | null> }
 
 const Shell = ({ children }: { children: React.ReactNode }) => (
-    <div className="bg-zinc-900 min-h-screen text-[#fffadd] pb-24 font-poppins">
+    <div className="bg-zinc-900 min-h-screen text-[#fffadd] pb-24">
         <NavigationBar />
         <main className="px-6 py-6 space-y-4 max-w-md mx-auto">{children}</main>
         <NavigationTabs activeTab="results" />
