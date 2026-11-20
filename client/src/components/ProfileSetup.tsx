@@ -76,7 +76,7 @@ const ProfileSetup = ({ onComplete }: ProfileSetupProps) => {
         const { error } = await supabase
             .from("profiles")
             .update({ image_url: url })
-            .eq("user_id", user?.id)
+            .eq("user_id", user?.id ?? "")
 
         setLoading(false)
 

@@ -200,7 +200,7 @@ const CreateBallotPage = () => {
     })
 
     const [dragItemIndex, setDragItemIndex] = useState<number | null>(null)
-    const [dragOverItemIndex, setDragOverItemIndex] = useState<number | null>(
+    const [, setDragOverItemIndex] = useState<number | null>(
         null
     )
 
@@ -237,7 +237,7 @@ const CreateBallotPage = () => {
         e.dataTransfer.effectAllowed = "move"
     }
 
-    const onDragEnter = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    const onDragEnter = (_e: React.DragEvent<HTMLDivElement>, index: number) => {
         setDragOverItemIndex(index)
 
         // If we are dragging over a different item, reorder the array immediately
@@ -373,14 +373,14 @@ const CreateBallotPage = () => {
 import { Users, X, Link as LinkIcon } from "lucide-react";
 
 // --- 1. Basic Info Inputs ---
-interface BasicInfoProps {
+interface CategoryBasicInputsProps {
     name: string;
     description: string;
     onNameChange: (val: string) => void;
     onDescChange: (val: string) => void;
 }
 
-export const CategoryBasicInputs: React.FC<BasicInfoProps> = ({ name, description, onNameChange, onDescChange }) => (
+export const CategoryBasicInputs: React.FC<CategoryBasicInputsProps> = ({ name, description, onNameChange, onDescChange }) => (
     <div className="space-y-4">
         <div>
             <label className="block text-sm font-bold mb-2 text-amber-100 uppercase tracking-wide">Category Name</label>
@@ -592,7 +592,7 @@ interface CategoryModalProps {
     existingCategoriesCount: number; // For default ordering
 }
 
-const CategoryModal: React.FC<CategoryModalProps> = ({ 
+export const CategoryModal: React.FC<CategoryModalProps> = ({ 
     isOpen, 
     onClose, 
     onSave, 

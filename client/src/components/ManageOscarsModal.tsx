@@ -28,7 +28,7 @@ const ManageOscarsModal = ({
         const { error } = await supabase
             .from("oscarsEvents")
             .delete()
-            .eq("id", selectedEvent.id)
+            .eq("id", selectedEvent.id ?? "")
             .select()
 
         setLoading(false)

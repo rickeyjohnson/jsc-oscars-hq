@@ -33,7 +33,7 @@ const EditOscarEvent = ({
 
             if (!event.name) {
                 event.name = `Just Side Chatting Oscars: ${capitalizeFirstLetter(
-                    event.semester
+                    event.semester ?? undefined
                 )} ${new Date(event.starts_at).getFullYear()}`
             }
         }
@@ -79,7 +79,7 @@ const EditOscarEvent = ({
                             </label>
                             <input
                                 type="text"
-                                value={oscarEvent.name}
+                                value={oscarEvent.name ?? ""}
                                 onChange={(e) =>
                                     setOscarEvent({
                                         ...oscarEvent,

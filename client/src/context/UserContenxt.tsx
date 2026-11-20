@@ -21,11 +21,11 @@ interface UserDataContextType {
 }
 
 export interface OscarsEvent {
-    id?: string | null
-    starts_at?: string
-    ends_at?: string
-    semester?: string
-    name?: string
+    id?: string
+    starts_at?: string | null
+    ends_at?: string | null
+    semester?: string | null
+    name?: string | null
 }
 
 const UserDataContext = createContext<UserDataContextType | null>(null)

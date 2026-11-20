@@ -26,7 +26,7 @@ const HomePage = () => {
             const { data, error } = await supabase
                 .from("profiles")
                 .select("image_url")
-                .eq("user_id", user?.id)
+                .eq("user_id", user?.id ?? "")
                 .single()
 
             if (error) {
