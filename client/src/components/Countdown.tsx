@@ -6,13 +6,15 @@ import type { Season } from "../types"
 const Countdown = ({ season }: { season: Season | null }) => {
     const [now, setNow] = useState(() => new Date())
 
+    const ceremony = season?.ceremony_at ? new Date(season.ceremony_at) : null
+    const parts = ceremony ? countdownParts(ceremony, now) : null
+    const running = parts !== null
+
     useEffect(() => {
+        if (!running) return
         const timer = setInterval(() => setNow(new Date()), 1000)
         return () => clearInterval(timer)
-    }, [])
-
-    const ceremony = season ? new Date(season.ceremony_at) : null
-    const parts = ceremony ? countdownParts(ceremony, now) : null
+    }, [running])
     const cells = parts
         ? [
               { value: parts.days, label: "DAYS" },

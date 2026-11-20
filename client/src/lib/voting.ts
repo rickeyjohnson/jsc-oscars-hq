@@ -39,3 +39,6 @@ export const ballotCardStatus = (b: Ballot, categoryCount: number, myVoteCount: 
     if (categoryCount > 0 && myVoteCount >= categoryCount) return "voted"
     return "open"
 }
+
+export const pendingBallots = (ballots: BallotSummary[], now: Date): BallotSummary[] =>
+    ballots.filter((b) => b.category_count > b.my_vote_count && ballotCardStatus(b, b.category_count, b.my_vote_count, now) === "open")

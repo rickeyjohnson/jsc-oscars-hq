@@ -108,7 +108,7 @@ export const fetchBallotDetail = async (ballotId: string): Promise<BallotDetail>
 }
 
 export const fetchCurrentSeason = async (): Promise<Season | null> => {
-    const { data, error } = await supabase.from("seasons").select("*").order("ceremony_at", { ascending: false }).limit(1)
+    const { data, error } = await supabase.from("seasons").select("*").order("ceremony_at", { ascending: false, nullsFirst: false }).limit(1)
     if (error) throw error
     return ((data ?? [])[0] as Season | undefined) ?? null
 }
@@ -120,14 +120,14 @@ export const fetchBallotSummaries = async (): Promise<BallotSummary[]> => {
     const list = (ballots ?? []) as Ballot[]
     if (list.length === 0) return []
     const ids = list.map((b) => b.id)
-    const sourceIds = Array.from(new Set(list.map((b) => (b.round !== "main" && b.parent_ballot_id ? b.parent_ballot_id : b.id))))
+    const sourceIds = list.filter((b) => !(b.round !== "main" && b.parent_ballot_id)).map((b) => b.id)
 
     const { data: auth, error: authError } = await supabase.auth.getUser()
     if (authError) throw authError
     const uid = auth.user?.id ?? ""
 
     const [cats, rounds, votes] = await Promise.all([
-        supabase.from("categories").select("id, ballot_id").in("ballot_id", sourceIds),
+        sourceIds.length > 0 ? supabase.from("categories").select("id, ballot_id").in("ballot_id", sourceIds) : Promise.resolve({ data: [] as { id: string; ballot_id: string }[], error: null }),
         supabase.from("round_nominees").select("ballot_id, category_id").in("ballot_id", ids),
         supabase.from("votes").select("ballot_id, category_id").in("ballot_id", ids).eq("voter_id", uid),
     ])

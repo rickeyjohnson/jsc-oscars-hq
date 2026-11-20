@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { selectableNominees, groupCandidates, votedCount, dashStates, nextUnvotedIndex, findMatchingNominee, ballotCardStatus } from "./voting"
+import { pendingBallots, selectableNominees, groupCandidates, votedCount, dashStates, nextUnvotedIndex, findMatchingNominee, ballotCardStatus } from "./voting"
 import type { Ballot, Member, Nominee } from "../types"
 
 const nom = (name: string, ids: string[], type: Nominee["type"] = "person"): Nominee => ({
@@ -73,5 +73,19 @@ describe("ballotCardStatus", () => {
         expect(ballotCardStatus({ ...openBallot, status: "closed" }, 3, 1, now)).toBe("closed")
         expect(ballotCardStatus({ ...openBallot, closes_at: "2026-11-22T00:00:00Z" }, 3, 1, now)).toBe("closed")
         expect(ballotCardStatus({ ...openBallot, opens_at: "2026-11-24T00:00:00Z" }, 3, 0, now)).toBe("upcoming")
+    })
+})
+
+describe("pendingBallots", () => {
+    const now = new Date("2026-11-23T00:00:00Z")
+    const base = { id: "b", season_id: "s", parent_ballot_id: null, name: "B", round: "main" as const, status: "open" as const, opens_at: "2026-11-22T00:00:00Z", closes_at: "2026-11-26T00:00:00Z" }
+    it("keeps only open ballots with unvoted categories", () => {
+        const list = [
+            { ...base, id: "a", category_count: 3, my_vote_count: 1 },
+            { ...base, id: "done", category_count: 3, my_vote_count: 3 },
+            { ...base, id: "empty", category_count: 0, my_vote_count: 0 },
+            { ...base, id: "closed", status: "closed" as const, category_count: 3, my_vote_count: 0 },
+        ]
+        expect(pendingBallots(list, now).map((b) => b.id)).toEqual(["a"])
     })
 })

@@ -49,6 +49,7 @@ const BallotCard = ({ ballot, now }: { ballot: BallotSummary; now: Date }) => {
                 <div>
                     <div className="flex items-center gap-2 mb-1">
                         <span className={`px-2 py-1 text-xs font-bold rounded-full ${config.badge}`}>{config.label}</span>
+                        {ballot.round === "tiebreak" && <span className="px-2 py-1 text-xs font-bold rounded-full bg-purple-500/20 text-purple-300">TIEBREAK</span>}
                         {status === "open" && <span className="text-xs text-amber-100/40">{closesInLabel(new Date(ballot.closes_at), now)}</span>}
                     </div>
                     <h3 className="text-xl font-bold text-amber-100">{ballot.name}</h3>

@@ -1,6 +1,6 @@
 import { ChevronRight, Clock, Vote } from "lucide-react"
 import { Link } from "react-router-dom"
-import { ballotCardStatus, type BallotSummary } from "../lib/voting"
+import { pendingBallots, type BallotSummary } from "../lib/voting"
 import { closesInLabel, urgency } from "../lib/time"
 
 const PendingBallot = ({ ballot, now }: { ballot: BallotSummary; now: Date }) => {
@@ -25,7 +25,7 @@ const PendingBallot = ({ ballot, now }: { ballot: BallotSummary; now: Date }) =>
 
 const PendingBallots = ({ ballots }: { ballots: BallotSummary[] }) => {
     const now = new Date()
-    const pending = ballots.filter((b) => ballotCardStatus(b, b.category_count, b.my_vote_count, now) === "open")
+    const pending = pendingBallots(ballots, now)
 
     return pending.length > 0 ? (
         <div className="bg-gradient-to-br from-red-500/20 to-red-600/10 border-2 border-red-500/30 rounded-3xl p-6">
@@ -41,11 +41,12 @@ const PendingBallots = ({ ballots }: { ballots: BallotSummary[] }) => {
             {pending.map((b) => (
                 <PendingBallot key={b.id} ballot={b} now={now} />
             ))}
-            <Link to={`/app/ballots/${pending[0].id}`}>
-                <button className="w-full bg-amber-100 text-zinc-900 rounded-xl py-3 font-bold hover:bg-amber-200 transition flex items-center justify-center gap-2">
-                    Vote Now
-                    <ChevronRight className="w-5 h-5" />
-                </button>
+            <Link
+                to={`/app/ballots/${pending[0].id}`}
+                className="w-full bg-amber-100 text-zinc-900 rounded-xl py-3 font-bold hover:bg-amber-200 transition flex items-center justify-center gap-2"
+            >
+                Vote Now
+                <ChevronRight className="w-5 h-5" />
             </Link>
         </div>
     ) : (

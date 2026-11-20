@@ -19,10 +19,16 @@ const HomePage = () => {
     const [season, setSeason] = useState<Season | null>(null)
     const [ballots, setBallots] = useState<BallotSummary[]>([])
 
+    const [seasonError, setSeasonError] = useState(false)
+    const [ballotsError, setBallotsError] = useState(false)
+    const [reloadKey, setReloadKey] = useState(0)
+
     useEffect(() => {
-        fetchCurrentSeason().then(setSeason).catch((e) => console.error("Error loading season: ", e))
-        fetchBallotSummaries().then(setBallots).catch((e) => console.error("Error loading ballots: ", e))
-    }, [])
+        setSeasonError(false)
+        setBallotsError(false)
+        fetchCurrentSeason().then(setSeason).catch((e) => { console.error("Error loading season: ", e); setSeasonError(true) })
+        fetchBallotSummaries().then(setBallots).catch((e) => { console.error("Error loading ballots: ", e); setBallotsError(true) })
+    }, [reloadKey])
 
     const handleProfileSetupComplete = () => {
         setProfileSetupComplete(false)
@@ -55,8 +61,17 @@ const HomePage = () => {
             <NavigationBar />
 
             <div className="px-6 py-6 space-y-6">
-                <Countdown season={season} />
-                <PendingBallots ballots={ballots} />
+                {seasonError ? <p className="text-sm text-red-400 text-center">Couldn't load the ceremony date</p> : <Countdown season={season} />}
+                {ballotsError ? (
+                    <p className="text-sm text-red-400 text-center">
+                        Couldn't load ballots{" "}
+                        <button className="underline" onClick={() => setReloadKey((k) => k + 1)}>
+                            Retry
+                        </button>
+                    </p>
+                ) : (
+                    <PendingBallots ballots={ballots} />
+                )}
             </div>
 
             <NavigationTabs activeTab={"home"} />
