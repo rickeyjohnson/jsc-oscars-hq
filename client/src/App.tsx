@@ -17,6 +17,7 @@ import BallotBuilderPage from "./pages/ballot-builder/BallotBuilderPage"
 import VotePage from "./pages/VotePage"
 import ManageBallotsPage from "./pages/committee/ManageBallotsPage"
 import BallotAdminPage from "./pages/committee/BallotAdminPage"
+import ReleasePage from "./pages/committee/ReleasePage"
 
 const App = () => {
     const ProtectedHomePage = WithAuth(HomePage)
@@ -100,6 +101,11 @@ const App = () => {
                 <Route
                     path="/app/profile/ballots/:ballotId"
                     element={committeeRoute(<BallotAdminPage />)}
+                />
+
+                <Route
+                    path="/app/profile/release"
+                    element={committeeRoute(<ReleasePage />)}
                 />
 
                 <Route path="*" element={<div>404 Not Found</div>} />
