@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { pendingBallots, selectableNominees, groupCandidates, votedCount, dashStates, nextUnvotedIndex, findMatchingNominee, ballotCardStatus, completionByMember } from "./voting"
+import { pendingBallots, selectableNominees, groupCandidates, votedCount, dashStates, nextUnvotedIndex, findMatchingNominee, ballotCardStatus, completionByMember, chipStatus } from "./voting"
 import type { Ballot, Member, Nominee } from "../types"
 
 const nom = (name: string, ids: string[], type: Nominee["type"] = "person"): Nominee => ({
@@ -107,5 +107,25 @@ describe("completionByMember", () => {
             { name: "Rico", voted: 0, total: 3, claimed: false },
             { name: "Micah", voted: 2, total: 3, claimed: true },
         ])
+    })
+})
+
+describe("completionByMember edge cases", () => {
+    const members: Member[] = [{ id: "m1", name: "Micah", user_id: "u1" }]
+    it("counts duplicate votes in one category once", () => {
+        expect(completionByMember(members, [{ voter_id: "u1", category_id: "c1" }, { voter_id: "u1", category_id: "c1" }], 3)[0].voted).toBe(1)
+    })
+    it("caps at the category count", () => {
+        const votes = ["c1", "c2", "c3", "c4"].map((category_id) => ({ voter_id: "u1", category_id }))
+        expect(completionByMember(members, votes, 3)[0].voted).toBe(3)
+    })
+})
+
+describe("chipStatus", () => {
+    const now = new Date("2026-11-23T00:00:00Z")
+    it("shows ended for open ballots past close", () => {
+        expect(chipStatus({ status: "open", closes_at: "2026-11-22T00:00:00Z" }, now)).toBe("ended")
+        expect(chipStatus({ status: "open", closes_at: "2026-11-24T00:00:00Z" }, now)).toBe("open")
+        expect(chipStatus({ status: "closed", closes_at: "2026-11-22T00:00:00Z" }, now)).toBe("closed")
     })
 })

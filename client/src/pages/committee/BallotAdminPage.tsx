@@ -4,10 +4,11 @@ import NavigationBar from "../../components/NavigationBar"
 import NavigationTabs from "../../components/NavigationTabs"
 import StatusChip from "../../components/committee/StatusChip"
 import CompletionPanel from "../../components/committee/CompletionPanel"
-import { fetchBallotSummaries, setBallotStatus } from "../../api/ballots"
+import { fetchBallotDetail, fetchBallotSummaries, setBallotStatus } from "../../api/ballots"
 import { fetchMembers } from "../../api/members"
 import { fetchAllVotes } from "../../api/votes"
-import { completionByMember, type BallotSummary, type MemberCompletion } from "../../lib/voting"
+import { publishBlockers } from "../../lib/ballotForm"
+import { completionByMember, chipStatus, type BallotSummary, type MemberCompletion } from "../../lib/voting"
 import { closesInLabel } from "../../lib/time"
 
 // Task 12 passes the Export CSV button as resultsAction; Task 14 passes the TallyPanel as resultsBody.
@@ -19,12 +20,14 @@ const BallotAdminPage = ({ resultsAction, resultsBody }: Props) => {
     const [rows, setRows] = useState<MemberCompletion[]>([])
     const [error, setError] = useState<string | null>(null)
     const [actionError, setActionError] = useState<string | null>(null)
+    const [blockers, setBlockers] = useState<string[]>([])
     const [busy, setBusy] = useState(false)
 
     const load = useCallback(async () => {
         if (!ballotId) return
         try {
-            const [all, members, votes] = await Promise.all([fetchBallotSummaries(true), fetchMembers(), fetchAllVotes(ballotId)])
+            const [all, members, votes, detail] = await Promise.all([fetchBallotSummaries(true), fetchMembers(), fetchAllVotes(ballotId), fetchBallotDetail(ballotId)])
+            setBlockers(publishBlockers(detail))
             const found = all.find((b) => b.id === ballotId)
             if (!found) throw new Error("Ballot not found")
             setBallot(found)
@@ -61,12 +64,12 @@ const BallotAdminPage = ({ resultsAction, resultsBody }: Props) => {
             <main className="p-6 space-y-6">
                 {error && <div className="text-center text-red-400">{error}</div>}
                 {!error && !ballot && <div className="text-center text-amber-100/60">Loading...</div>}
-                {ballot && (
+                {ballot && !error && (
                     <>
                         <div>
                             <div className="flex justify-between items-center gap-2">
                                 <h2 className="text-2xl font-black">{ballot.name}</h2>
-                                <StatusChip status={ballot.status} />
+                                <StatusChip status={chipStatus(ballot, new Date())} />
                             </div>
                             <p className="text-sm text-amber-100/60 mt-1">
                                 Closes {fmt(ballot.closes_at)} · {closesInLabel(new Date(ballot.closes_at), new Date()).replace(/^Closes /, "")}
@@ -84,12 +87,17 @@ const BallotAdminPage = ({ resultsAction, resultsBody }: Props) => {
                         )}
                         {ballot.status === "draft" && (
                             <button
-                                disabled={busy}
+                                disabled={busy || blockers.length > 0}
                                 onClick={() => changeStatus("open", "Publish this ballot? Members will be able to vote.")}
                                 className="w-full bg-amber-100 text-zinc-900 font-bold rounded-2xl p-4 disabled:opacity-50"
                             >
                                 Publish
                             </button>
+                        )}
+                        {ballot.status === "draft" && blockers.length > 0 && (
+                            <ul className="text-xs text-amber-400 space-y-1">
+                                {blockers.map((b) => <li key={b}>{b}</li>)}
+                            </ul>
                         )}
                         {actionError && <div className="text-center text-red-400">{actionError}</div>}
 

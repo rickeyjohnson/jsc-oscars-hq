@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { buildNomineeRows, validateBallotForPublish } from "./ballotForm"
+import { buildNomineeRows, validateBallotForPublish, publishBlockers } from "./ballotForm"
 import type { BallotFormData, Category, Member, Nominee } from "../types"
 
 const names = ["Zed", "Anthony", "Nick", "Evan"]
@@ -43,5 +43,23 @@ describe("validateBallotForPublish", () => {
     it("duplicate nominees", () => {
         const c = cat({ name: "P", nominee_mode: "preset", nominees: [nom("Pizza"), nom("pizza")] })
         expect(validateBallotForPublish({ ...validForm, categories: [c] })).toContain('Category "P" has duplicate nominee "pizza"')
+    })
+})
+
+describe("publishBlockers", () => {
+    const cat = (over: Partial<Category>): Category => ({ id: "c", name: "Cat", description: "", order: 0, nominee_mode: "preset", allow_member_add: false, nominees: [], ...over })
+    const detail = (categories: Category[], over = {}) => ({ id: "b", season_id: "s", parent_ballot_id: null, name: "B", round: "main" as const, status: "draft" as const, opens_at: "2026-11-22T00:00:00Z", closes_at: "2026-11-26T00:00:00Z", categories, ...over })
+    const nominee: Nominee = { id: "n", display_name: "X", type: "outsider", member_ids: [] }
+    it("blocks zero categories", () => {
+        expect(publishBlockers(detail([]))).toEqual(["Add at least one category"])
+    })
+    it("blocks subset with no nominees", () => {
+        expect(publishBlockers(detail([cat({ nominee_mode: "subset" })]))).toHaveLength(1)
+    })
+    it("allows preset with member add and no nominees, group with none, and filled preset", () => {
+        expect(publishBlockers(detail([cat({ allow_member_add: true }), cat({ nominee_mode: "group" }), cat({ nominees: [nominee] })]))).toEqual([])
+    })
+    it("blocks closes before opens", () => {
+        expect(publishBlockers(detail([cat({ nominees: [nominee] })], { closes_at: "2026-11-21T00:00:00Z" }))).toHaveLength(1)
     })
 })

@@ -4,7 +4,7 @@ import NavigationBar from "../../components/NavigationBar"
 import NavigationTabs from "../../components/NavigationTabs"
 import StatusChip from "../../components/committee/StatusChip"
 import { fetchBallotSummaries } from "../../api/ballots"
-import type { BallotSummary } from "../../lib/voting"
+import { chipStatus, type BallotSummary } from "../../lib/voting"
 
 const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" })
 
@@ -32,7 +32,7 @@ const ManageBallotsPage = () => {
                                 <span className="font-bold">{b.name}</span>
                                 <span className="flex gap-2 items-center">
                                     {b.round !== "main" && <span className="text-xs text-amber-100/60 capitalize">{b.round}</span>}
-                                    <StatusChip status={b.status} />
+                                    <StatusChip status={chipStatus(b, new Date())} />
                                 </span>
                             </div>
                             <div className="text-sm text-amber-100/60 mt-1">

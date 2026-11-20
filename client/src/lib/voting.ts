@@ -58,3 +58,9 @@ export const completionByMember = (members: Member[], votes: { voter_id: string;
         }))
         .sort((a, b) => a.voted - b.voted || a.name.localeCompare(b.name))
 }
+
+export type ChipStatus = Ballot["status"] | "ended"
+
+// An open ballot whose close time has passed (never closed by hand) reads as "ended".
+export const chipStatus = (b: Pick<Ballot, "status" | "closes_at">, now: Date): ChipStatus =>
+    b.status === "open" && new Date(b.closes_at).getTime() <= now.getTime() ? "ended" : b.status

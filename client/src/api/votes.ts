@@ -1,5 +1,6 @@
 import { supabase } from "../supabaseClient"
 import type { VoteRow } from "../types"
+import { fetchAllPages } from "../lib/paging"
 
 // votes.voter_id is the auth user id (default auth.uid()); RLS enforces window, self-vote and claim.
 const currentUserId = async (): Promise<string> => {
@@ -44,8 +45,15 @@ export const addNominee = async (categoryId: string, displayName: string, member
 }
 
 // Committee only (RLS): every vote on a ballot.
-export const fetchAllVotes = async (ballotId: string): Promise<VoteRow[]> => {
-    const { data, error } = await supabase.from("votes").select("category_id, nominee_id, voter_id, updated_at").eq("ballot_id", ballotId)
-    if (error) throw error
-    return (data ?? []) as VoteRow[]
-}
+export const fetchAllVotes = async (ballotId: string): Promise<VoteRow[]> =>
+    fetchAllPages<VoteRow>(async (from, to) => {
+        const { data, error } = await supabase
+            .from("votes")
+            .select("category_id, nominee_id, voter_id, updated_at")
+            .eq("ballot_id", ballotId)
+            .order("created_at")
+            .order("id")
+            .range(from, to)
+        if (error) throw error
+        return (data ?? []) as VoteRow[]
+    })
