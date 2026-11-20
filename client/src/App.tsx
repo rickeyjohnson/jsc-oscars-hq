@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { Route, Routes } from "react-router-dom"
 import "./App.css"
 import LandingPage from "./pages/LandingPage"
@@ -11,6 +12,7 @@ import WithAuth from "./components/WithAuth"
 import ResetPassword from "./pages/ResetPassword"
 import ComfirmedEmailPage from "./pages/ComfirmedEmailPage"
 import { UserDataProvider } from "./context/UserContenxt"
+import RequireCommittee from "./components/RequireCommittee"
 import CreateBallotTemplate from "./pages/CreateBallotTemplate"
 
 const App = () => {
@@ -18,6 +20,16 @@ const App = () => {
     const ProtectedBallotsPage = WithAuth(BallotsPage)
     const ProtectedStatsPage = WithAuth(StatsPage)
     const ProtectedProfilePage = WithAuth(ProfilePage)
+
+    // UX gate only; RLS is the real protection for committee actions.
+    const committeeRoute = (el: ReactNode) => {
+        const Guarded = WithAuth(() => (
+            <UserDataProvider>
+                <RequireCommittee>{el}</RequireCommittee>
+            </UserDataProvider>
+        ))
+        return <Guarded />
+    }
 
     return (
         <>
@@ -66,11 +78,7 @@ const App = () => {
 
                 <Route
                     path="/app/profile/ballots/create"
-                    element={
-                        <UserDataProvider>
-                            <CreateBallotTemplate />
-                        </UserDataProvider>
-                    }
+                    element={committeeRoute(<CreateBallotTemplate />)}
                 />
 
                 <Route path="*" element={<div>404 Not Found</div>} />

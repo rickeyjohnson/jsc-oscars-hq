@@ -1,5 +1,9 @@
 import { Trash2, GripVertical, Calendar, Clock, Trophy } from "lucide-react"
-import { type BallotFormData, type Category, type EventOption, type Nominee } from "../types"
+// Legacy builder types; Task 6 replaces this page.
+type Nominee = { id: string; display_name: string; secondary_text?: string; user_ids: string[]; is_preset?: boolean }
+type Category = { id: string; name: string; description?: string; order: number; nominees: Nominee[] }
+type BallotFormData = { event_id: string; name: string; opens_at: string; closes_at: string; categories: Category[] }
+type EventOption = { id: string; name: string; date: string }
 
 // --- Basic Info Form Component ---
 interface BasicInfoProps {

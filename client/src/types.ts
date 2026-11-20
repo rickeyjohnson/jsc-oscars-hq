@@ -1,34 +1,14 @@
-// types.ts
-
-
-export type Category = {
-    id: string; // Added ID for reliable keying in lists
-    name: string;
-    description?: string;
-    order: number;
-    nominees: Nominee[];
-}
-
-export type BallotFormData = {
-    event_id: string;
-    name: string;
-    opens_at: string; // ISO string for datetime-local input
-    closes_at: string;
-    categories: Category[];
-}
-
-export type EventOption = {
-    id: string;
-    name: string;
-    date: string;
-}
-
-// types.ts
-
-export type Nominee = {
-    id: string;
-    display_name: string; // The main name (e.g., "Barbie")
-    secondary_text?: string; // The values combined (e.g., "Margot Robbie, Ryan Gosling")
-    user_ids: string[]; // Linked real users
-    is_preset?: boolean; // To distinguish visually
-}
+export type NomineeMode = "everyone" | "subset" | "preset" | "group"
+export type NomineeType = "person" | "group" | "outsider" | "noun"
+export type BallotStatus = "draft" | "open" | "closed" | "released"
+export type BallotRound = "main" | "tiebreak" | "committee"
+export type DecidedBy = "votes" | "tiebreak" | "committee_vote" | "manual"
+export type Member = { id: string; name: string; user_id: string | null }
+export type Season = { id: string; name: string; ceremony_at: string; location: string | null; results_released_at: string | null }
+export type Ballot = { id: string; season_id: string; parent_ballot_id: string | null; name: string; round: BallotRound; status: BallotStatus; opens_at: string; closes_at: string }
+export type Nominee = { id: string; display_name: string; secondary_text?: string; type: NomineeType; member_ids: string[] }
+export type Category = { id: string; name: string; description: string; order: number; nominee_mode: NomineeMode; allow_member_add: boolean; nominees: Nominee[] }
+export type BallotFormData = { season_id: string; name: string; opens_at: string; closes_at: string; categories: Category[] }
+export type BallotDetail = Ballot & { categories: Category[] }
+export type VoteRow = { category_id: string; nominee_id: string; voter_id: string; updated_at: string }
+export type ResultRow = { category_id: string; decided_ballot_id: string; winner_nominee_id: string | null; nominee_ids: string[]; top3_nominee_ids: string[]; decided_by: DecidedBy | null }

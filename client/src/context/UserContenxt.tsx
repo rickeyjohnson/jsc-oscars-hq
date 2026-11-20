@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react"
 import { useAuth } from "./AuthContext"
 import { supabase } from "../supabaseClient"
+import type { Member } from "../types"
 
 interface UserProfile {
     user_id: string
@@ -9,11 +10,12 @@ interface UserProfile {
     email: string
     image_url: string
     created_at: string
-    is_committee: string
+    is_committee: boolean
 }
 
 interface UserDataContextType {
     profile: UserProfile | null
+    member: Member | null
     loading: boolean
     fetchOscars: () => Promise<OscarsEvent[]>
 }
@@ -35,6 +37,7 @@ export const UserDataProvider = ({
 }) => {
     const { user } = useAuth()
     const [profile, setProfile] = useState<UserProfile | null>(null)
+    const [member, setMember] = useState<Member | null>(null)
     const [loading, setLoading] = useState(true)
 
     // TODO: add other supabase fetches (chatgpt helper functions)
@@ -58,19 +61,33 @@ export const UserDataProvider = ({
 
     useEffect(() => {
         const fetchProfile = async () => {
-            if (!user) return
+            if (!user) {
+                setLoading(false)
+                return
+            }
 
-            const { data, error } = await supabase
-                .from("profiles")
-                .select("*")
-                .eq("user_id", user.id)
-                .single()
+            const [profileRes, memberRes] = await Promise.all([
+                supabase
+                    .from("profiles")
+                    .select("*")
+                    .eq("user_id", user.id)
+                    .single(),
+                supabase
+                    .from("members")
+                    .select("id, name, user_id")
+                    .eq("user_id", user.id)
+                    .maybeSingle(),
+            ])
 
-            if (error) {
-                console.error("Error fetching profile:", error)
+            if (profileRes.error) {
+                console.error("Error fetching profile:", profileRes.error)
             } else {
-                setProfile(data)
-                console.log(data)
+                setProfile(profileRes.data as UserProfile)
+            }
+            if (memberRes.error) {
+                console.error("Error fetching member:", memberRes.error)
+            } else {
+                setMember(memberRes.data)
             }
             setLoading(false)
         }
@@ -79,7 +96,7 @@ export const UserDataProvider = ({
     }, [user])
 
     return (
-        <UserDataContext.Provider value={{ profile, loading, fetchOscars }}>
+        <UserDataContext.Provider value={{ profile, member, loading, fetchOscars }}>
             {children}
         </UserDataContext.Provider>
     )
