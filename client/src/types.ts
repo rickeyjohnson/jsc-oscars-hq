@@ -11,4 +11,5 @@ export type Category = { id: string; name: string; description: string; order: n
 export type BallotFormData = { season_id: string; name: string; opens_at: string; closes_at: string; categories: Category[] }
 export type BallotDetail = Ballot & { categories: Category[] }
 export type VoteRow = { category_id: string; nominee_id: string; voter_id: string; updated_at: string }
-export type ResultRow = { category_id: string; decided_ballot_id: string; winner_nominee_id: string | null; nominee_ids: string[]; top3_nominee_ids: string[]; decided_by: DecidedBy | null }
+export type Place = { nominee_id: string; slot: 1 | 2 | 3 | null; place: number; tied: boolean }
+export type ResultRow = { category_id: string; decided_ballot_id: string; winner_nominee_id: string | null; nominee_ids: string[]; top3_nominee_ids: string[]; decided_by: DecidedBy | null; places?: Place[] | null }
