@@ -1,35 +1,80 @@
-import NavigationBar from "../components/NavigationBar"
-import NavigationTabs from "../components/NavigationTabs"
-import Countdown from "../components/Countdown"
-import PendingBallots from "../components/PendingBallots"
+import { useEffect, useMemo, useState } from "react"
+import { SlidersHorizontal } from "lucide-react"
 import ProfileSetup from "../components/ProfileSetup"
-import { useEffect, useState } from "react"
-import { Link } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
+import { useUserData } from "../context/UserContenxt"
 import { supabase } from "../supabaseClient"
-import { fetchBallotSummaries, fetchCurrentSeason } from "../api/ballots"
-import type { BallotSummary } from "../lib/voting"
-import type { Season } from "../types"
+import { Screen } from "../ui/Screen"
+import { Skeleton, SkeletonScreen } from "../ui/Skeleton"
+import { useToast } from "../ui/Toast"
+import { loadHomePrefs, saveHomePrefs, type HomePrefs } from "../ui/logic/homePrefs"
+import { resolveWidgets } from "../ui/logic/homeWidgets"
+import { CustomizeHomeSheet } from "./home/CustomizeHomeSheet"
+import { firstName } from "./home/format"
+import { useHomeData } from "./home/useHomeData"
+import { HomeWidget } from "./home/widgets"
+
+const storage = (): Storage | null => {
+    try {
+        return window.localStorage
+    } catch {
+        return null
+    }
+}
+
+const HomeBody = ({ userId, isCommittee, name }: { userId: string; isCommittee: boolean; name: string }) => {
+    const state = useHomeData(isCommittee)
+    const toast = useToast()
+    const [prefs, setPrefs] = useState<HomePrefs>(() => loadHomePrefs(storage(), userId, isCommittee))
+    const [customizing, setCustomizing] = useState(false)
+    const released = Boolean(state.data?.released)
+    const widgets = useMemo(() => resolveWidgets(prefs, { isCommittee, released }), [prefs, isCommittee, released])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const now = useMemo(() => new Date(), [state.data])
+
+    const change = (next: HomePrefs) => {
+        setPrefs(next)
+        saveHomePrefs(storage(), userId, next)
+        toast.show("Home updated")
+    }
+
+    return (
+        <Screen
+            title="Home"
+            brandHeader
+            width="full"
+            trailing={
+                <button
+                    type="button"
+                    aria-label="Customize Home"
+                    onClick={() => setCustomizing(true)}
+                    className="-mr-2 grid size-11 place-items-center rounded-full text-label cursor-pointer"
+                >
+                    <SlidersHorizontal aria-hidden className="size-5" />
+                </button>
+            }
+        >
+            <div className="mx-auto max-w-[1280px]">
+                <p className="mb-4 text-large-title">
+                    {name ? `Hey ${name}.` : "Hey."}
+                </p>
+                <div className="grid grid-flow-dense grid-cols-1 items-start gap-3 lg:grid-cols-2 min-[1400px]:grid-cols-3">
+                    {widgets.map((w) => (
+                        <div key={w.id} className={w.span === 2 ? "lg:col-span-2" : ""}>
+                            <HomeWidget id={w.id} state={state} now={now} />
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <CustomizeHomeSheet open={customizing} onClose={() => setCustomizing(false)} prefs={prefs} isCommittee={isCommittee} onChange={change} />
+        </Screen>
+    )
+}
 
 const HomePage = () => {
     const { user } = useAuth()
-    const [profileSetupComplete, setProfileSetupComplete] = useState<
-        boolean | null
-    >(true)
-
-    const [season, setSeason] = useState<Season | null>(null)
-    const [ballots, setBallots] = useState<BallotSummary[]>([])
-
-    const [seasonError, setSeasonError] = useState(false)
-    const [ballotsError, setBallotsError] = useState(false)
-    const [reloadKey, setReloadKey] = useState(0)
-
-    useEffect(() => {
-        setSeasonError(false)
-        setBallotsError(false)
-        fetchCurrentSeason().then(setSeason).catch((e) => { console.error("Error loading season: ", e); setSeasonError(true) })
-        fetchBallotSummaries().then(setBallots).catch((e) => { console.error("Error loading ballots: ", e); setBallotsError(true) })
-    }, [reloadKey])
+    const { profile, member, loading } = useUserData()
+    const [profileSetupComplete, setProfileSetupComplete] = useState<boolean | null>(true)
 
     const skipKey = `jsc.profileSetupSkipped.${user?.id ?? ""}`
     const handleProfileSetupSkip = () => {
@@ -54,10 +99,7 @@ const HomePage = () => {
                 .single()
 
             if (error) {
-                console.error(
-                    "Error fetching if profile is complete: ",
-                    error.message
-                )
+                console.error("Error fetching if profile is complete: ", error.message)
                 setProfileSetupComplete(true)
                 return
             }
@@ -75,34 +117,21 @@ const HomePage = () => {
     }, [user?.id])
 
     return (
-        <div className="bg-zinc-900 min-h-screen text-[#fffadd] pb-24">
-            <NavigationBar />
-
-            <div className="px-6 py-6 space-y-6">
-                {seasonError ? <p className="text-sm text-red-400 text-center">Couldn't load the ceremony date</p> : <Countdown season={season} />}
-                {season?.results_released_at && (
-                    <Link to="/app/results" className="block rounded-2xl bg-[#fffadd] text-zinc-900 p-5 text-center">
-                        <div className="text-xs tracking-[0.25em] opacity-60">THE WINNERS</div>
-                        <div className="text-xl font-black">The winners are in</div>
-                        <div className="text-sm font-bold mt-1">See the winners</div>
-                    </Link>
-                )}
-                {ballotsError ? (
-                    <p className="text-sm text-red-400 text-center">
-                        Couldn't load ballots{" "}
-                        <button className="underline" onClick={() => setReloadKey((k) => k + 1)}>
-                            Retry
-                        </button>
-                    </p>
-                ) : (
-                    <PendingBallots ballots={ballots} />
-                )}
-            </div>
-
-            <NavigationTabs activeTab={"home"} />
-
+        <>
+            {loading ? (
+                <Screen title="Home" brandHeader>
+                    <SkeletonScreen label="Loading Home">
+                        <div className="space-y-3">
+                            <Skeleton shape="block" />
+                            <Skeleton shape="card" />
+                        </div>
+                    </SkeletonScreen>
+                </Screen>
+            ) : (
+                <HomeBody userId={user?.id ?? ""} isCommittee={Boolean(profile?.is_committee)} name={firstName(member?.name ?? profile?.display_name)} />
+            )}
             <ProfileSetup open={!profileSetupComplete} onComplete={handleProfileSetupComplete} onSkip={handleProfileSetupSkip} />
-        </div>
+        </>
     )
 }
 
