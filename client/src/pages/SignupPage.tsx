@@ -1,13 +1,17 @@
 import { signupErrorText } from "../lib/authErrors"
-import React, { useEffect, useState } from "react"
+import React, { useCallback, useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { Mail, Lock, User, IdCard, LoaderCircle } from "lucide-react"
+import { Check } from "lucide-react"
 import { supabase } from "../supabaseClient"
 import { useAuth } from "../context/AuthContext"
 import { fetchAvailableMemberNames } from "../api/members"
 import { authRedirectUrl } from "../lib/siteUrl"
 import { Sheet } from "../ui/Sheet"
 import { Button } from "../ui/Button"
+import { AuthLayout } from "../ui/AuthLayout"
+import { TextField } from "../ui/TextField"
+import { Skeleton, SkeletonScreen } from "../ui/Skeleton"
+import { PEBBLE_CLASS, pebbleFor } from "../ui/logic/pebble"
 
 type SignupDate = {
     email: string
@@ -99,7 +103,9 @@ const SignupPage = () => {
         setShowVerifyEmailModal(true)
     }
 
-    useEffect(() => {
+    const loadNames = useCallback(() => {
+        setNamesLoading(true)
+        setNamesError(false)
         fetchAvailableMemberNames()
             .then(setMemberNames)
             .catch((err) => {
@@ -110,165 +116,124 @@ const SignupPage = () => {
     }, [])
 
     useEffect(() => {
+        loadNames()
+    }, [loadNames])
+
+    useEffect(() => {
         if (user && user?.email_confirmed_at) {
             navigate("/app")
         }
     }, [navigate, user, user?.email_confirmed_at])
 
+    const noNames = !namesLoading && !namesError && memberNames.length === 0
     return (
-        <div className="min-h-screen bg-zinc-900 text-[#fffadd] flex items-center justify-center px-6 py-12">
+        <AuthLayout title="Pick your name." subtitle="Only the names below are on the list." step="Step 1 of 2">
             <VerifyEmailModal open={showVerifyEmailModal} onDone={() => setShowVerifyEmailModal(false)} />
-            <div className="w-full max-w-md">
-                <Link to={"/"}>
-                    <button className="mb-8 text-[#fffadd]/60 hover:text-[#fffadd] transition">
-                        ← Back
-                    </button>
-                </Link>
-                <div className="mb-8">
-                    <div className="font-oscars-regular text-xs text-[#fffadd] tracking-widest">
-                        JUST SIDECHATTING
-                    </div>
-                    <div className="font-oscars-thin text-3xl text-[#fffadd] font-light tracking-[0.15rem]">
-                        OSCARS
-                    </div>
-                </div>
-                <h2 className="text-4xl font-black mb-2 text-[#fffadd]">
-                    Create Account
-                </h2>
-                <p className="text-[#fffadd]/60 mb-8">
-                    Create your account to start your Oscars experience
-                </p>
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-4 w-full flex items-center">
-                        <div className="w-full">
-                            <label className="block text-sm font-medium mb-2">
-                                Name
-                            </label>
-                            <div className="relative">
-                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#fffadd]/40" />
-                                <div className="group w-full bg-amber-100/5 border border-amber-100/10 rounded-xl pl-12 pr-4 focus-within:outline-none focus-within:border-amber-100/30 transition text-[#fffadd]">
-                                    <select
-                                        name="name"
-                                        value={signupData.name ?? ""}
-                                        onChange={handleChange}
-                                        className="w-full focus:outline-none text-[#fffadd] py-4"
-                                        required={true}
-                                    >
-                                        <option value="" disabled hidden>
-                                            New Nick
-                                        </option>
-                                        {memberNames.map((n) => (
-                                            <option key={n} value={n}>
-                                                {n}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                {namesLoading && (
-                                    <p className="text-[#fffadd]/60 text-sm mt-2">
-                                        Loading names…
-                                    </p>
-                                )}
-                                {namesError && (
-                                    <p className="text-red-400 text-sm mt-2">
-                                        Couldn't load names. Refresh and try
-                                        again.
-                                    </p>
-                                )}
-                                {!namesLoading &&
-                                    !namesError &&
-                                    memberNames.length === 0 && (
-                                        <p className="text-red-400 text-sm mt-2">
-                                            No names left. Ask a committee
-                                            member.
-                                        </p>
-                                    )}
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                <div role="group" aria-labelledby="name-heading">
+                    <h2 id="name-heading" className="sr-only">
+                        Your name
+                    </h2>
+                    {namesLoading && (
+                        <SkeletonScreen label="Loading names">
+                            <div className="flex flex-wrap gap-2">
+                                {[88, 64, 96, 72, 80, 104].map((w) => (
+                                    <Skeleton key={w} shape="circle" width={`${w}px`} height="44px" />
+                                ))}
                             </div>
-                        </div>
-                    </div>
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium mb-2">
-                            Email
-                        </label>
-                        <div className="relative">
-                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#fffadd]/40" />
-                            <input
-                                type="email"
-                                name="email"
-                                value={signupData.email}
-                                onChange={handleChange}
-                                className="w-full bg-amber-100/5 border border-amber-100/10 rounded-xl px-12 py-4 focus:outline-none focus:border-amber-100/30 transition text-[#fffadd]"
-                                placeholder="you@example.com"
-                                required={true}
-                            />
-                        </div>
-                    </div>
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium mb-2">
-                            Username
-                        </label>
-                        <div className="relative">
-                            <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#fffadd]/40" />
-                            <input
-                                type="text"
-                                name="username"
-                                value={signupData.username}
-                                onChange={handleChange}
-                                className="w-full bg-amber-100/5 border border-amber-100/10 rounded-xl px-12 py-4 focus:outline-none focus:border-amber-100/30 transition text-[#fffadd]"
-                                placeholder="rickeyistaken"
-                                required={true}
-                            />
-                        </div>
-                    </div>
-                    <div className="mb-6">
-                        <label className="block text-sm font-medium mb-2">
-                            Password
-                        </label>
-                        <div className="relative">
-                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#fffadd]/40" />
-                            <input
-                                type="password"
-                                name="password"
-                                value={signupData.password}
-                                onChange={handleChange}
-                                className="w-full bg-amber-100/5 border border-amber-100/10 rounded-xl px-12 py-4 focus:outline-none focus:border-amber-100/30 transition text-[#fffadd]"
-                                placeholder="••••••••"
-                                required={true}
-                            />
-                        </div>
-                    </div>
-                    <button
-                        className="w-full bg-[#fffadd] rounded-full text-zinc-900 py-4 font-bold hover:bg-[#fffadd]/80 transition mb-4 flex justify-center items-center"
-                        type="submit"
-                        disabled={
-                            namesLoading ||
-                            namesError ||
-                            memberNames.length === 0
-                        }
-                    >
-                        {loader ? (
-                            <LoaderCircle className="animate-spin w-5 h-5" />
-                        ) : (
-                            "Create Account"
-                        )}
-                    </button>
-                    {signupError && (
-                        <p className="text-red-400 text-sm mb-4">
-                            {signupError}
-                        </p>
+                        </SkeletonScreen>
                     )}
-                </form>
-
-                <p className="text-center text-[#fffadd]/60">
-                    Already have an account?{" "}
-                    <Link to="/login">
-                        <button className="text-[#fffadd] hover:underline font-bold underline">
-                            Login
-                        </button>
-                    </Link>
-                </p>
-            </div>
-        </div>
+                    {namesError && (
+                        <div role="alert" className="flex flex-col items-start gap-2">
+                            <p className="text-subhead text-danger">Couldn't load names.</p>
+                            <Button variant="tinted" size="md" onClick={loadNames}>
+                                Try again
+                            </Button>
+                        </div>
+                    )}
+                    {noNames && <p className="text-subhead text-danger">No names left. Ask a committee member.</p>}
+                    {!namesLoading && !namesError && memberNames.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                            {memberNames.map((n) => {
+                                const selected = signupData.name === n
+                                const peb = selected ? "bg-inverse text-on-inverse ring-2 ring-pebble-lemon" : PEBBLE_CLASS[pebbleFor(n)].bg + " " + PEBBLE_CLASS[pebbleFor(n)].text
+                                return (
+                                    <button
+                                        key={n}
+                                        type="button"
+                                        aria-pressed={selected}
+                                        onClick={() => setSignupData({ ...signupData, name: n })}
+                                        className={`text-callout inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full px-4 font-bold ${peb}`}
+                                    >
+                                        {selected && <Check aria-hidden className="size-4" />}
+                                        {n}
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    )}
+                    {memberNames.length > 0 && !namesLoading && !namesError && (
+                        <p className="text-footnote text-label-3 mt-3">Wrong name? A committee member can reset it.</p>
+                    )}
+                </div>
+                <TextField
+                    label="Username"
+                    name="username"
+                    autoComplete="username"
+                    enterKeyHint="next"
+                    autoCapitalize="none"
+                    value={signupData.username}
+                    onChange={handleChange}
+                    required
+                />
+                <TextField
+                    label="Email"
+                    type="email"
+                    name="email"
+                    autoComplete="email"
+                    inputMode="email"
+                    enterKeyHint="next"
+                    autoCapitalize="none"
+                    value={signupData.email}
+                    onChange={handleChange}
+                    placeholder="you@example.com"
+                    required
+                />
+                <TextField
+                    label="Password"
+                    type="password"
+                    name="password"
+                    autoComplete="new-password"
+                    enterKeyHint="go"
+                    value={signupData.password}
+                    onChange={handleChange}
+                    required
+                />
+                {signupError && (
+                    <p role="alert" className="text-subhead text-danger">
+                        {signupError}
+                    </p>
+                )}
+                <Button
+                    type="submit"
+                    variant="pebble"
+                    pebble="lemon"
+                    size="lg"
+                    fullWidth
+                    loading={loader}
+                    loadingLabel="Creating…"
+                    disabled={namesLoading || namesError || memberNames.length === 0 || !signupData.name}
+                >
+                    Create account
+                </Button>
+            </form>
+            <p className="text-callout text-label-2 mt-4 text-center">
+                Already have an account?{" "}
+                <Link to="/login" className="text-label inline-flex min-h-11 items-center font-bold underline">
+                    Log in
+                </Link>
+            </p>
+        </AuthLayout>
     )
 }
 

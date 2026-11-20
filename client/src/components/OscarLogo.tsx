@@ -30,7 +30,7 @@ const RATIO = 5 / 22
 const Logo: React.FC<LogoProps> = ({ size = "medium", as: Root = "div", decorative = false, tone = "cream" }) => {
     const oscarsSize = SIZE_MAP[size]
     const justSideSize = oscarsSize * RATIO
-    const a11y = decorative ? { "aria-hidden": true } : { role: "img", "aria-label": "Just Sidechatting Oscars" }
+    const a11y = decorative ? { "aria-hidden": true } : Root === "h1" ? { "aria-label": "Just Sidechatting Oscars" } : { role: "img", "aria-label": "Just Sidechatting Oscars" }
 
     return (
         <Root

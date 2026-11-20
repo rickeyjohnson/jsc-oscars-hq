@@ -1,13 +1,14 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { Mail, Lock } from "lucide-react"
 import { supabase } from "../supabaseClient"
 import { useAuth } from "../context/AuthContext"
 import { authRedirectUrl } from "../lib/siteUrl"
 import { loginErrorText } from "../lib/authErrors"
 import { Sheet } from "../ui/Sheet"
 import { Button } from "../ui/Button"
+import { AuthLayout } from "../ui/AuthLayout"
+import { TextField } from "../ui/TextField"
 
 interface LoginData {
     email: string
@@ -60,16 +61,14 @@ const ForgotPasswordModal = ({ open, closeModal }: { open: boolean; closeModal: 
         >
             <form id="forgot-password-form" onSubmit={handleForgotPassword}>
                 <p className="text-callout text-label-2 mb-4">Enter your email and we'll send you a reset link.</p>
-                <label htmlFor="forgot-password-email" className="text-subhead mb-2 block font-medium">
-                    Email
-                </label>
-                <input
-                    id="forgot-password-email"
+                <TextField
+                    label="Email"
                     type="email"
                     autoComplete="email"
+                    inputMode="email"
+                    enterKeyHint="send"
                     value={forgotPasswordEmail}
                     onChange={(e) => setForgotPasswordEmail(e.target.value)}
-                    className="bg-fill text-label w-full rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-accent"
                     placeholder="you@example.com"
                 />
                 {message && (
@@ -93,6 +92,7 @@ const LoginPage = () => {
         useState(false)
     const [loginError, setLoginError] = useState("")
     const [loginLoading, setLoginLoading] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
     const navigate = useNavigate()
 
     const handleChange = (
@@ -141,99 +141,64 @@ const LoginPage = () => {
     }, [])
 
     return (
-        <div className="min-h-screen bg-zinc-900 text-[#fffadd] flex items-center justify-center px-6 py-12">
+        <AuthLayout title="Welcome back." subtitle="Log in to vote.">
             <ForgotPasswordModal open={showForgotPasswordModal} closeModal={closeModal} />
-            <div className="w-full max-w-md">
-                <Link to={"/"}>
-                    <button className="mb-8 text-[#fffadd]/60 hover:text-[#fffadd] transition">
-                        ← Back
-                    </button>
-                </Link>
-                <div className="mb-8">
-                    <div className="font-oscars-regular text-xs text-[#fffadd] tracking-widest">
-                        JUST SIDECHATTING
-                    </div>
-                    <div className="font-oscars-thin text-3xl text-[#fffadd] font-light tracking-[0.15rem]">
-                        OSCARS
-                    </div>
-                </div>
-                <h2 className="text-4xl font-black mb-2 text-[#fffadd]">
-                    Welcome Back
-                </h2>
-                <p className="text-[#fffadd]/60 mb-8">
-                    Login to continue your Oscars experience
-                </p>
-
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium mb-2">
-                            Email
-                        </label>
-                        <div className="relative">
-                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#fffadd]/40" />
-                            <input
-                                type="email"
-                                name="email"
-                                value={loginData.email}
-                                onChange={handleChange}
-                                className="w-full bg-amber-100/5 border border-amber-100/10 rounded-xl px-12 py-4 focus:outline-none focus:border-amber-100/30 transition text-[#fffadd]"
-                                placeholder="you@example.com"
-                                required={true}
-                            />
-                        </div>
-                    </div>
-                    <div className="mb-6">
-                        <label className="block text-sm font-medium mb-2">
-                            Password
-                        </label>
-                        <div className="relative">
-                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#fffadd]/40" />
-                            <input
-                                type="password"
-                                name="password"
-                                value={loginData.password}
-                                onChange={handleChange}
-                                className="w-full bg-amber-100/5 border border-amber-100/10 rounded-xl px-12 py-4 focus:outline-none focus:border-amber-100/30 transition text-[#fffadd]"
-                                placeholder="••••••••"
-                                required={true}
-                            />
-                        </div>
-                    </div>
-                    <div className="mb-6 text-right">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                <TextField
+                    label="Email"
+                    type="email"
+                    name="email"
+                    autoComplete="email"
+                    inputMode="email"
+                    enterKeyHint="next"
+                    autoCapitalize="none"
+                    value={loginData.email}
+                    onChange={handleChange}
+                    placeholder="you@example.com"
+                    required
+                />
+                <TextField
+                    label="Password"
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    autoComplete="current-password"
+                    enterKeyHint="go"
+                    value={loginData.password}
+                    onChange={handleChange}
+                    required
+                    trailing={
                         <button
                             type="button"
-                            onClick={() => setShowForgotPasswordModal(true)}
-                            className="text-sm text-[#fffadd]/60 hover:text-[#fffadd] transition"
+                            onClick={() => setShowPassword((v) => !v)}
+                            aria-pressed={showPassword}
+                            className="text-subhead text-label-2 hover:text-label min-h-11 min-w-11 px-3 font-bold"
                         >
-                            Forgot password?
+                            {showPassword ? "Hide" : "Show"}
                         </button>
-                        <p className="text-xs text-[#fffadd]/50 mt-1">
-                            Not getting emails? Ask a committee member to reset your account.
-                        </p>
-                    </div>
-                    <button
-                        type="submit"
-                        disabled={loginLoading}
-                        className="w-full bg-[#fffadd] rounded-full text-zinc-900 py-4 font-bold hover:bg-[#fffadd]/80 transition mb-4 disabled:opacity-60"
-                    >
-                        {loginLoading ? "Logging in..." : "Login"}
-                    </button>
-                    {loginError && (
-                        <p role="alert" className="text-red-400 text-sm mb-4">
-                            {loginError}
-                        </p>
-                    )}
-                </form>
-                <p className="text-center text-[#fffadd]/60">
-                    Don't have an account?{" "}
-                    <Link to="/signup">
-                        <button className="text-[#fffadd] hover:underline font-bold underline">
-                            Sign Up
-                        </button>
+                    }
+                />
+                {loginError && (
+                    <p role="alert" className="text-subhead text-danger">
+                        {loginError}
+                    </p>
+                )}
+                <Button type="submit" variant="pebble" pebble="lemon" size="lg" fullWidth loading={loginLoading} loadingLabel="Logging in…">
+                    Log in
+                </Button>
+            </form>
+            <div className="mt-4 flex flex-col items-center gap-1 text-center">
+                <Button variant="plain" size="md" onClick={() => setShowForgotPasswordModal(true)}>
+                    Forgot password?
+                </Button>
+                <p className="text-footnote text-label-3">Not getting emails? Ask a committee member to reset your account.</p>
+                <p className="text-callout text-label-2 mt-3">
+                    New here?{" "}
+                    <Link to="/signup" className="text-label inline-flex min-h-11 items-center font-bold underline">
+                        Pick your name
                     </Link>
                 </p>
             </div>
-        </div>
+        </AuthLayout>
     )
 }
 

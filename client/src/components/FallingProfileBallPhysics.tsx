@@ -5,60 +5,57 @@ import {
     Render,
     Runner,
     Bodies,
+    Body,
     Composite,
     Mouse,
     MouseConstraint,
     Events,
 } from "matter-js"
+import { settledLayout } from "../ui/logic/settle"
 
 const BALL_COUNT = 13
 const BALL_RADIUS = 40
 const WALL_THICKNESS = 200
 
+// The fixed layer is sized by the browser (inset-0 tracks the dynamic viewport), so measure it instead of window.inner*.
+const measure = (el: HTMLElement) => {
+    const vv = window.visualViewport
+    return {
+        w: el.clientWidth || vv?.width || window.innerWidth,
+        h: el.clientHeight || vv?.height || window.innerHeight,
+    }
+}
+
 const FallingProfileBallsPhysics: React.FC = () => {
     const sceneRef = useRef<HTMLDivElement | null>(null)
 
     useEffect(() => {
-        if (!sceneRef.current) return
+        const host = sceneRef.current
+        if (!host) return
+        const reduced = !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+        let { w, h } = measure(host)
 
         const engine: any = Engine.create()
         engine.gravity.y = 1
 
         const render: any = Render.create({
-            element: sceneRef.current,
+            element: host,
             engine,
             options: {
-                width: window.innerWidth,
-                height: window.innerHeight,
+                width: w,
+                height: h,
                 wireframes: false,
                 background: "transparent",
                 pixelRatio: window.devicePixelRatio,
             } as any,
         })
+        render.canvas.setAttribute("aria-hidden", "true")
 
         /* ---------- Walls ---------- */
         const createWalls = () => [
-            Bodies.rectangle(
-                window.innerWidth / 2,
-                window.innerHeight + WALL_THICKNESS / 2,
-                window.innerWidth + WALL_THICKNESS * 2,
-                WALL_THICKNESS,
-                { isStatic: true }
-            ),
-            Bodies.rectangle(
-                -WALL_THICKNESS / 2,
-                window.innerHeight / 2,
-                WALL_THICKNESS,
-                window.innerHeight + WALL_THICKNESS * 2,
-                { isStatic: true }
-            ),
-            Bodies.rectangle(
-                window.innerWidth + WALL_THICKNESS / 2,
-                window.innerHeight / 2,
-                WALL_THICKNESS,
-                window.innerHeight + WALL_THICKNESS * 2,
-                { isStatic: true }
-            ),
+            Bodies.rectangle(w / 2, h + WALL_THICKNESS / 2, w + WALL_THICKNESS * 2, WALL_THICKNESS, { isStatic: true }),
+            Bodies.rectangle(-WALL_THICKNESS / 2, h / 2, WALL_THICKNESS, h + WALL_THICKNESS * 2, { isStatic: true }),
+            Bodies.rectangle(w + WALL_THICKNESS / 2, h / 2, WALL_THICKNESS, h + WALL_THICKNESS * 2, { isStatic: true }),
         ]
 
         let walls: any = createWalls()
@@ -67,8 +64,7 @@ const FallingProfileBallsPhysics: React.FC = () => {
         /* ---------- Balls ---------- */
         const balls: any = Array.from({ length: BALL_COUNT }).map((_, index) => {
             const body = Bodies.circle(
-                Math.random() * (window.innerWidth - BALL_RADIUS * 2) +
-                    BALL_RADIUS,
+                Math.random() * (w - BALL_RADIUS * 2) + BALL_RADIUS,
                 Math.random() * -300,
                 BALL_RADIUS,
                 {
@@ -88,18 +84,24 @@ const FallingProfileBallsPhysics: React.FC = () => {
 
         Composite.add(engine.world, balls)
 
-        /* ---------- Mouse ---------- */
-        const mouse = Mouse.create(render.canvas)
-        const mouseConstraint: any = MouseConstraint.create(engine, {
-            mouse,
-            constraint: {
-                stiffness: 0.25,
-                render: { visible: false },
-            } as any,
-        })
+        /* ---------- Reduced motion: settled arrangement, drawn once ---------- */
+        const arrange = () => {
+            settledLayout(BALL_COUNT, w, h, BALL_RADIUS).forEach((p, i) => Body.setPosition(balls[i], p))
+        }
 
-        render.mouse = mouse
-        Composite.add(engine.world, mouseConstraint)
+        /* ---------- Mouse ---------- */
+        if (!reduced) {
+            const mouse = Mouse.create(render.canvas)
+            const mouseConstraint: any = MouseConstraint.create(engine, {
+                mouse,
+                constraint: {
+                    stiffness: 0.25,
+                    render: { visible: false },
+                } as any,
+            })
+            render.mouse = mouse
+            Composite.add(engine.world, mouseConstraint)
+        }
 
         /* ---------- Custom Draw (Circle Mask) ---------- */
         Events.on(render, "afterRender", () => {
@@ -136,34 +138,54 @@ const FallingProfileBallsPhysics: React.FC = () => {
             )
         })
 
-        Render.run(render)
-        const runner = Runner.create()
-        Runner.run(runner, engine)
+        let runner: any = null
+        if (reduced) {
+            arrange()
+            const draw = () => Render.world(render)
+            balls.forEach((b: any) => b.avatar.addEventListener("load", draw))
+            draw()
+        } else {
+            Render.run(render)
+            runner = Runner.create()
+            Runner.run(runner, engine)
+        }
 
         /* ---------- Resize ---------- */
         const handleResize = () => {
-            render.canvas.width = window.innerWidth
-            render.canvas.height = window.innerHeight
+            ;({ w, h } = measure(host))
+            const ratio = window.devicePixelRatio || 1
+            render.options.width = w
+            render.options.height = h
+            render.bounds.max.x = w
+            render.bounds.max.y = h
+            render.canvas.width = w * ratio
+            render.canvas.height = h * ratio
+            render.canvas.style.width = `${w}px`
+            render.canvas.style.height = `${h}px`
 
             Composite.remove(engine.world, walls)
             walls = createWalls()
             Composite.add(engine.world, walls)
+            if (reduced) {
+                arrange()
+                Render.world(render)
+            }
         }
 
         window.addEventListener("resize", handleResize)
+        window.visualViewport?.addEventListener("resize", handleResize)
 
         return () => {
             window.removeEventListener("resize", handleResize)
+            window.visualViewport?.removeEventListener("resize", handleResize)
             Render.stop(render)
-            Runner.stop(runner)
+            if (runner) Runner.stop(runner)
             Engine.clear(engine)
             render.canvas.remove()
         }
     }, [])
 
-    return (
-        <div ref={sceneRef} className="pointer-events-auto fixed inset-0 z-0" />
-    )
+    return <div ref={sceneRef} className="pointer-events-auto fixed inset-0 z-0" />
 }
 
 export default FallingProfileBallsPhysics

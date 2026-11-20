@@ -1,29 +1,25 @@
-import { Link } from "react-router-dom"
 import FallingProfileBallsPhysics from "../components/FallingProfileBallPhysics"
 import OscarLogo from "../components/OscarLogo"
-import { ChevronRight } from "lucide-react"
+import { Button } from "../ui/Button"
 
 const LandingPage = () => {
     return (
-        <div className="bg-zinc-900 min-h-screen flex items-center justify-center flex-col overflow-hidden text-[#fffadd]">
-            <div className="z-10 flex flex-col items-center justify-center max-w-md">
-                <OscarLogo size="small" />
-                <div className="mx-auto my-6">Be there or be ...</div>
-                <div className="flex gap-4 items-center m-5">
-                    <Link to={"/login"}>
-                        <button className="px-8 py-4 rounded-full bg-[#302f2d] text-[#fffadd] hover:bg-[#45433f] font-medium">
-                            Login
-                        </button>
-                    </Link>
-                    <Link to={"/signup"}>
-                        <button className="px-8 py-4 rounded-full bg-[#fffadd] text-black hover:bg-[#e6e6e6] font-medium inline-flex items-center gap-2 group">
-                            Get Started{" "}
-                            <ChevronRight className="group-hover:translate-x-1 transition" />
-                        </button>
-                    </Link>
-                </div>
-            </div>
+        <div className="bg-bg text-label relative min-h-dvh overflow-hidden">
             <FallingProfileBallsPhysics />
+            <main className="px-gutter pt-safe pb-safe pointer-events-none relative z-10 mx-auto flex min-h-dvh w-full max-w-[420px] flex-col justify-between py-10">
+                <div className="mt-[12dvh] flex flex-col items-center">
+                    <OscarLogo size="medium" as="h1" />
+                    <p className="text-title-3 mt-4 text-center font-bold text-pebble-lemon">Be there or be ...</p>
+                </div>
+                <div className="pointer-events-auto flex flex-col gap-3">
+                    <Button to="/signup" variant="primary" size="lg" fullWidth>
+                        Get started
+                    </Button>
+                    <Button to="/login" variant="secondary" size="lg" fullWidth>
+                        Log in
+                    </Button>
+                </div>
+            </main>
         </div>
     )
 }
