@@ -1,5 +1,7 @@
 import { supabase } from "../supabaseClient"
-import type { Place, ResultRow } from "../types"
+import { runRelease, type ReleaseIO, type ReleaseStatus } from "../lib/release"
+import type { Ballot, Place, ResultRow, Season } from "../types"
+import { fetchBallotDetail } from "./ballots"
 
 // Committee reads every result; members only after the season is released (RLS).
 export const fetchResults = async (categoryIds: string[]): Promise<ResultRow[]> => {
@@ -37,14 +39,43 @@ export const updatePlaces = async (rows: { category_id: string; places: Place[] 
     return filled
 }
 
-// Committee only. Reveals the season's results to members and marks its finished ballots released.
-export const releaseSeasonResults = async (seasonId: string): Promise<void> => {
-    const now = new Date().toISOString()
-    const { error } = await supabase.from("seasons").update({ results_released_at: now }).eq("id", seasonId)
+// Committee only. Everything the release checks need for one season.
+export const fetchReleaseStatus = async (seasonId: string): Promise<ReleaseStatus> => {
+    const { data: season, error } = await supabase.from("seasons").select("*").eq("id", seasonId).single()
     if (error) throw error
-    const closed = await supabase.from("ballots").update({ status: "released" }).eq("season_id", seasonId).eq("status", "closed")
-    if (closed.error) throw closed.error
-    // open ballots whose window has ended count as closed
-    const ended = await supabase.from("ballots").update({ status: "released" }).eq("season_id", seasonId).eq("status", "open").lte("closes_at", now)
-    if (ended.error) throw ended.error
+    const { data: ballots, error: bError } = await supabase.from("ballots").select("*").eq("season_id", seasonId)
+    if (bError) throw bError
+    const all = (ballots ?? []) as Ballot[]
+    const mains = all.filter((b) => b.round === "main" && b.status !== "draft")
+    const details = await Promise.all(mains.map((b) => fetchBallotDetail(b.id)))
+    const mainCategoryIds = details.flatMap((d) => d.categories.map((c) => c.id))
+    const rows = await fetchResults(mainCategoryIds)
+    const results: Record<string, ResultRow> = {}
+    for (const r of rows) results[r.category_id] = r
+    return { season: season as Season, ballots: all, mainCategoryIds, results }
 }
+
+const realReleaseIO: ReleaseIO = {
+    load: fetchReleaseStatus,
+    async releaseBallots(seasonId, nowIso) {
+        const closed = await supabase.from("ballots").update({ status: "released" }).eq("season_id", seasonId).eq("status", "closed")
+        if (closed.error) throw closed.error
+        // open ballots whose window has ended count as closed
+        const ended = await supabase.from("ballots").update({ status: "released" }).eq("season_id", seasonId).eq("status", "open").lte("closes_at", nowIso)
+        if (ended.error) throw ended.error
+    },
+    async markSeasonReleased(seasonId, nowIso) {
+        const { data, error } = await supabase
+            .from("seasons")
+            .update({ results_released_at: nowIso })
+            .eq("id", seasonId)
+            .is("results_released_at", null)
+            .select("id")
+        if (error) throw error
+        return (data ?? []).length === 1
+    },
+}
+
+// Committee only. Checks first (no writes if any fail), marks finished ballots released,
+// then reveals the season's results to members last.
+export const releaseSeasonResults = (seasonId: string): Promise<void> => runRelease(realReleaseIO, seasonId, new Date())
