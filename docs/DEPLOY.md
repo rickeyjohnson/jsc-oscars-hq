@@ -41,18 +41,26 @@ Dashboard -> Storage -> `profile-pics` bucket: set max file size to 5 MB and all
 
 ## 4. Database migrations, tests and cleanup (MUST happen before voting opens)
 
+**Pre-launch checklist (do all of these before announcing):**
+- [ ] `drop schema tests cascade;`
+- [ ] `drop extension if exists pgtap;`
+- [ ] Rotate the DB password and the secret key (section 5).
+- [ ] Delete stray ballots: `select id, name, status from public.ballots;` and remove any practice ballot.
+
+Note: `profiles.email` is readable by every signed-in member through the API today (column grant). Acceptable for 14 friends; listed under "Known limitations / fix before the ceremony" in section 8.
+
 Apply every file in `supabase/migrations/` in this order (dashboard SQL editor or MCP `apply_migration`):
 1. `20261119000000_remote_schema.sql` - applied.
 2. `20261120000100_members_and_roles.sql` - applied.
 3. `20261120000200_voting.sql` - applied.
 4. `20261120000300_voting_fixes.sql` - applied.
 5. `20261121000100_results_places.sql` - applied via MCP.
-6. `20261121000200_reset_claim_guards.sql` - NOT applied: paste it in the dashboard SQL editor. Member-name Reset fails until then.
+6. `20261121000200_reset_claim_guards.sql` - applied live (test 04 passed 1..10).
 
 DB tests (`supabase/tests/database/`, run in the dashboard SQL editor; the `tests` schema from `000-setup-tests-hooks.test.sql` must exist; run 000 first if it was dropped). Each file prints TAP lines:
 - `02_voting_rls.test.sql` -> `1..71`
-- `03_results_places.test.sql` -> `1..8`
-- `04_reset_claim_guards.test.sql` -> `1..10` (needs migration 6)
+- `03_results_places.test.sql` -> `1..8` (passed once)
+- `04_reset_claim_guards.test.sql` -> `1..10` (passed once; needs migration 6, which is applied)
 - (`01_members_roles.test.sql` -> `1..12`)
 All lines should be `ok`.
 
@@ -91,9 +99,9 @@ select count(*) from seasons where results_released_at is not null;  -- 0 before
    cd ~/repos/jsc-oscars && ./venv/bin/python oscars.py
    ```
    (Edit the script's input filename if it is hard-coded.) Confirm it runs and the winners look right.
-6. Release, results and stats (use a throwaway season state; undo in step 8): Record results for each category, resolve ties, use `Fill in podium places` if shown, then Profile -> Release results (checklist green, `Hold to release` for 3 s). As a member check the Results page (podiums, no vote counts) and the Stats page. Releasing marks the real season released: undo with `update seasons set results_released_at = null where name = 'JSC Oscars Fall 2026'; update ballots set status = 'closed' where status = 'released';`.
+6. Release, results and stats (use a throwaway season state; undo in step 8): Record results for each category, resolve ties, use `Fill in podium places` if shown, then Profile -> Release results (checklist green, `Hold to release` for 3 s). As a member check the Results page (podiums, no vote counts) and the Stats page. Releasing marks the real season released: undo by running `supabase/manual/wipe_test_data.sql` (preferred) or, by hand, `update seasons set results_released_at = null where name = 'JSC Oscars Fall 2026'; update ballots set status = 'closed' where status = 'released' and season_id = (select id from public.seasons order by ceremony_at desc nulls last limit 1);`.
 7. Tie test: make a 2-2 tie style result (or edit votes via a second test ballot). On the committee tally view create a tiebreak round, vote in it, close it, record the winner. Also try the manual pick.
-8. Cleanup: Supabase -> Table Editor -> `ballots` -> delete the test ballot (cascades). Verify:
+8. Cleanup: Supabase -> Table Editor -> `ballots` -> delete the test ballot (cascades). Delete any non-[TEST] practice ballot you created by hand (look at `select id, name, status from public.ballots;`). Verify:
    ```sql
    select count(*) from votes;  -- 0
    select count(*) from ballots; -- 0
@@ -116,7 +124,8 @@ select count(*) from seasons where results_released_at is not null;  -- 0 before
 
 - Supabase free projects pause after about a week of inactivity. Check the project is Active in the dashboard the day before voting week, and open the app yourself first. Restore from the dashboard if paused.
 - With confirmation OFF, signup needs no email. Reset emails only work with custom SMTP (section 2); otherwise use the recovery procedure in section 7.
-- Known limitations / needs migration later (acceptable for 14 friends):
+- Known limitations / fix before the ceremony (acceptable for 14 friends):
+  - `profiles.email` is readable by every signed-in member through the API (column grant). Plan: `revoke select (email) on public.profiles from authenticated;` and change `client/src/context/UserContenxt.tsx` `select('*')` to explicit columns.
   - `nominees.created_by` (who added a write-in) is readable by signed-in members before release.
   - Round lineage is not constrained in the DB (tiebreak/committee parent and round combinations).
   - `ballot_is_open` uses `now()` (transaction time); `clock_timestamp()` would be stricter.

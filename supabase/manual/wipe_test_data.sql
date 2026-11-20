@@ -4,8 +4,10 @@
 --
 -- WARNING: this deletes users with email like '%@jsc-test.local' and ballots named
 -- '[TEST]%' (and their tiebreak/committee child rounds). It also clears
--- seasons.results_released_at, but ONLY for a season that has no remaining non-draft
--- ballot after the test ballots are gone, so it can never un-release real results.
+-- seasons.results_released_at (a practice release must not stay live) but FAILS CLOSED: if
+-- a real ballot with status 'released' remains, it raises and the whole wipe rolls back.
+-- Ballots not named '[TEST]%' are never deleted; each is listed in a WARNING so you can
+-- delete stray practice ballots by hand.
 -- Real (non-test) users are never deleted; a warning is raised if any exist.
 -- Run it BEFORE announcing to friends (before Mon Nov 23).
 -- ============================================================================
@@ -28,16 +30,40 @@ delete from public.ballots
 where name like '[TEST]%'
    or parent_ballot_id in (select id from public.ballots where name like '[TEST]%');
 
--- un-release a practice release: only for seasons with NO remaining non-draft ballot.
--- Any ballot left at this point is a real one, so a real released season is never touched.
+-- Warn (never delete) about ballots that are not [TEST] ballots: stray practice ballots
+-- or real ones. Delete practice ballots by hand: select id, name, status from public.ballots;
+do $s$
+declare b record; n int := 0;
+begin
+  for b in select bl.id, bl.name, bl.status, s.name as season from public.ballots bl
+           join public.seasons s on s.id = bl.season_id
+           where bl.name not like '[TEST]%' order by bl.created_at loop
+    n := n + 1;
+    raise warning 'NOT a [TEST] ballot, NOT deleted: % (status %, season %, id %). If it is a stray practice ballot, delete it by hand.',
+      b.name, b.status, b.season, b.id;
+  end loop;
+  if n > 0 then
+    raise warning '*** % non-[TEST] ballot(s) remain. Delete stray practice ballots by hand before launch. ***', n;
+  end if;
+end
+$s$;
+
+-- un-release a practice release, FAIL CLOSED:
+--  (a) a real ballot with status 'released' in a released season -> raise, the whole wipe rolls back;
+--  (b) otherwise (only real draft/open/closed ballots, none released) the practice release must not
+--      stay live, so clear results_released_at and list any real non-draft ballots in a NOTICE.
 do $r$
-declare s record;
+declare s record; v_list text;
 begin
   for s in select id, name from public.seasons where results_released_at is not null loop
-    if exists (select 1 from public.ballots b where b.season_id = s.id and b.status <> 'draft') then
-      raise warning 'Season % has real non-draft ballots; release left as is.', s.name;
-    else
-      update public.seasons set results_released_at = null where id = s.id;
+    if exists (select 1 from public.ballots b where b.season_id = s.id and b.status = 'released') then
+      raise exception 'Refusing: real released ballots exist in season % ; resolve manually (nothing was changed)', s.name;
+    end if;
+    select string_agg(b.name || ' (' || b.status || ')', ', ') into v_list
+    from public.ballots b where b.season_id = s.id and b.status <> 'draft';
+    update public.seasons set results_released_at = null where id = s.id;
+    if v_list is not null then
+      raise notice 'Season % un-released. Real non-draft ballots still present: %', s.name, v_list;
     end if;
   end loop;
 end
