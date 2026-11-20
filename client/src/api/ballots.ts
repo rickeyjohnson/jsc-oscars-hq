@@ -1,6 +1,7 @@
 import { supabase } from "../supabaseClient"
 import { buildNomineeRows } from "../lib/ballotForm"
 import { toUtcIso } from "../lib/time"
+import type { BallotSummary } from "../lib/voting"
 import type { Ballot, BallotDetail, BallotFormData, BallotStatus, Category, Member, Nominee, Season } from "../types"
 
 export const fetchSeasons = async (): Promise<Season[]> => {
@@ -104,4 +105,49 @@ export const fetchBallotDetail = async (ballotId: string): Promise<BallotDetail>
         }))
 
     return { ...(ballot as Ballot), categories }
+}
+
+export const fetchCurrentSeason = async (): Promise<Season | null> => {
+    const { data, error } = await supabase.from("seasons").select("*").order("ceremony_at", { ascending: false }).limit(1)
+    if (error) throw error
+    return ((data ?? [])[0] as Season | undefined) ?? null
+}
+
+// Visible (RLS) non-draft ballots with category counts and the caller's own vote counts.
+export const fetchBallotSummaries = async (): Promise<BallotSummary[]> => {
+    const { data: ballots, error } = await supabase.from("ballots").select("*").neq("status", "draft").order("closes_at", { ascending: true })
+    if (error) throw error
+    const list = (ballots ?? []) as Ballot[]
+    if (list.length === 0) return []
+    const ids = list.map((b) => b.id)
+    const sourceIds = Array.from(new Set(list.map((b) => (b.round !== "main" && b.parent_ballot_id ? b.parent_ballot_id : b.id))))
+
+    const { data: auth, error: authError } = await supabase.auth.getUser()
+    if (authError) throw authError
+    const uid = auth.user?.id ?? ""
+
+    const [cats, rounds, votes] = await Promise.all([
+        supabase.from("categories").select("id, ballot_id").in("ballot_id", sourceIds),
+        supabase.from("round_nominees").select("ballot_id, category_id").in("ballot_id", ids),
+        supabase.from("votes").select("ballot_id, category_id").in("ballot_id", ids).eq("voter_id", uid),
+    ])
+    if (cats.error) throw cats.error
+    if (rounds.error) throw rounds.error
+    if (votes.error) throw votes.error
+
+    const catCount = new Map<string, number>()
+    for (const c of cats.data ?? []) catCount.set(c.ballot_id, (catCount.get(c.ballot_id) ?? 0) + 1)
+    const roundCats = new Map<string, Set<string>>()
+    for (const r of rounds.data ?? []) roundCats.set(r.ballot_id, (roundCats.get(r.ballot_id) ?? new Set()).add(r.category_id))
+    const voted = new Map<string, Set<string>>()
+    for (const v of votes.data ?? []) voted.set(v.ballot_id, (voted.get(v.ballot_id) ?? new Set()).add(v.category_id))
+
+    return list.map((b) => {
+        const isRound = b.round !== "main" && Boolean(b.parent_ballot_id)
+        return {
+            ...b,
+            category_count: isRound ? (roundCats.get(b.id)?.size ?? 0) : (catCount.get(b.id) ?? 0),
+            my_vote_count: voted.get(b.id)?.size ?? 0,
+        }
+    })
 }

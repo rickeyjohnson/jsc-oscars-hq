@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
-import { selectableNominees, groupCandidates, votedCount, dashStates, nextUnvotedIndex, findMatchingNominee, closesInLabel } from "./voting"
-import type { Member, Nominee } from "../types"
+import { selectableNominees, groupCandidates, votedCount, dashStates, nextUnvotedIndex, findMatchingNominee, ballotCardStatus } from "./voting"
+import type { Ballot, Member, Nominee } from "../types"
 
 const nom = (name: string, ids: string[], type: Nominee["type"] = "person"): Nominee => ({
     id: `n-${name}`, display_name: name, type, member_ids: ids,
@@ -64,12 +64,14 @@ describe("findMatchingNominee", () => {
     })
 })
 
-describe("closesInLabel", () => {
-    const now = new Date("2026-11-20T00:00:00Z")
-    it("formats", () => {
-        expect(closesInLabel("2026-11-23T00:00:00Z", now)).toBe("Closes in 3 days")
-        expect(closesInLabel("2026-11-20T05:00:00Z", now)).toBe("Closes in 5 hours")
-        expect(closesInLabel("2026-11-20T00:20:00Z", now)).toBe("Closes in 20 minutes")
-        expect(closesInLabel("2026-11-19T00:00:00Z", now)).toBe("Closed")
+describe("ballotCardStatus", () => {
+    const now = new Date("2026-11-23T00:00:00Z")
+    const openBallot: Ballot = { id: "b", season_id: "s", parent_ballot_id: null, name: "B", round: "main", status: "open", opens_at: "2026-11-22T00:00:00Z", closes_at: "2026-11-26T00:00:00Z" }
+    it("derives the card status", () => {
+        expect(ballotCardStatus(openBallot, 3, 3, now)).toBe("voted")
+        expect(ballotCardStatus(openBallot, 3, 1, now)).toBe("open")
+        expect(ballotCardStatus({ ...openBallot, status: "closed" }, 3, 1, now)).toBe("closed")
+        expect(ballotCardStatus({ ...openBallot, closes_at: "2026-11-22T00:00:00Z" }, 3, 1, now)).toBe("closed")
+        expect(ballotCardStatus({ ...openBallot, opens_at: "2026-11-24T00:00:00Z" }, 3, 0, now)).toBe("upcoming")
     })
 })

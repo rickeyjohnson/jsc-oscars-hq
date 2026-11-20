@@ -7,7 +7,8 @@ import { fetchBallotDetail } from "../api/ballots"
 import { fetchMembers } from "../api/members"
 import { addNominee, castVote, clearVote, fetchMyVotes } from "../api/votes"
 import { useUserData } from "../context/UserContenxt"
-import { closesInLabel, dashStates, findMatchingNominee, nextUnvotedIndex, selectableNominees, votedCount } from "../lib/voting"
+import { closesInLabel } from "../lib/time"
+import { dashStates, findMatchingNominee, nextUnvotedIndex, selectableNominees, votedCount } from "../lib/voting"
 import type { BallotDetail, Member } from "../types"
 
 const SAVE_ERROR = "Couldn't save. Voting may be closed."
@@ -181,7 +182,7 @@ const VotePage = () => {
                     <Link to="/app/ballots" className="text-xs opacity-70">← Back to ballots</Link>
                     <div className="mt-1 flex items-baseline justify-between">
                         <b className="text-base">{ballot.name}</b>
-                        <span className="text-xs opacity-60">{closesInLabel(ballot.closes_at)}</span>
+                        <span className="text-xs opacity-60">{closesInLabel(new Date(ballot.closes_at), new Date())}</span>
                     </div>
                     <div className="mt-1 text-xs opacity-60">{voted} of {total} voted</div>
                 </div>

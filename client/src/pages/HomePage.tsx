@@ -2,20 +2,27 @@ import NavigationBar from "../components/NavigationBar"
 import NavigationTabs from "../components/NavigationTabs"
 import Countdown from "../components/Countdown"
 import PendingBallots from "../components/PendingBallots"
-import MusicPlaylistSection from "../components/MusicPlaylistSection"
-import MakeYourOwnCategories from "../components/MakeYourOwnCategories"
-import Locked from "../components/Locked"
-import Announcements from "../components/Announcements"
 import ProfileSetup from "../components/ProfileSetup"
 import { useEffect, useState } from "react"
 import { useAuth } from "../context/AuthContext"
 import { supabase } from "../supabaseClient"
+import { fetchBallotSummaries, fetchCurrentSeason } from "../api/ballots"
+import type { BallotSummary } from "../lib/voting"
+import type { Season } from "../types"
 
 const HomePage = () => {
     const { user } = useAuth()
     const [profileSetupComplete, setProfileSetupComplete] = useState<
         boolean | null
     >(true)
+
+    const [season, setSeason] = useState<Season | null>(null)
+    const [ballots, setBallots] = useState<BallotSummary[]>([])
+
+    useEffect(() => {
+        fetchCurrentSeason().then(setSeason).catch((e) => console.error("Error loading season: ", e))
+        fetchBallotSummaries().then(setBallots).catch((e) => console.error("Error loading ballots: ", e))
+    }, [])
 
     const handleProfileSetupComplete = () => {
         setProfileSetupComplete(false)
@@ -48,17 +55,8 @@ const HomePage = () => {
             <NavigationBar />
 
             <div className="px-6 py-6 space-y-6">
-                <Countdown />
-                <PendingBallots />
-                <Locked>
-                    <MakeYourOwnCategories />
-                </Locked>
-                <Locked>
-                    <MusicPlaylistSection />
-                </Locked>
-                <Locked>
-                    <Announcements />
-                </Locked>
+                <Countdown season={season} />
+                <PendingBallots ballots={ballots} />
             </div>
 
             <NavigationTabs activeTab={"home"} />

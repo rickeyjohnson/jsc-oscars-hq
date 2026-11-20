@@ -1,16 +1,33 @@
 import NavigationBar from "../components/NavigationBar"
 import NavigationTabs from "../components/NavigationTabs"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import BallotCard from "../components/BallotCard"
+import { fetchBallotSummaries } from "../api/ballots"
+import { ballotCardStatus, type BallotSummary } from "../lib/voting"
+
+const FILTERS = ["All", "Open", "Voted", "Closed"] as const
+type Filter = (typeof FILTERS)[number]
 
 const BallotsPage = () => {
-    const [selectedCategory, setSelectedCategory] = useState("all")
-    const baseClasses =
-        "px-4 py-2 rounded-full text-sm whitespace-nowrap border transition-colors"
+    const [selected, setSelected] = useState<Filter>("All")
+    const [ballots, setBallots] = useState<BallotSummary[] | null>(null)
+    const [error, setError] = useState<string | null>(null)
+    const now = new Date()
 
+    useEffect(() => {
+        fetchBallotSummaries()
+            .then(setBallots)
+            .catch((e) => setError(e instanceof Error ? e.message : "Could not load ballots"))
+    }, [])
+
+    const baseClasses = "px-4 py-2 rounded-full text-sm whitespace-nowrap border transition-colors"
     const selectedClasses = "bg-amber-100 text-zinc-900 font-bold"
-    const unselectedClasses =
-        "bg-amber-100/10 text-amber-100 border-amber-100/20 font-medium"
+    const unselectedClasses = "bg-amber-100/10 text-amber-100 border-amber-100/20 font-medium"
+
+    const filtered = (ballots ?? []).filter((b) => {
+        if (selected === "All") return true
+        return ballotCardStatus(b, b.category_count, b.my_vote_count, now) === selected.toLowerCase()
+    })
 
     return (
         <div>
@@ -20,44 +37,19 @@ const BallotsPage = () => {
                     <div className="space-y-6 p-6">
                         <h2 className="text-3xl font-black">Ballots</h2>
 
-                        {/* Filter Tabs */}
                         <div className="flex gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-2">
-                            {/* All Time */}
-                            <button
-                                onClick={() => setSelectedCategory("all")}
-                                className={`${baseClasses} ${
-                                    selectedCategory === "all"
-                                        ? selectedClasses
-                                        : unselectedClasses
-                                }`}
-                            >
-                                All
-                            </button>
-                            {["Open", "Voted", "Closed"].map((category) => (
-                                <button
-                                    key={category}
-                                    onClick={() =>
-                                        setSelectedCategory(category)
-                                    }
-                                    className={`${baseClasses} ${
-                                        selectedCategory === category
-                                            ? selectedClasses
-                                            : unselectedClasses
-                                    }`}
-                                >
-                                    {category}
+                            {FILTERS.map((f) => (
+                                <button key={f} onClick={() => setSelected(f)} className={`${baseClasses} ${selected === f ? selectedClasses : unselectedClasses}`}>
+                                    {f}
                                 </button>
                             ))}
                         </div>
 
-                        {/* Ballot Cards */}
                         <div className="space-y-4">
-                            {[].map((ballot, index) => (
-                                <BallotCard key={index} ballot={ballot} />
-                            )) && (
-                                <div className="text-center">No ballots</div>
-                            )}{" "}
-                            {/* replace key */}
+                            {error && <div className="text-center text-red-400">{error}</div>}
+                            {!error && ballots === null && <div className="text-center text-amber-100/60">Loading...</div>}
+                            {ballots !== null && filtered.map((b) => <BallotCard key={b.id} ballot={b} now={now} />)}
+                            {ballots !== null && filtered.length === 0 && <div className="text-center">No ballots</div>}
                         </div>
                     </div>
                 </main>

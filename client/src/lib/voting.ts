@@ -1,4 +1,4 @@
-import type { Member, Nominee } from "../types"
+import type { Ballot, Member, Nominee } from "../types"
 
 // Members never see nominees linked to themselves (includes groups they are in).
 export const selectableNominees = (nominees: Nominee[], myMemberId: string | null): Nominee[] =>
@@ -30,13 +30,12 @@ export const findMatchingNominee = (nominees: Nominee[], typed: string): Nominee
     return key ? nominees.find((n) => n.display_name.trim().toLowerCase() === key) : undefined
 }
 
-export const closesInLabel = (closesAt: string, now: Date = new Date()): string => {
-    const ms = new Date(closesAt).getTime() - now.getTime()
-    if (ms <= 0) return "Closed"
-    const plural = (n: number, u: string) => `${n} ${u}${n === 1 ? "" : "s"}`
-    const days = Math.floor(ms / 86_400_000)
-    if (days >= 1) return `Closes in ${plural(days, "day")}`
-    const hours = Math.floor(ms / 3_600_000)
-    if (hours >= 1) return `Closes in ${plural(hours, "hour")}`
-    return `Closes in ${plural(Math.max(1, Math.floor(ms / 60_000)), "minute")}`
+export type BallotCardStatus = "upcoming" | "open" | "voted" | "closed"
+export type BallotSummary = Ballot & { category_count: number; my_vote_count: number }
+
+export const ballotCardStatus = (b: Ballot, categoryCount: number, myVoteCount: number, now: Date): BallotCardStatus => {
+    if (b.status === "closed" || b.status === "released" || new Date(b.closes_at).getTime() <= now.getTime()) return "closed"
+    if (new Date(b.opens_at).getTime() > now.getTime()) return "upcoming"
+    if (categoryCount > 0 && myVoteCount >= categoryCount) return "voted"
+    return "open"
 }
