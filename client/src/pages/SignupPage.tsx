@@ -32,6 +32,8 @@ const SignupPage = () => {
     const [showVerifyEmailModal, setShowVerifyEmailModal] = useState(false)
     const [loader, setLoader] = useState(false)
     const [memberNames, setMemberNames] = useState<string[]>([])
+    const [namesLoading, setNamesLoading] = useState(true)
+    const [namesError, setNamesError] = useState(false)
     const [signupError, setSignupError] = useState("")
     const [signupData, setSignupData] = useState<SignupDate>({
         email: "",
@@ -87,7 +89,11 @@ const SignupPage = () => {
     useEffect(() => {
         fetchAvailableMemberNames()
             .then(setMemberNames)
-            .catch((err) => console.error("error loading names: ", err))
+            .catch((err) => {
+                console.error("error loading names: ", err)
+                setNamesError(true)
+            })
+            .finally(() => setNamesLoading(false))
     }, [])
 
     useEffect(() => {
@@ -145,6 +151,25 @@ const SignupPage = () => {
                                         ))}
                                     </select>
                                 </div>
+                                {namesLoading && (
+                                    <p className="text-[#fffadd]/60 text-sm mt-2">
+                                        Loading names…
+                                    </p>
+                                )}
+                                {namesError && (
+                                    <p className="text-red-400 text-sm mt-2">
+                                        Couldn't load names. Refresh and try
+                                        again.
+                                    </p>
+                                )}
+                                {!namesLoading &&
+                                    !namesError &&
+                                    memberNames.length === 0 && (
+                                        <p className="text-red-400 text-sm mt-2">
+                                            No names left. Ask a committee
+                                            member.
+                                        </p>
+                                    )}
                             </div>
                         </div>
                     </div>
@@ -202,6 +227,11 @@ const SignupPage = () => {
                     <button
                         className="w-full bg-[#fffadd] rounded-full text-zinc-900 py-4 font-bold hover:bg-[#fffadd]/80 transition mb-4 flex justify-center items-center"
                         type="submit"
+                        disabled={
+                            namesLoading ||
+                            namesError ||
+                            memberNames.length === 0
+                        }
                     >
                         {loader ? (
                             <LoaderCircle className="animate-spin w-5 h-5" />
