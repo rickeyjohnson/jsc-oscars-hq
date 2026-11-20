@@ -10,13 +10,15 @@ export function resultForRound(round: BallotRound, ballotId: string, t: Category
       category_id: t.category_id,
       decided_ballot_id: ballotId,
       winner_nominee_id: winner,
-      nominee_ids: t.nominee_ids,
-      top3_nominee_ids: t.top3_ids,
+      nominee_ids: [...t.nominee_ids],
+      top3_nominee_ids: [...t.top3_ids],
       decided_by: winner ? (round === "main" ? "votes" : round === "tiebreak" ? "tiebreak" : "committee_vote") : null,
     }
   }
   return {
     ...prev,
+    nominee_ids: [...prev.nominee_ids],
+    top3_nominee_ids: [...prev.top3_nominee_ids],
     decided_ballot_id: ballotId,
     winner_nominee_id: winner,
     decided_by: winner ? (round === "tiebreak" ? "tiebreak" : "committee_vote") : null,
@@ -38,7 +40,8 @@ export function manualResult(prev: ResultRow, winnerId: string, ballotId: string
     ...prev,
     decided_ballot_id: ballotId,
     winner_nominee_id: winnerId,
-    nominee_ids: prev.nominee_ids.length === 0 ? [winnerId] : prev.nominee_ids,
+    nominee_ids: prev.nominee_ids.length === 0 ? [winnerId] : [...prev.nominee_ids],
+    top3_nominee_ids: [...prev.top3_nominee_ids],
     decided_by: "manual",
   }
 }

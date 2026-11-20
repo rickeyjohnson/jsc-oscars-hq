@@ -21,4 +21,14 @@ describe("nomineeStats", () => {
   it("accumulates across categories", () => {
     expect(nomineeStats([{ ...r("x"), nominee_ids: ["p"], winner_nominee_id: null }, { ...r("y"), nominee_ids: ["p"], winner_nominee_id: "p" }], noms).members.a).toEqual({ wins: 1, noms: 2 })
   })
+  it("counts a member once when a person and a group both include them", () => {
+    const m = nomineeStats([{ ...r("x"), nominee_ids: ["p", "g1"], winner_nominee_id: "p" }], noms).members
+    expect(m.a).toEqual({ wins: 1, noms: 1 })
+    expect(m.b).toEqual({ wins: 0, noms: 1 })
+    const w = nomineeStats([{ ...r("x"), nominee_ids: ["p", "g1"], winner_nominee_id: "g1" }], noms).members
+    expect(w.a).toEqual({ wins: 1, noms: 1 })
+  })
+  it("counts a manual winner outside nominee_ids as nominated and winning", () => {
+    expect(nomineeStats([{ ...r("x"), nominee_ids: ["g2"], winner_nominee_id: "p" }], noms).members.a).toEqual({ wins: 1, noms: 1 })
+  })
 })

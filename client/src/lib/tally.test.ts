@@ -30,4 +30,9 @@ describe("tallyCategory", () => {
   it("ignores other categories", () => {
     expect(tallyCategory("c", [...v({ A: 2 }), { category_id: "other", nominee_id: "B" }]).ranked).toHaveLength(1)
   })
+  it("ignores votes for non-eligible nominees", () => {
+    const t = tallyCategory("c", v({ A: 1, B: 1, Z: 5 }), ["A", "B"])
+    expect(t.ranked.map(r => r.nominee_id)).toEqual(["A", "B"])
+    expect(t.first_tied).toBe(true)
+  })
 })

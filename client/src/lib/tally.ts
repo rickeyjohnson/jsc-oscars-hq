@@ -15,8 +15,10 @@ export function tallyCategory(
 ): CategoryTally {
   const counts = new Map<string, number>()
   for (const id of eligibleIds ?? []) counts.set(id, 0)
+  const elig = eligibleIds ? new Set(eligibleIds) : null
   for (const vote of votes) {
     if (vote.category_id !== categoryId) continue
+    if (elig && !elig.has(vote.nominee_id)) continue
     counts.set(vote.nominee_id, (counts.get(vote.nominee_id) ?? 0) + 1)
   }
   const entries = [...counts.entries()].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))

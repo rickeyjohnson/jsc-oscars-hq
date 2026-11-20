@@ -17,7 +17,9 @@ export function nomineeStats(
     const winMembers = new Set<string>()
     const nomOthers = new Set<string>()
     const winOthers = new Set<string>()
-    for (const id of row.nominee_ids) {
+    const ids = new Set(row.nominee_ids)
+    if (row.winner_nominee_id) ids.add(row.winner_nominee_id)
+    for (const id of ids) {
       const nominee = nominees[id]
       if (!nominee) continue
       const isWinner = id === row.winner_nominee_id
