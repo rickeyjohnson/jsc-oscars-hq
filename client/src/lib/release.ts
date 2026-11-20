@@ -9,10 +9,10 @@ export type ReleaseIO = {
 }
 
 // Slack for the browser clock being ahead of the server's.
-const CLOCK_SKEW_MS = 60_000
+export const CLOCK_SKEW_MS = 60_000
 
 // closed/released, or open with its window over (by at least CLOCK_SKEW_MS). Drafts never count as ended.
-const hasEnded = (b: Ballot, now: Date): boolean =>
+export const hasEnded = (b: Ballot, now: Date): boolean =>
     b.status === "closed" || b.status === "released" || (b.status === "open" && new Date(b.closes_at).getTime() <= now.getTime() - CLOCK_SKEW_MS)
 
 // Drafts are ignored everywhere.

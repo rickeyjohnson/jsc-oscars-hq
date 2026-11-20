@@ -18,7 +18,7 @@ describe("buildIcs", () => {
                 "DTSTART:20261204T210000Z",
                 "DTEND:20261205T000000Z",
                 "SUMMARY:JSC Oscars",
-                "LOCATION:Kadin's\\, 12 Main St\; Apt 2",
+                "LOCATION:Kadin's\\, 12 Main St\\; Apt 2",
                 "DESCRIPTION:Line one\\nLine two",
                 "END:VEVENT",
                 "END:VCALENDAR",
@@ -41,6 +41,9 @@ describe("buildIcs", () => {
         const unfolded = s.replace(/\r\n /g, "")
         expect(unfolded).toContain("DESCRIPTION:" + "é".repeat(100))
         expect(lines.some((l) => l.startsWith(" "))).toBe(true)
+    })
+    it("accepts a domain-qualified uid verbatim", () => {
+        expect(buildIcs({ ...base, uid: "season-1@jsc-oscars" })).toContain("UID:season-1@jsc-oscars\r\n")
     })
     it("is stable for identical input", () => expect(buildIcs(base)).toBe(buildIcs({ ...base })))
 })

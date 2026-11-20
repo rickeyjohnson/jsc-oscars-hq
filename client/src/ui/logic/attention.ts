@@ -1,4 +1,4 @@
-import type { ReleaseCheck } from "../../lib/release"
+import { hasEnded, type ReleaseCheck } from "../../lib/release"
 import type { Ballot } from "../../types"
 
 export type AttentionItem = { id: "close" | "ties" | "release" | "ready"; label: string; to: string; tone: "warn" | "success" }
@@ -10,7 +10,7 @@ const RELEASE = "/app/profile/release"
 export function attentionItems(i: { ballots: Ballot[]; checks: ReleaseCheck[] | null; released: boolean; now: Date }): AttentionItem[] {
     if (i.released) return []
     const items: AttentionItem[] = []
-    const ended = i.ballots.filter((b) => b.status === "open" && new Date(b.closes_at).getTime() <= i.now.getTime()).length
+    const ended = i.ballots.filter((b) => b.round === "main" && b.status === "open" && hasEnded(b, i.now)).length
     if (ended > 0) {
         items.push({ id: "close", label: ended === 1 ? "1 ballot ended but is still open" : `${ended} ballots ended but are still open`, to: BALLOTS, tone: "warn" })
     }

@@ -35,4 +35,13 @@ describe("attentionItems", () => {
         expect(attentionItems({ ballots: [ballot({})], checks: allOk, released: true, now })).toEqual([])
         expect(attentionItems({ ballots: [], checks: null, released: false, now })).toEqual([])
     })
+    it("close only counts MAIN ballots past the 60 s skew; a tiebreak does not hide the ballots_closed failure", () => {
+        const tb = ballot({ id: "t", round: "tiebreak", parent_ballot_id: "m" })
+        const main = ballot({ id: "m", closes_at: "2026-12-05T00:00:00Z" })
+        const out = attentionItems({ ballots: [main, tb], checks: [bad("ballots_closed", "1 of 2 ballots closed"), ok("no_round_open"), ok("winners")], released: false, now })
+        expect(out.map((a) => a.id)).toEqual(["release"])
+        expect(out[0].label).toBe("1 of 2 ballots closed")
+        const fresh = ballot({ closes_at: new Date(now.getTime() - 30_000).toISOString() })
+        expect(attentionItems({ ballots: [fresh], checks: null, released: false, now })).toEqual([])
+    })
 })

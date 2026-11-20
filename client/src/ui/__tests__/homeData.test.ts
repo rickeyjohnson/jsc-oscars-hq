@@ -46,4 +46,23 @@ describe("loadHomeData fetch plan", () => {
         expect(io.fetchReleaseStatus).not.toHaveBeenCalled()
         expect(d.season).toBeNull()
     })
+    it("a failing widget fetch does not blank the rest", async () => {
+        const io1 = { ...mk(true), fetchSeasonResults: vi.fn(async () => { throw new Error("boom") }) }
+        await expect(loadHomeData(false, io1, now)).resolves.toMatchObject({ results: null, errors: { results: expect.any(Error) } })
+        const io2 = { ...mk(false), fetchReleaseStatus: vi.fn(async () => { throw new Error("x") }) }
+        const d2 = await loadHomeData(true, io2, now)
+        expect(d2.checks).toBeNull()
+        expect(d2.errors.committee).toBeInstanceOf(Error)
+        expect(d2.completion).not.toBeNull()
+        const io3 = { ...mk(false), fetchAllVotes: vi.fn(async () => { throw new Error("y") }) }
+        const d3 = await loadHomeData(true, io3, now)
+        expect(d3.completion).toBeNull()
+        expect(d3.errors.completion).toBeInstanceOf(Error)
+        expect(d3.checks).not.toBeNull()
+    })
+    it("skips release status once released, still loads completion if a ballot is open", async () => {
+        const io = mk(true)
+        await loadHomeData(true, io, now)
+        expect(io.fetchReleaseStatus).not.toHaveBeenCalled()
+    })
 })

@@ -1,3 +1,4 @@
+// uid must be domain-qualified and stable per event, e.g. `${season.id}@jsc-oscars` (RFC 5545 recommends this).
 export type IcsEvent = { uid: string; title: string; start: Date; durationMinutes: number; location?: string | null; description?: string; now: Date }
 
 // Default ceremony length (matches the EditOscarEvent default).
@@ -8,7 +9,7 @@ const utc = (d: Date) =>
     `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`
 
 // RFC 5545 TEXT escaping.
-const esc = (s: string) => s.replace(/\\/g, "\\\\").replace(/;/g, "\;").replace(/,/g, "\\,").replace(/\r\n|\r|\n/g, "\\n")
+const esc = (s: string) => s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r\n|\r|\n/g, "\\n")
 
 // Fold to at most 75 octets per line (continuations start with a space and count it), never splitting a character.
 function fold(line: string): string {

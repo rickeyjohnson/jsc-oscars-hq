@@ -23,32 +23,45 @@ export type HomeData = {
     // committee only (null for members):
     ballots: Ballot[] | null
     checks: ReleaseCheck[] | null
+    // null when there is no open main ballot (or the fetch failed, see errors.completion)
     completion: { ballot: BallotSummary; members: MemberCompletion[] } | null
+    // a failing widget fetch only blanks that widget; the base season/ballots fetch stays fatal
+    errors: Partial<Record<"results" | "committee" | "completion", Error>>
 }
+const asError = (e: unknown) => (e instanceof Error ? e : new Error(String(e)))
 
 // Minimal fetching: members never touch committee data; nobody requests results before release.
 export async function loadHomeData(isCommittee: boolean, io: HomeIO, now: Date): Promise<HomeData> {
     const [season, summaries] = await Promise.all([io.fetchCurrentSeason(), io.fetchBallotSummaries()])
     const released = Boolean(season?.results_released_at)
-    const data: HomeData = { season, released, summaries, results: null, ballots: null, checks: null, completion: null }
+    const data: HomeData = { season, released, summaries, results: null, ballots: null, checks: null, completion: null, errors: {} }
     if (!season) return data
     const jobs: Promise<void>[] = []
     if (released) {
-        jobs.push(io.fetchSeasonResults(season.id).then((r) => void (data.results = r)))
+        jobs.push(io.fetchSeasonResults(season.id).then((r) => void (data.results = r), (e) => void (data.errors.results = asError(e))))
     }
     if (isCommittee) {
-        jobs.push(
-            io.fetchReleaseStatus(season.id).then((s) => {
-                data.ballots = s.ballots
-                data.checks = releaseChecks(s, now).checks
-            }),
-        )
+        // Release readiness only matters before release (attentionItems is empty afterwards).
+        if (!released) {
+            jobs.push(
+                io.fetchReleaseStatus(season.id).then(
+                    (s) => {
+                        data.ballots = s.ballots
+                        data.checks = releaseChecks(s, now).checks
+                    },
+                    (e) => void (data.errors.committee = asError(e)),
+                ),
+            )
+        }
         const open = summaries.find((b) => b.round === "main" && b.status === "open" && new Date(b.closes_at).getTime() > now.getTime())
         if (open) {
             jobs.push(
-                Promise.all([io.fetchAllVotes(open.id), io.fetchMembers()]).then(([votes, members]) => {
-                    data.completion = { ballot: open, members: completionByMember(members, votes, open.category_count) }
-                }),
+                Promise.all([io.fetchAllVotes(open.id), io.fetchMembers()]).then(
+                    ([votes, members]) => {
+                        data.completion = { ballot: open, members: completionByMember(members, votes, open.category_count) }
+                    },
+                    (e) => void (data.errors.completion = asError(e)),
+                ),
             )
         }
     }
