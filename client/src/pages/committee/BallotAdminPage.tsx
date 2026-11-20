@@ -4,6 +4,7 @@ import NavigationBar from "../../components/NavigationBar"
 import NavigationTabs from "../../components/NavigationTabs"
 import StatusChip from "../../components/committee/StatusChip"
 import CompletionPanel from "../../components/committee/CompletionPanel"
+import ExportCsvButton from "../../components/committee/ExportCsvButton"
 import { fetchBallotDetail, fetchBallotSummaries, setBallotStatus } from "../../api/ballots"
 import { fetchMembers } from "../../api/members"
 import { fetchAllVotes } from "../../api/votes"
@@ -11,7 +12,7 @@ import { publishBlockers } from "../../lib/ballotForm"
 import { completionByMember, chipStatus, type BallotSummary, type MemberCompletion } from "../../lib/voting"
 import { closesInLabel } from "../../lib/time"
 
-// Task 12 passes the Export CSV button as resultsAction; Task 14 passes the TallyPanel as resultsBody.
+// resultsAction overrides the default Export CSV button; Task 14 passes the TallyPanel as resultsBody.
 type Props = { resultsAction?: ReactNode; resultsBody?: ReactNode }
 
 const BallotAdminPage = ({ resultsAction, resultsBody }: Props) => {
@@ -106,9 +107,9 @@ const BallotAdminPage = ({ resultsAction, resultsBody }: Props) => {
                         <div className="bg-amber-100/5 border border-amber-100/10 rounded-2xl p-4">
                             <div className="flex justify-between items-center mb-3">
                                 <h3 className="font-bold">Results</h3>
-                                {/* Task 12: Export CSV button goes here (resultsAction) */}
-                                {resultsAction}
+                                {resultsAction ?? <ExportCsvButton ballotId={ballot.id} ballotName={ballot.name} />}
                             </div>
+                            <p className="text-xs text-amber-100/60 mb-3">The CSV works any time, including mid-vote.</p>
                             {/* Task 14: TallyPanel goes here (resultsBody) */}
                             {resultsBody ?? <p className="text-sm text-amber-100/60">Tally, ties, tiebreak and winners appear here once voting closes.</p>}
                         </div>
