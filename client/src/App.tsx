@@ -19,6 +19,7 @@ import VotePage from "./pages/VotePage"
 import ManageBallotsPage from "./pages/committee/ManageBallotsPage"
 import BallotAdminPage from "./pages/committee/BallotAdminPage"
 import ReleasePage from "./pages/committee/ReleasePage"
+import MemberNamesPage from "./pages/committee/MemberNamesPage"
 
 const App = () => {
     const ProtectedHomePage = WithAuth(HomePage)
@@ -116,6 +117,11 @@ const App = () => {
                 <Route
                     path="/app/profile/release"
                     element={committeeRoute(<ReleasePage />)}
+                />
+
+                <Route
+                    path="/app/profile/members"
+                    element={committeeRoute(<MemberNamesPage />)}
                 />
 
                 <Route path="*" element={<div>404 Not Found</div>} />

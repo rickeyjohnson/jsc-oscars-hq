@@ -19,7 +19,6 @@ import { useUserData } from "../context/UserContenxt"
 import ProfilePageButton from "../components/ProfilePageButton"
 import ManageOscarsModal from "../components/ManageOscarsModal"
 import { useState } from "react"
-import UserManagementModal from "../components/UserManagementModal"
 import JokeGeneratorModal from "../components/JokeGeneratorModal"
 import EditProfileModal from "../components/EditProfileModal"
 import { useNavigate } from "react-router-dom"
@@ -28,7 +27,6 @@ const ProfilePage = () => {
     const { profile } = useUserData()
     const navigate = useNavigate()
     const [openManageOscarModal, setOpenManageOscarModal] = useState(false)
-    const [openUserManagement, setOpenUserManagement] = useState(false)
     const [openJokeGenerator, setOpenJokeGenerator] = useState(false)
     const [openEditProfile, setOpenEditProfile] = useState(false)
 
@@ -156,7 +154,7 @@ const ProfilePage = () => {
                                 <ProfilePageButton
                                     label="User Management"
                                     icon={<Users className="w-5 h-5" />}
-                                    onClick={() => setOpenUserManagement(true)}
+                                    onClick={() => navigate("/app/profile/members")}
                                 />
                                 <ProfilePageButton
                                     label="Manage Events"
@@ -183,11 +181,6 @@ const ProfilePage = () => {
                 <ManageOscarsModal
                     isOpen={openManageOscarModal}
                     onClose={() => setOpenManageOscarModal(false)}
-                />
-
-                <UserManagementModal
-                    isOpen={openUserManagement}
-                    onClose={() => setOpenUserManagement(false)}
                 />
 
                 <JokeGeneratorModal

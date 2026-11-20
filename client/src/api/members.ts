@@ -33,3 +33,15 @@ export const fetchMemberAvatars = async (): Promise<Record<string, string | null
     for (const m of members) out[m.id] = m.user_id ? byUser.get(m.user_id) ?? null : null
     return out
 }
+
+// Committee-only RPC: unlinks the member and deletes that account's votes.
+export const resetMemberClaim = async (name: string): Promise<void> => {
+    const { error } = await supabase.rpc("reset_member_claim", { p_name: name })
+    if (error) throw error
+}
+
+export const countVotesBy = async (userId: string): Promise<number> => {
+    const { count, error } = await supabase.from("votes").select("id", { count: "exact", head: true }).eq("voter_id", userId)
+    if (error) throw error
+    return count ?? 0
+}
