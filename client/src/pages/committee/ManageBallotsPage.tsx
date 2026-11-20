@@ -45,7 +45,7 @@ const ManageBallotsPage = () => {
                 <Link to="/app/profile/ballots/create" className="block text-center bg-amber-100 text-zinc-900 font-bold rounded-2xl p-4">
                     + New ballot
                 </Link>
-                <Link to="/app/profile/release" className="block text-center bg-amber-100 text-zinc-900 font-bold rounded-2xl p-4">
+                <Link to="/app/profile/release" className="block text-center bg-amber-100 text-zinc-900 font-bold rounded-full px-6 py-3">
                     Reveal results
                 </Link>
             </main>

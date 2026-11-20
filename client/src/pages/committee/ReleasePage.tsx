@@ -74,6 +74,12 @@ const ReleasePage = () => {
         }
     }, [])
 
+    // a check turning red mid-hold cancels the hold
+    const isReady = load.state === "ready" && load.ready
+    useEffect(() => {
+        if (!isReady) dispatch({ type: "cancel" })
+    }, [isReady])
+
     // release exactly once when the hold completes
     const seasonId = load.state === "ready" ? load.seasonId : null
     useEffect(() => {
@@ -105,8 +111,11 @@ const ReleasePage = () => {
     if (load.released || opened)
         return (
             <Page>
-                <Label>THE ENVELOPE IS OPEN</Label>
-                <h1 className="text-2xl font-black">The winners are live for every member.</h1>
+                <div role="status" className="space-y-6">
+                    <Label>THE ENVELOPE</Label>
+                    <h1 className="text-2xl font-black">The envelope is open</h1>
+                    <p className="text-amber-100/80">The winners are live for every member.</p>
+                </div>
                 <Link to="/app/results" className="block text-center bg-amber-100 text-zinc-900 font-bold rounded-full h-12 leading-[3rem]">See the results</Link>
                 <div className="text-center"><Link to="/app/profile" className="text-amber-100/60">Back to profile</Link></div>
             </Page>
@@ -150,7 +159,7 @@ const ReleasePage = () => {
                     {failing.map((c) => <li key={c.id}>{c.label}</li>)}
                 </ul>
             )}
-            {releaseError && <div className="text-red-400 text-center text-sm">{releaseError}</div>}
+            {releaseError && <div role="alert" className="text-red-400 text-center text-sm">{releaseError}</div>}
             <div className="text-center text-xs text-amber-100/60">Press and hold for 3 seconds</div>
             <div className="text-center"><Link to="/app/profile" className="text-amber-100/60">← Not yet, take me back</Link></div>
         </Page>
@@ -174,6 +183,7 @@ const HoldButton = ({ ready, busy, progress, onDown, onMove, onUp, onCancel }: H
         style={{ touchAction: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none" }}
         onContextMenu={(e) => e.preventDefault()}
         onPointerDown={(e) => {
+            if (e.pointerType === "mouse" && e.button !== 0) return
             e.currentTarget.setPointerCapture?.(e.pointerId)
             onDown(e.pointerId, e.clientX, e.clientY)
         }}
