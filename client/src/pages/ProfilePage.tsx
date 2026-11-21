@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { Calendar, KeyRound, Laugh, Lock, LogOut, Plus, Settings, SquareCheckBig, User, Users } from "lucide-react"
 import { supabase } from "../supabaseClient"
 import { useUserData } from "../context/UserContenxt"
-import ManageOscarsModal from "../components/ManageOscarsModal"
+import { SeasonSheet } from "../components/committee/SeasonSheet"
 import JokeGeneratorModal from "../components/JokeGeneratorModal"
 import EditProfileModal from "../components/EditProfileModal"
 import { nomineeStats } from "../lib/stats"
@@ -108,7 +108,7 @@ const ProfilePage = () => {
                             <ListRow title="Manage ballots" leading={icon(SquareCheckBig)} chevron to="/app/profile/ballots" />
                             <ListRow title="Members" leading={icon(Users)} chevron to="/app/profile/members" />
                             <ListRow title="The envelope" leading={icon(KeyRound)} chevron to="/app/profile/release" />
-                            <ListRow title="Event dates" leading={icon(Calendar)} chevron onClick={() => setManageOpen(true)} />
+                            <ListRow title="Season and ceremony date" leading={icon(Calendar)} chevron onClick={() => setManageOpen(true)} />
                         </GroupedSection>
                     )}
                     <GroupedSection header="Labs">
@@ -128,7 +128,7 @@ const ProfilePage = () => {
                     </GroupedSection>
                 </div>
             </div>
-            <ManageOscarsModal isOpen={manageOpen} onClose={() => setManageOpen(false)} />
+            <SeasonSheet open={manageOpen} onClose={() => setManageOpen(false)} />
             <JokeGeneratorModal isOpen={jokeOpen} onClose={() => setJokeOpen(false)} />
             <EditProfileModal isOpen={editOpen} onClose={() => setEditOpen(false)} />
         </Screen>

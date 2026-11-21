@@ -219,3 +219,10 @@ export const reopenBallot = async (ballotId: string, closesAtIso: string): Promi
     if (kind === "refused") throw new ReopenRefusedError(error.message)
     throw error
 }
+
+// Committee only (RLS). Returns false when no row changed, i.e. the caller has no right to edit the season.
+export const updateSeason = async (seasonId: string, fields: { name: string; ceremony_at: string | null; location: string | null }): Promise<boolean> => {
+    const { data, error } = await supabase.from("seasons").update(fields).eq("id", seasonId).select("id")
+    if (error) throw error
+    return (data ?? []).length === 1
+}

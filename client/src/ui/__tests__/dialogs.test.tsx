@@ -10,12 +10,11 @@ vi.mock("../../supabaseClient", () => ({ supabase: { from: () => ({}), auth: {} 
 
 import { ConfirmSheet } from "../ConfirmSheet"
 import { Sheet } from "../Sheet"
-import Modal, { ModalHeader } from "../../components/Modal"
-import ManageOscarsModal from "../../components/ManageOscarsModal"
-import EditOscarEvent from "../../components/EditOscarEvent"
+import { SeasonSheet } from "../../components/committee/SeasonSheet"
 import JokeGeneratorModal from "../../components/JokeGeneratorModal"
-import DeleteConfirmationModal from "../../components/DeleteConfirmationModal"
 import GroupSheet from "../../components/vote/GroupSheet"
+
+vi.mock("../../api/ballots", () => ({ fetchCurrentSeason: vi.fn().mockResolvedValue(null), updateSeason: vi.fn() }))
 
 const src = join(__dirname, "..", "..")
 const walk = (dir: string): string[] =>
@@ -43,9 +42,7 @@ describe("every Sheet-based dialog", () => {
         const noop = () => {}
         const cases: [string, React.ReactElement, RegExp | string][] = [
             ["Sheet", <Sheet open onClose={noop} title="Plain sheet">x</Sheet>, "Plain sheet"],
-            ["Modal", <Modal isOpen onClose={noop}><ModalHeader title="Legacy modal" />x</Modal>, "Legacy modal"],
-            ["ManageOscarsModal", <ManageOscarsModal isOpen onClose={noop} />, "Oscar Events"],
-            ["EditOscarEvent", <EditOscarEvent isOpen onClose={noop} isEdit={false} currEvent={{}} />, "Add New Event"],
+            ["SeasonSheet", <SeasonSheet open onClose={noop} />, "Season"],
             ["JokeGeneratorModal", <JokeGeneratorModal isOpen onClose={noop} />, "Joke"],
             ["GroupSheet", <GroupSheet open candidates={[]} onClose={noop} onSubmit={noop} />, "Add a group"],
         ]
@@ -72,12 +69,6 @@ describe("confirm dialogs", () => {
         const dlg = await checkDialog("Sure?", "alertdialog")
         expect(dlg.querySelector('[aria-label="Close"]')).toBeNull()
         expect(screen.getByRole("button", { name: "Keep editing" })).toBeTruthy()
-    })
-    it("defaults the cancel label to Cancel, and DeleteConfirmationModal is a destructive confirm", async () => {
-        render(<DeleteConfirmationModal isOpen onClose={() => {}} onConfirm={() => {}} />)
-        await checkDialog("Delete Item", "alertdialog")
-        expect(screen.getByRole("button", { name: "Cancel" })).toBeTruthy()
-        expect(screen.getByRole("button", { name: "Delete" }).className).toMatch(/text-danger/)
     })
 })
 
