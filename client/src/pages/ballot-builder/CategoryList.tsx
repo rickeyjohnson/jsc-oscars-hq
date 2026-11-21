@@ -4,6 +4,7 @@ import { dropIndex } from "../../ui/logic/dragReorder"
 import { moveCategory } from "../../ui/logic/builder"
 import { PEBBLE_EDGE, pebbleAt } from "../../ui/logic/pebble"
 import { EmptyState } from "../../ui/EmptyState"
+import { Chip } from "../../ui/Chip"
 import { Award } from "lucide-react"
 import type { Category } from "../../types"
 
@@ -77,7 +78,10 @@ const CategoryList: React.FC<CategoryListProps> = ({ categories, onChange, onEdi
                             <GripVertical aria-hidden className="size-5" />
                         </button>
                         <button type="button" onClick={() => onEdit(i)} className="min-h-11 min-w-0 flex-1 text-left">
-                            <span className="block truncate text-headline">{category.name}</span>
+                            <span className="flex min-w-0 items-center gap-2">
+                                <span className="truncate text-headline">{category.name}</span>
+                                {category.source === "myoc" && <Chip tone="sky">MYOC</Chip>}
+                            </span>
                             <span className="block text-footnote text-label-2">
                                 {category.nominee_mode === "everyone" ? "Everyone" : `${category.nominees.length} ${category.nominees.length === 1 ? "option" : "options"}`}
                             </span>

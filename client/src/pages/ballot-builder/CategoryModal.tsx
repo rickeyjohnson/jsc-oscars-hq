@@ -44,6 +44,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({ isOpen, onClose, o
             nominee_mode: nomineeConfig?.nominee_mode ?? "everyone",
             allow_member_add: nomineeConfig?.allow_member_add ?? false,
             nominees: nomineeConfig?.nominees ?? [],
+            ...(initialData?.source ? { source: initialData.source } : {}),
         })
         setDirty(false)
         onClose()

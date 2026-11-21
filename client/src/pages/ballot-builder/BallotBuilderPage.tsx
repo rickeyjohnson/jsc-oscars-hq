@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 import { Plus } from "lucide-react"
 import { fetchSeasons, saveBallotDraft, setBallotStatus } from "../../api/ballots"
 import { fetchMembers } from "../../api/members"
@@ -10,6 +10,7 @@ import { BottomAccessory } from "../../ui/BottomAccessory"
 import { GroupedSection } from "../../ui/GroupedSection"
 import { ListRow } from "../../ui/ListRow"
 import { useToast } from "../../ui/Toast"
+import { readBuilderState, toDraftCategories } from "../../lib/myoc"
 import { BUILDER_STEPS, stepIssues, type BuilderStep } from "../../ui/logic/builder"
 import BallotBasicInfo from "./BallotBasicInfo"
 import CategoryList from "./CategoryList"
@@ -33,7 +34,10 @@ function StepIndicator({ step }: { step: BuilderStep }) {
 }
 
 const BallotBuilderPage = () => {
-    const [formData, setFormData] = useState<BallotFormData>({ season_id: "", name: "", opens_at: "", closes_at: "", categories: [] })
+    const location = useLocation()
+    // Accepted MYOC ideas arrive as router state and become draft categories (same name dedupe as bulk import).
+    const [seed] = useState(() => toDraftCategories(readBuilderState(location.state)))
+    const [formData, setFormData] = useState<BallotFormData>({ season_id: "", name: "", opens_at: "", closes_at: "", categories: seed.categories })
     const [step, setStep] = useState<BuilderStep>("details")
     const [seasons, setSeasons] = useState<Season[]>([])
     const [modalOpen, setModalOpen] = useState(false)
@@ -45,6 +49,11 @@ const BallotBuilderPage = () => {
     const [busy, setBusy] = useState(false)
     const navigate = useNavigate()
     const toast = useToast()
+
+    useEffect(() => {
+        if (seed.categories.length > 0) toast.show(`${seed.categories.length} ${seed.categories.length === 1 ? "category" : "categories"} added from MYOC`)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     useEffect(() => {
         fetchSeasons().then(setSeasons).catch(() => setErrors((p) => [...p, "Could not load seasons"]))
