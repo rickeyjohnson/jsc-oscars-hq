@@ -16,6 +16,7 @@ import { ErrorState } from "../ui/ErrorState"
 import { Countdown } from "../ui/Countdown"
 import { Envelope } from "../ui/Envelope"
 import { COPY } from "../ui/copy"
+import { useReleaseWatch } from "../ui/useReleaseWatch"
 import { parseResultsTab, type ResultsTab } from "../ui/logic/resultsTab"
 import { hasSeenEnvelope, markEnvelopeSeen, safeStorage } from "../ui/logic/reveal"
 import { WinnersView } from "./results/WinnersView"
@@ -82,6 +83,9 @@ const ResultsPage = () => {
         if (userLoading) return
         void run()
     }, [run, userLoading])
+
+    // A member waiting on the sealed screen sees the reveal without reloading.
+    useReleaseWatch(load.state === "sealed", () => void run())
 
     const setTab = (v: ResultsTab) => setParams(v === "winners" ? {} : { view: v }, { replace: true })
 

@@ -3,6 +3,7 @@ import { fetchBallotSummaries, fetchCurrentSeason } from "../api/ballots"
 import { fetchMembers } from "../api/members"
 import { fetchReleaseStatus, fetchSeasonResults } from "../api/results"
 import { fetchAllVotes } from "../api/votes"
+import { useReleaseWatch } from "./useReleaseWatch"
 import { loadHomeData, type HomeData, type HomeIO } from "./logic/homeData"
 
 const realIO: HomeIO = { fetchCurrentSeason, fetchBallotSummaries, fetchSeasonResults, fetchReleaseStatus, fetchAllVotes, fetchMembers }
@@ -40,5 +41,7 @@ export function useHomeData(isCommittee: boolean): HomeDataState {
         document.addEventListener("visibilitychange", onVisible)
         return () => document.removeEventListener("visibilitychange", onVisible)
     }, [reload])
+    // Sealed Home notices the reveal on its own (only the season row is polled).
+    useReleaseWatch(Boolean(state.data && state.data.season && !state.data.released), reload)
     return { ...state, reload }
 }

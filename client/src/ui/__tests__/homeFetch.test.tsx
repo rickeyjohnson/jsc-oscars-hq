@@ -35,15 +35,15 @@ describe("useHomeData fetch plan", () => {
         api.fetchCurrentSeason.mockResolvedValue({ id: "S", name: "F", ceremony_at: null, location: null, results_released_at: null })
         const { result } = renderHook(() => useHomeData(false))
         await waitFor(() => expect(result.current.data).not.toBeNull())
-        expect(api.fetchCurrentSeason).toHaveBeenCalledTimes(1)
+        expect(api.fetchBallotSummaries).toHaveBeenCalledTimes(1)
         document.dispatchEvent(new Event("visibilitychange"))
-        expect(api.fetchCurrentSeason).toHaveBeenCalledTimes(1) // too soon
+        expect(api.fetchBallotSummaries).toHaveBeenCalledTimes(1) // too soon (the release watch only reads the season row)
         vi.useFakeTimers({ toFake: ["Date"], now: Date.now() + 61_000 })
         try {
             document.dispatchEvent(new Event("visibilitychange"))
         } finally {
             vi.useRealTimers()
         }
-        await waitFor(() => expect(api.fetchCurrentSeason).toHaveBeenCalledTimes(2))
+        await waitFor(() => expect(api.fetchBallotSummaries).toHaveBeenCalledTimes(2))
     })
 })
