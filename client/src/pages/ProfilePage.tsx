@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Calendar, KeyRound, Laugh, Lock, LogOut, Plus, Settings, SquareCheckBig, User, Users } from "lucide-react"
+import { Calendar, KeyRound, Laugh, Lock, LogOut, Plus, Settings, SquareCheckBig, Trophy, User, Users } from "lucide-react"
 import { supabase } from "../supabaseClient"
 import { useUserData } from "../context/UserContenxt"
 import { displayName } from "../lib/displayName"
@@ -9,6 +9,8 @@ import JokeGeneratorModal from "../components/JokeGeneratorModal"
 import EditProfileModal from "../components/EditProfileModal"
 import { nomineeStats } from "../lib/stats"
 import { fetchBallotDetail } from "../api/ballots"
+import { fetchPastStats } from "../api/pastStats"
+import { lifetimeFor, type PastStatRow } from "../lib/pastStats"
 import type { Nominee } from "../types"
 import { Avatar } from "../ui/Avatar"
 import { GroupedSection } from "../ui/GroupedSection"
@@ -44,6 +46,17 @@ const ProfilePage = () => {
             live = false
         }
     }, [mainIds, member])
+    // Previous-semester rows are public to members. Null while loading or when the table is not deployed (tiles then stay season-only).
+    const [pastRows, setPastRows] = useState<PastStatRow[] | null>(null)
+    useEffect(() => {
+        let live = true
+        fetchPastStats()
+            .then((r) => live && setPastRows(r.available ? r.rows : null))
+            .catch(() => live && setPastRows(null))
+        return () => {
+            live = false
+        }
+    }, [])
     const stats = useMemo(() => {
         if (!d) return null
         let tally: { wins: number; noms: number } | null = null
@@ -52,8 +65,8 @@ const ProfilePage = () => {
             for (const c of d.results.categories) for (const n of c.nominees) nominees[n.id] = n
             tally = nomineeStats(Object.values(d.results.results), nominees).members[member.id] ?? { wins: 0, noms: 0 }
         }
-        return youStats({ released: d.released, tally, noms: preNoms })
-    }, [d, member, preNoms])
+        return youStats({ released: d.released, tally, noms: preNoms, past: pastRows && member ? lifetimeFor(member.id, pastRows) : null })
+    }, [d, member, preNoms, pastRows])
 
     const name = displayName(member, profile)
     return (
@@ -78,6 +91,7 @@ const ProfilePage = () => {
                                             <p className="font-display text-title-1 tabular-nums">{s.value}</p>
                                         )}
                                         <p className="break-words text-caption-1 text-label-2">{s.locked ? s.value : s.label}</p>
+                                        {s.caption && <p className="text-caption-2 text-label-3">{s.caption}</p>}
                                     </div>
                                 ))}
                             </div>
@@ -93,6 +107,7 @@ const ProfilePage = () => {
                 <div className="space-y-6">
                     <GroupedSection header="Account">
                         <ListRow title="Edit profile" leading={icon(User)} chevron onClick={() => setEditOpen(true)} />
+                        <ListRow title="Previous Oscars" leading={icon(Trophy)} chevron to="/app/results/previous" />
                         <ListRow title="Settings" leading={icon(Settings)} chevron to="/app/profile/settings" />
                     </GroupedSection>
                     {isCommittee && (

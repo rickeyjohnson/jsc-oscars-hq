@@ -27,4 +27,23 @@ describe("ProfilePage source", () => {
         expect(src).not.toMatch(/username@example\.com|"--"/)
         expect(src).toContain("Log out")
     })
+    it("with past stats the tiles are lifetime totals (past + this season) captioned All time", () => {
+        const s = youStats({ released: true, tally: { wins: 1, noms: 2 }, noms: null, past: { wins: 3, noms: 7 } })
+        expect(s.tiles.map((x) => [x.label, x.value, x.caption])).toEqual([["Wins", "4", "All time"], ["Noms", "9", "All time"], ["Win rate", "44.44%", "All time"]])
+    })
+    it("before release only this season's wins stay hidden: past shows, this season's noms are added", () => {
+        const s = youStats({ released: false, tally: { wins: 9, noms: 9 }, noms: 2, past: { wins: 3, noms: 7 } })
+        expect(s.tiles.map((x) => [x.label, x.value, Boolean(x.locked)])).toEqual([["Wins", "3", false], ["Noms", "9", false], ["Win rate", "42.86%", false]])
+        expect(JSON.stringify(s)).not.toContain("12")
+    })
+    it("a member with no past rows (0 / 0) and no nominations: zeros and 0%, no NaN", () => {
+        for (const released of [true, false]) {
+            const s = youStats({ released, tally: released ? { wins: 0, noms: 0 } : null, noms: 0, past: { wins: 0, noms: 0 } })
+            expect(s.tiles.map((x) => x.value)).toEqual(["0", "0", "0%"])
+        }
+        expect(youStats({ released: true, tally: null, noms: null, past: { wins: 0, noms: 0 } }).tiles.map((x) => x.value)).toEqual(["0", "0", "0%"])
+    })
+    it("without past (table missing) the old behavior stays", () => {
+        expect(youStats({ released: false, tally: null, noms: 4, past: null }).tiles[0].locked).toBe(true)
+    })
 })
