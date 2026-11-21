@@ -10,7 +10,7 @@ grant select on public.__ids to authenticated, anon;
 create function public.__id(p_k text) returns uuid language sql stable security definer set search_path = '' as
   $$ select v from public.__ids where k = p_k $$;
 
-insert into public.__tap(line) select plan(11);
+insert into public.__tap(line) select plan(10);
 
 -- real member names only; unclaim them first (real accounts may hold them), all undone by the rollback
 update members set user_id = null, claimed_at = null where name in ('Rickey','Micah','Nick');
