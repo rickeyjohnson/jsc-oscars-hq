@@ -5,6 +5,7 @@ import App from "./App.tsx"
 import { BrowserRouter } from "react-router-dom"
 import { ReduceMotionProvider } from "./ui/ReduceMotion.tsx"
 import { AuthProvider } from "./context/AuthContext.tsx"
+import { registerServiceWorker } from "./lib/pwa"
 
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
@@ -17,3 +18,5 @@ createRoot(document.getElementById("root")!).render(
         </BrowserRouter>
     </StrictMode>
 )
+
+registerServiceWorker() // production only
