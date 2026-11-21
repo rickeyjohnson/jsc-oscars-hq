@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { ChevronDown, ChevronUp, GripVertical, Trash2 } from "lucide-react"
+import { ChevronDown, ChevronUp, GripVertical, Pencil, Trash2 } from "lucide-react"
 import { dropIndex } from "../../ui/logic/dragReorder"
 import { moveCategory } from "../../ui/logic/builder"
 import { PEBBLE_EDGE, pebbleAt } from "../../ui/logic/pebble"
@@ -81,6 +81,10 @@ const CategoryList: React.FC<CategoryListProps> = ({ categories, onChange, onEdi
                             <span className="block text-footnote text-label-2">
                                 {category.nominee_mode === "everyone" ? "Everyone" : `${category.nominees.length} ${category.nominees.length === 1 ? "option" : "options"}`}
                             </span>
+                        </button>
+                        <button type="button" aria-label={`Edit ${category.name}`} onClick={() => onEdit(i)} className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-fill px-3 text-subhead font-bold text-label">
+                            <Pencil aria-hidden className="size-4" />
+                            Edit
                         </button>
                         <button type="button" aria-label={`Move ${category.name} up`} disabled={i === 0} onClick={() => onChange(moveCategory(categories, i, i - 1))} className={KEY_BTN}>
                             <ChevronUp aria-hidden className="size-5" />

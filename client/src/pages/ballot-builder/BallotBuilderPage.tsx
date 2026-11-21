@@ -11,7 +11,6 @@ import { GroupedSection } from "../../ui/GroupedSection"
 import { ListRow } from "../../ui/ListRow"
 import { useToast } from "../../ui/Toast"
 import { BUILDER_STEPS, stepIssues, type BuilderStep } from "../../ui/logic/builder"
-import { PEBBLE_EDGE, pebbleAt } from "../../ui/logic/pebble"
 import BallotBasicInfo from "./BallotBasicInfo"
 import CategoryList from "./CategoryList"
 import CategoryModal from "./CategoryModal"
@@ -142,9 +141,12 @@ const BallotBuilderPage = () => {
                     </GroupedSection>
                     <GroupedSection header={`${formData.categories.length} categories`}>
                         {formData.categories.map((c, i) => (
-                            <li key={c.id} className={`border-l-4 px-4 py-3 ${PEBBLE_EDGE[pebbleAt(i)]}`}>
-                                <p className="text-headline">{c.name}</p>
-                                <p className="text-footnote text-label-2">{c.nominee_mode === "everyone" ? "Everyone" : `${c.nominees.length} options`}</p>
+                            <li key={c.id} className="flex items-center gap-3 px-4 py-3">
+                                <span aria-hidden className="w-6 shrink-0 text-footnote tabular-nums text-label-2">
+                                    {i + 1}
+                                </span>
+                                <span className="min-w-0 flex-1 truncate text-body">{c.name}</span>
+                                <span className="shrink-0 text-footnote text-label-2">{c.nominee_mode === "everyone" ? "Everyone" : `${c.nominees.length} ${c.nominees.length === 1 ? "option" : "options"}`}</span>
                             </li>
                         ))}
                     </GroupedSection>
