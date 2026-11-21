@@ -50,7 +50,7 @@ Project -> Settings -> Environment Variables (Production and Preview), then **Re
 - [ ] `VITE_SUPABASE_URL` = `https://fsuczxowirmsxtmzzsys.supabase.co`
 - [ ] `VITE_SUPABASE_API_KEY` = the publishable key
 - [ ] `VITE_SITE_URL` = `https://<app>.vercel.app`
-- [ ] `VITE_GOOGLE_AUTH` = `true`
+- [ ] `VITE_GOOGLE_LOGIN` = `true`
 - [ ] `curl -s -o /dev/null -w "%{http_code}\n" https://<app>.vercel.app/app/ballots` -> `200`
 
 ## 6. Committee (DEPLOY 3)

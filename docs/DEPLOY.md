@@ -12,7 +12,7 @@ Supabase project: `fsuczxowirmsxtmzzsys` (see section 4 for which migrations are
    - `VITE_SUPABASE_URL` = `https://fsuczxowirmsxtmzzsys.supabase.co`
    - `VITE_SUPABASE_API_KEY` = the **publishable** key (`sb_publishable_...`). Not the secret key.
    - `VITE_SITE_URL` = leave blank for the first deploy.
-   - `VITE_GOOGLE_AUTH` = leave EMPTY until the Google provider is configured (section 2b); then `true`. It only shows or hides "Continue with Google".
+   - `VITE_GOOGLE_LOGIN` = leave EMPTY until the Google provider is configured (section 2b); then `true`. It only shows or hides "Continue with Google".
    - All `VITE_*` values are baked in at build time: change one, then Redeploy.
 4. Deploy. Note the URL, e.g. `https://<app>.vercel.app`.
 5. Set `VITE_SITE_URL=https://<app>.vercel.app` in Vercel -> Settings -> Environment Variables, then Deployments -> Redeploy (Vite bakes env vars in at build time).
@@ -34,7 +34,7 @@ Dashboard -> Authentication -> Providers -> Email: turn OFF "Confirm email". Dec
 1. Google Cloud Console -> APIs and Services -> Credentials -> Create OAuth client ID (Web application). Authorized redirect URI = `https://fsuczxowirmsxtmzzsys.supabase.co/auth/v1/callback`. Copy the client ID and secret.
 2. Supabase -> Authentication -> Providers -> Google: enable, paste the client ID and secret, save.
 3. Supabase -> Authentication -> URL Configuration: Redirect URLs must include `https://<app>.vercel.app/**` (the app sends users back to `/app`) and `http://localhost:5173/**` for dev. A missing entry sends people to the Site URL root instead.
-4. Vercel: set `VITE_GOOGLE_AUTH=true`, Redeploy. Check: Log in shows "Continue with Google"; a first-time Google user lands on `/claim` to pick their name.
+4. Vercel: set `VITE_GOOGLE_LOGIN=true`, Redeploy. Check: Log in shows "Continue with Google"; a first-time Google user lands on `/claim` to pick their name.
 5. If Google users are not being created, check the provider's "Allow new users" and that "Confirm email" does not block OAuth emails.
 Never paste the Google client secret into chat or the repo.
 
