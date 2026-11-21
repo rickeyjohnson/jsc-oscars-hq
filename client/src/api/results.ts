@@ -3,6 +3,7 @@ import { runRelease, type ReleaseIO, type ReleaseStatus } from "../lib/release"
 import type { Ballot, Category, Place, ResultRow, Season } from "../types"
 import { fetchBallotDetail as fetchBallotDetailRaw } from "./ballots"
 import { dedupe } from "../lib/cache/dedup"
+import type { GuardedWrite } from "../lib/autoRecord"
 
 // Home reads each ballot detail twice (results + release status): collapse concurrent identical reads. VotePage uses the raw call.
 const fetchBallotDetail = (id: string) => dedupe("ballot-detail:" + id, () => fetchBallotDetailRaw(id))
@@ -28,6 +29,29 @@ export const upsertResults = async (rows: ResultRow[]): Promise<void> => {
     const payload = rows.map(({ places, ...rest }) => (places === undefined ? { ...rest, updated_at: now } : { ...rest, places, updated_at: now }))
     const { error } = await supabase.from("results").upsert(payload, { onConflict: "category_id" })
     if (error) throw error
+}
+
+// Committee only. The automatic record step: only fills what is missing, so two committee members
+// doing it at once (or a manual pick that landed first) are never overwritten.
+//  - expected null: insert, ignoring a row that appeared in the meantime
+//  - expected <ballot id>: update only while the row is still decided by that ballot
+export const recordResultsGuarded = async (writes: GuardedWrite[]): Promise<void> => {
+    if (writes.length === 0) return
+    const now = new Date().toISOString()
+    const payload = (row: GuardedWrite["row"]) => {
+        const { places, ...rest } = row
+        return places === undefined ? { ...rest, updated_at: now } : { ...rest, places, updated_at: now }
+    }
+    const inserts = writes.filter((w) => w.expected === null)
+    if (inserts.length > 0) {
+        const { error } = await supabase.from("results").upsert(inserts.map((w) => payload(w.row)), { onConflict: "category_id", ignoreDuplicates: true })
+        if (error) throw error
+    }
+    for (const w of writes.filter((x) => x.expected !== null)) {
+        const { category_id, ...rest } = payload(w.row)
+        const { error } = await supabase.from("results").update(rest).eq("category_id", category_id).eq("decided_ballot_id", w.expected as string)
+        if (error) throw error
+    }
 }
 
 // Committee only. Fills podium places on recorded rows whose places are still null (never
