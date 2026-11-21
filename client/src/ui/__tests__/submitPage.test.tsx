@@ -47,7 +47,7 @@ describe("SubmitBallotPage", () => {
         expect(screen.queryByText("MAIN BALLOT")).toBeNull()
         expect(document.querySelector("svg[aria-label*='Oscars' i], img[alt*='Oscars' i]")).toBeNull()
         expect(screen.getByRole("link", { name: "Back" }).getAttribute("href")).toBe("/app/ballots/B1")
-        expect(screen.getByRole("button", { name: /submit my ballot/i }).getAttribute("aria-disabled")).toBe("false")
+        expect((screen.getByRole("button", { name: /submit my ballot/i }) as HTMLButtonElement).disabled).toBe(false)
         expect(screen.getByRole("link", { name: "Back to ballot" }).getAttribute("href")).toBe("/app/ballots/B1")
     })
 
@@ -56,7 +56,7 @@ describe("SubmitBallotPage", () => {
         vi.mocked(fetchMyVotes).mockResolvedValue({})
         renderPage()
         const hold = await screen.findByRole("button", { name: /submit my ballot/i })
-        expect(hold.getAttribute("aria-disabled")).toBe("true")
+        expect((hold as HTMLButtonElement).disabled).toBe(true)
         expect(screen.getByText("2 categories skipped")).toBeTruthy()
     })
 
@@ -78,17 +78,27 @@ describe("SubmitBallotPage", () => {
         expect(clearVote).not.toHaveBeenCalled()
     })
 
-    it("completing the hold stores the submission and shows success", async () => {
+    it("tapping Submit opens a confirm sheet; Keep editing closes it without submitting", async () => {
+        vi.mocked(fetchBallotDetail).mockResolvedValue(ballot() as never)
+        vi.mocked(fetchMyVotes).mockResolvedValue({ c1: "a" })
+        renderPage()
+        fireEvent.click(await screen.findByRole("button", { name: /submit my ballot/i }))
+        const dlg = await screen.findByRole("dialog", { name: "Submit your ballot?" })
+        expect(dlg.textContent).toContain("1 of 2 categories voted, 1 skipped.")
+        fireEvent.click(screen.getByRole("button", { name: "Keep editing" }))
+        await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull())
+        expect(localStorage.getItem("jsc.submitted.v1.B1.u1")).toBeNull()
+    })
+
+    it("confirming stores the submission and shows success, with no vote writes", async () => {
         vi.mocked(fetchBallotDetail).mockResolvedValue(ballot() as never)
         vi.mocked(fetchMyVotes).mockResolvedValue({ c1: "a", c2: "b" })
-        let t = 0
-        vi.spyOn(performance, "now").mockImplementation(() => t)
-        vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => setTimeout(() => { t += 1000; cb(t) }, 0) as unknown as number)
         renderPage()
-        fireEvent.keyDown(await screen.findByRole("button", { name: /submit my ballot/i }), { key: " " })
-        expect((await screen.findByRole("status", undefined, { timeout: 3000 })).textContent).toContain("Ballot submitted")
+        fireEvent.click(await screen.findByRole("button", { name: /submit my ballot/i }))
+        fireEvent.click(await screen.findByRole("button", { name: "Submit ballot" }))
+        expect((await screen.findByRole("status")).textContent).toContain("Ballot submitted")
         await waitFor(() => expect(localStorage.getItem("jsc.submitted.v1.B1.u1")).toBeTruthy())
         expect(castVote).not.toHaveBeenCalled()
-        vi.restoreAllMocks()
+        expect(clearVote).not.toHaveBeenCalled()
     })
 })

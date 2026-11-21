@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { Link, Navigate, useParams } from "react-router-dom"
 import { Check, ChevronLeft, TriangleAlert } from "lucide-react"
 import { vibrate } from "../ui/haptics"
@@ -7,8 +7,8 @@ import { fetchMyVotes } from "../api/votes"
 import { submissionIO } from "../api/submissions"
 import { useUserData } from "../context/UserContenxt"
 import { votedCount } from "../lib/voting"
-import { HOLD_IDLE, holdProgress, holdReducer } from "../lib/hold"
-import { HoldButton } from "../ui/HoldButton"
+import { Button } from "../ui/Button"
+import { Sheet } from "../ui/Sheet"
 import { closesLabel, submitChecklist } from "../ui/logic/submit"
 import type { BallotDetail } from "../types"
 
@@ -39,10 +39,10 @@ const SubmitBallotPage = () => {
     const { profile } = useUserData()
     const userId = profile?.user_id ?? ""
     const [load, setLoad] = useState<Load>({ state: "loading" })
-    const [hold, dispatch] = useReducer(holdReducer, HOLD_IDLE)
-    const [now, setNow] = useState(0)
+    const [confirming, setConfirming] = useState(false)
+    const [busy, setBusy] = useState(false)
+    const [submitError, setSubmitError] = useState(false)
     const [submittedAt, setSubmittedAt] = useState<string | null>(null)
-    const fired = useRef(false)
     const [attempt, setAttempt] = useState(0)
 
     useEffect(() => {
@@ -60,41 +60,21 @@ const SubmitBallotPage = () => {
         }
     }, [ballotId, userId, attempt])
 
-    useEffect(() => {
-        if (hold.phase !== "holding") return
-        let raf = 0
-        const loop = () => {
-            const t = performance.now()
-            setNow(t)
-            dispatch({ type: "tick", t })
-            raf = requestAnimationFrame(loop)
-        }
-        raf = requestAnimationFrame(loop)
-        return () => cancelAnimationFrame(raf)
-    }, [hold.phase])
-
-    useEffect(() => {
-        const cancel = () => dispatch({ type: "cancel" })
-        const onVis = () => document.visibilityState === "hidden" && cancel()
-        window.addEventListener("blur", cancel)
-        document.addEventListener("visibilitychange", onVis)
-        return () => {
-            window.removeEventListener("blur", cancel)
-            document.removeEventListener("visibilitychange", onVis)
-        }
-    }, [])
-
-    // confirm exactly once when the hold completes (no vote writes)
-    useEffect(() => {
-        if (hold.phase !== "done" || fired.current || !userId) return
-        fired.current = true
-        void submissionIO(userId)
+    // Confirmed in the sheet: store the device-local confirmation (no vote writes).
+    const confirm = () => {
+        if (busy || !userId) return
+        setBusy(true)
+        setSubmitError(false)
+        submissionIO(userId)
             .submit(ballotId)
             .then((at) => {
                 vibrate("submit")
+                setConfirming(false)
                 setSubmittedAt(at)
             })
-    }, [hold.phase, ballotId, userId])
+            .catch(() => setSubmitError(true))
+            .finally(() => setBusy(false))
+    }
 
     const back = `/app/ballots/${ballotId}`
     if (load.state === "loading") return <Page backTo={back}><div className="text-body">Loading…</div></Page>
@@ -133,8 +113,6 @@ const SubmitBallotPage = () => {
     }
 
     const ready = list.submittable
-    const progress = holdProgress(hold, now)
-    const down = (pointerId: number, x: number, y: number) => ready && dispatch({ type: "down", t: performance.now(), pointerId, x, y })
 
     const skipped = Math.max(0, total - voted)
     return (
@@ -155,19 +133,37 @@ const SubmitBallotPage = () => {
                 ))}
             </ul>
             <div className="mt-auto space-y-3 pb-4">
-                <HoldButton
-                    ready={ready}
-                    busy={false}
-                    label="Submit my ballot"
-                    hint={ready ? "Press and hold for 3 seconds" : "Vote in at least one category to submit"}
-                    progress={progress}
-                    onDown={down}
-                    onMove={(id, x, y) => dispatch({ type: "move", pointerId: id, x, y })}
-                    onUp={(id) => dispatch({ type: "up", pointerId: id })}
-                    onCancel={() => dispatch({ type: "cancel" })}
-                />
+                <Button fullWidth size="lg" variant="primary" disabled={!ready} onClick={() => setConfirming(true)}>
+                    Submit my ballot
+                </Button>
+                {!ready && <p className="text-center text-footnote">Vote in at least one category to submit</p>}
                 <div className="text-center"><Link to={back} className={quietLink}>Back to ballot</Link></div>
             </div>
+            <Sheet
+                open={confirming}
+                onClose={() => !busy && setConfirming(false)}
+                title="Submit your ballot?"
+                fit
+                footer={
+                    <div className="flex flex-col gap-3">
+                        <Button fullWidth loading={busy} loadingLabel="Submitting…" onClick={confirm}>
+                            Submit ballot
+                        </Button>
+                        <Button fullWidth variant="tinted" disabled={busy} onClick={() => setConfirming(false)}>
+                            Keep editing
+                        </Button>
+                    </div>
+                }
+            >
+                <p className="text-body">
+                    {voted} of {total} {total === 1 ? "category" : "categories"} voted{skipped > 0 ? `, ${skipped} skipped` : ""}.
+                </p>
+                {submitError && (
+                    <p role="alert" className="mt-3 text-callout font-bold">
+                        Couldn't save your submission. Try again.
+                    </p>
+                )}
+            </Sheet>
         </Page>
     )
 }
