@@ -32,7 +32,7 @@ export function NavBar({
                     {back && (
                         <Link to={back.to} aria-label={`Back to ${back.label}`} className="-ml-2 inline-flex min-h-11 min-w-11 items-center gap-0.5 rounded-control pr-3 text-body font-bold">
                             <ChevronLeft aria-hidden className="size-6" />
-                            <span>{back.label}</span>
+                            <span className="truncate">{back.label}</span>
                         </Link>
                     )}
                 </div>
