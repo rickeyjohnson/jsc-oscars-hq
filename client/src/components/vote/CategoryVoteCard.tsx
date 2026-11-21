@@ -96,6 +96,7 @@ const CategoryVoteCard = (p: Props) => {
                                 src={n.member_ids.length === 1 ? p.avatars[n.member_ids[0]] : null}
                                 size={40}
                                 ring="pebble"
+                                onPebble={on}
                                 pebble={peb}
                                 decorative
                             />

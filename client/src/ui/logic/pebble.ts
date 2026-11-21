@@ -64,3 +64,14 @@ export const PEBBLE_EDGE: Record<PebbleName, string> = {
     sky: "border-pebble-sky",
     grape: "border-pebble-grape",
 }
+
+// Selected card: the face turns ink with the letter in the card's pebble. Literal strings for Tailwind's scanner.
+export const PEBBLE_INK_FACE: Record<PebbleName, string> = {
+    strawberry: "bg-on-pebble-strawberry text-pebble-strawberry",
+    cherry: "bg-on-pebble-cherry text-pebble-cherry",
+    tangerine: "bg-on-pebble-tangerine text-pebble-tangerine",
+    lemon: "bg-on-pebble-lemon text-pebble-lemon",
+    lime: "bg-on-pebble-lime text-pebble-lime",
+    sky: "bg-on-pebble-sky text-pebble-sky",
+    grape: "bg-on-pebble-grape text-pebble-grape",
+}

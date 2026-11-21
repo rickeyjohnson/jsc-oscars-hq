@@ -269,6 +269,11 @@ describe("VotePage one-per-page flow", () => {
         expect(radio(ANN).className).not.toMatch(/border-l|border-pebble-/)
         expect(radio(BO).className).not.toMatch(/border-l|border-pebble-/)
         expect(radio(ANN).querySelector("svg")).toBeTruthy()
+        // fill only: the face has no ring or offset halo, and turns ink
+        const face = radio(ANN).querySelector("span")!.className
+        expect(face).not.toMatch(/ring-offset-bg|ring-\[3px\]|border-/)
+        expect(face).toMatch(/bg-on-pebble-/)
+        expect(radio(BO).querySelector("span")!.className).toMatch(/ring-\[3px\]/)
         expect(radio(BO).querySelector("svg")).toBeNull()
     })
 
