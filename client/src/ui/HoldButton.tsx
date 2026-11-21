@@ -30,7 +30,7 @@ export function HoldButton({ ready, busy, progress, label, hint, busyLabel = "Wo
                 type="button"
                 aria-disabled={!ready || busy}
                 aria-describedby={hintId}
-                className={`relative block h-14 w-full select-none overflow-hidden rounded-full bg-bg border-2 border-label-3 ${ready ? "cursor-pointer" : "opacity-50"}`}
+                className={`relative block h-14 w-full select-none overflow-hidden rounded-full border-2 ${ready ? "border-label-3 bg-bg cursor-pointer" : "bg-current/15 border-current/50 cursor-not-allowed"}`}
                 style={{ touchAction: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none" }}
                 onContextMenu={(e) => e.preventDefault()}
                 onPointerDown={(e) => {
@@ -54,12 +54,12 @@ export function HoldButton({ ready, busy, progress, label, hint, busyLabel = "Wo
                 onBlur={onCancel}
             >
                 <span aria-hidden className="pointer-events-none absolute inset-y-0 left-0 w-full origin-left bg-inverse" style={{ transform: `scaleX(${p})` }} />
-                <span className={`${layer} text-label`}>{text}</span>
+                <span className={`${layer} ${ready ? "text-label" : ""}`}>{text}</span>
                 <span aria-hidden className={`${layer} text-on-inverse`} style={{ clipPath: `inset(0 ${(1 - p) * 100}% 0 0)` }}>
                     {text}
                 </span>
             </button>
-            <p id={hintId} className="mt-2 text-center text-footnote text-label-2">
+            <p id={hintId} className="mt-2 text-center text-subhead">
                 {hint}
             </p>
         </div>

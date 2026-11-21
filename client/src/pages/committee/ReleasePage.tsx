@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react"
 import { Link } from "react-router-dom"
 import { Check, ChevronLeft, TriangleAlert } from "lucide-react"
-import OscarLogo from "../../components/OscarLogo"
 import { vibrate } from "../../ui/haptics"
 import { fetchCurrentSeason } from "../../api/ballots"
 import { fetchReleaseStatus, releaseSeasonResults } from "../../api/results"
@@ -20,21 +19,19 @@ const RELEASE_FAILED = "Couldn't open the envelope. Check your connection and ho
 
 const Page = ({ children, back = true }: { children: React.ReactNode; back?: boolean }) => (
     <div className="min-h-dvh bg-pebble-lemon text-on-pebble-lemon">
-        <main className="mx-auto flex min-h-dvh max-w-[560px] flex-col gap-6 px-gutter py-6 pt-safe pb-safe">
-            <div className="flex items-center justify-between">
-                {back ? (
-                    <Link to="/app/profile" aria-label="Back to You" className="-ml-2 inline-flex min-h-11 min-w-11 items-center gap-0.5 rounded-control pr-3 text-body font-bold">
+        <main className="mx-auto flex min-h-dvh max-w-[560px] flex-col gap-6 px-gutter pb-safe pt-safe">
+            <div className="flex min-h-14 items-center">
+                {back && (
+                    <Link to="/app/profile" aria-label="Back to You" className="inline-flex min-h-11 items-center gap-1 rounded-control pr-3 text-body font-bold">
                         <ChevronLeft aria-hidden className="size-6" />
                         <span>You</span>
                     </Link>
-                ) : <span />}
-                <OscarLogo size="small" decorative tone="onLemon" />
+                )}
             </div>
             {children}
         </main>
     </div>
 )
-const Label = () => <div className="text-caption-1 font-bold tracking-[0.25em]">THE ENVELOPE</div>
 const quietLink = "inline-flex min-h-11 items-center justify-center rounded-control px-4 text-body font-bold underline underline-offset-4"
 
 const ReleasePage = () => {
@@ -118,12 +115,11 @@ const ReleasePage = () => {
             .finally(() => setBusy(false))
     }, [hold.phase, seasonId])
 
-    if (load.state === "loading") return <Page><Label /><div className="text-body">Loading…</div></Page>
+    if (load.state === "loading") return <Page><div className="text-body">Loading…</div></Page>
     if (load.state === "error")
         return (
             <Page>
-                <Label />
-                <div role="alert" className="text-body font-bold">{load.message}</div>
+                                <div role="alert" className="text-body font-bold">{load.message}</div>
                 <button type="button" onClick={() => { setLoad({ state: "loading" }); void refresh(true) }} className="min-h-14 rounded-full bg-bg px-6 text-title-3 text-label">Retry</button>
                 <Link to="/app/profile" className={quietLink}>Not yet</Link>
             </Page>
@@ -133,8 +129,7 @@ const ReleasePage = () => {
         return (
             <Page>
                 <div role="status" className="space-y-4">
-                    <Label />
-                    <h1 className="text-display">The envelope is open</h1>
+                                        <h1 className="text-display">The envelope is open</h1>
                     <p className="text-body">The winners are live for every member.</p>
                 </div>
                 <Link to="/app/results" className="inline-flex min-h-14 items-center justify-center rounded-full bg-bg text-title-3 text-label">See results</Link>
@@ -150,34 +145,37 @@ const ReleasePage = () => {
 
     return (
         <Page>
-            <div className="space-y-4 pt-4">
-                <Label />
+            <div className="space-y-3 pt-2">
                 <h1 className="text-display">Reveal the winners?</h1>
-                <p className="text-title-3">There is no going back.</p>
-                <p className="text-body">Every member will see every winner. This can't be undone.</p>
+                <p className="text-body font-bold">Every member sees every winner, and it can't be undone.</p>
             </div>
-            <ul className="space-y-2">
+            <ul className="space-y-2 text-callout">
                 {load.checks.map((c) => (
-                    <li key={c.id} className="flex min-h-11 items-center gap-3 rounded-card bg-on-pebble-lemon/10 px-4 py-3 text-callout">
-                        {c.ok ? <Check aria-hidden className="size-5 shrink-0" /> : <TriangleAlert aria-hidden className="size-5 shrink-0" />}
+                    <li key={c.id} className="flex items-start gap-3">
+                        {c.ok ? <Check aria-hidden className="mt-0.5 size-5 shrink-0" /> : <TriangleAlert aria-hidden className="mt-0.5 size-5 shrink-0" />}
                         <span className="flex-1">
                             <span className="sr-only">{c.ok ? "Ready: " : "Not ready: "}</span>
                             {c.label}
                         </span>
-                        {!c.ok && <Link to="/app/profile/ballots" className="inline-flex min-h-11 items-center font-bold underline underline-offset-4">Go to tally</Link>}
                     </li>
                 ))}
-                <li className="flex min-h-11 items-center gap-3 rounded-card bg-on-pebble-lemon/10 px-4 py-3 text-callout">
-                    <Check aria-hidden className="size-5 shrink-0" />Members never see vote counts
+                <li className="flex items-start gap-3">
+                    <Check aria-hidden className="mt-0.5 size-5 shrink-0" />
+                    <span className="flex-1">Members never see vote counts</span>
                 </li>
             </ul>
-            <div className="mt-auto space-y-3">
+            {failing.length > 0 && (
+                <Link to="/app/profile/ballots" className="inline-flex min-h-11 items-center self-start font-bold underline underline-offset-4">
+                    Go to tally
+                </Link>
+            )}
+            <div className="mt-auto space-y-3 pb-4">
                 <HoldButton
                     ready={ready}
                     busy={busy}
                     label="Hold to open the envelope"
                     busyLabel="Opening…"
-                    hint={ready ? "Press and hold for 3 seconds" : `Locked until every check passes: ${failing.map((c) => c.label).join("; ")}`}
+                    hint={ready ? "Press and hold for 3 seconds" : "Locked until every check passes"}
                     progress={progress}
                     onDown={down}
                     onMove={(id, x, y) => dispatch({ type: "move", pointerId: id, x, y })}
