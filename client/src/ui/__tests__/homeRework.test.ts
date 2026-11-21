@@ -3,7 +3,7 @@ import { PEBBLE_COLORS } from "../tokens"
 import { contrastRatio } from "../logic/contrast"
 import { WIDGETS, resolveWidgets, widgetColor } from "../logic/homeWidgets"
 import { defaultPrefs } from "../logic/homePrefs"
-import { applyGroupOrder, dropIndex, moveToGap } from "../logic/dragReorder"
+import { applyGroupOrder, dropIndex, edgeScrollSpeed, moveToGap } from "../logic/dragReorder"
 
 const rects = [
     { top: 0, height: 40 },
@@ -93,5 +93,16 @@ describe("widget colors", () => {
             const r = contrastRatio(PEBBLE_COLORS[c].on, PEBBLE_COLORS[c].bg)
             expect(r).toBeGreaterThanOrEqual(c === "grape" ? 3 : 4.5)
         }
+    })
+})
+
+describe("edgeScrollSpeed", () => {
+    it("scrolls up near the top edge, down near the bottom, and not in the middle", () => {
+        expect(edgeScrollSpeed(300, 100, 700)).toBe(0)
+        expect(edgeScrollSpeed(100, 100, 700)).toBeLessThan(0)
+        expect(edgeScrollSpeed(130, 100, 700)).toBeLessThan(0)
+        expect(edgeScrollSpeed(700, 100, 700)).toBeGreaterThan(0)
+        expect(edgeScrollSpeed(670, 100, 700)).toBeGreaterThan(0)
+        expect(Math.abs(edgeScrollSpeed(90, 100, 700))).toBeGreaterThanOrEqual(Math.abs(edgeScrollSpeed(135, 100, 700)))
     })
 })

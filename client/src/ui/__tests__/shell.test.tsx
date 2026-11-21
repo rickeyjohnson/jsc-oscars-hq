@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { render, screen, within } from "@testing-library/react"
+import { fireEvent, render, screen, within } from "@testing-library/react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import type { ReactNode } from "react"
 import { AppShell } from "../AppShell"
@@ -82,6 +82,16 @@ describe("AppShell", () => {
         expect(links[0].getAttribute("aria-current")).toBeNull()
         expect(nav.querySelectorAll("button")).toHaveLength(0)
         expect(screen.getByText("Ballots page")).toBeTruthy()
+    })
+
+    it("sets the document title per tab and moves focus to the content when a nav link was focused", () => {
+        renderAt("/app")
+        expect(document.title).toBe("Home | JSC Oscars")
+        const link = within(screen.getByRole("navigation", { name: "Main" })).getByRole("link", { name: "Ballots" })
+        link.focus()
+        fireEvent.click(link)
+        expect(document.title).toBe("Ballots | JSC Oscars")
+        expect(document.activeElement).toBe(document.getElementById("main-content"))
     })
 
     it("desktop: sidebar replaces tab bar; user chip links to /app/profile; committee group only for committee", () => {

@@ -4,7 +4,7 @@ import { ToastProvider } from "./Toast"
 import { TabBar } from "./TabBar"
 import { Sidebar } from "./Sidebar"
 import { ShellContext } from "./ShellContext"
-import { activeTab, isTextEntry } from "./logic/tabs"
+import { TABS, activeTab, isTextEntry } from "./logic/tabs"
 import { useUserData } from "../context/UserContenxt"
 import { fetchBallotSummaries } from "../api/ballots"
 import { pendingBallots } from "../lib/voting"
@@ -72,6 +72,19 @@ export function AppShell() {
     const typing = useTextFocus(!desktop)
     const root = useRef<HTMLDivElement>(null)
     const active = activeTab(pathname)
+
+    // Route title, and after a tab change move focus to the content when it was on the nav (the fade is visual only).
+    const first = useRef(true)
+    useEffect(() => {
+        const label = TABS.find((t) => t.id === active)?.label
+        if (label) document.title = `${label} | JSC Oscars`
+        if (first.current) {
+            first.current = false
+            return
+        }
+        const el = document.activeElement
+        if (el && el.closest("nav")) document.getElementById("main-content")?.focus({ preventScroll: true })
+    }, [active])
 
     useEffect(() => {
         if (!slot) return

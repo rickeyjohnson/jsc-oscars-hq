@@ -25,3 +25,10 @@ export function applyGroupOrder(p: HomePrefs, group: readonly WidgetId[], next: 
     let i = 0
     return { ...p, order: p.order.map((id) => (slots.has(id) ? next[i++] : id)) }
 }
+
+/** Pixels to scroll per tick while dragging: negative near the top edge, positive near the bottom, 0 elsewhere. */
+export function edgeScrollSpeed(pointerY: number, top: number, bottom: number, zone = 40, max = 14): number {
+    if (pointerY < top + zone) return -Math.round((max * Math.min(zone, top + zone - pointerY)) / zone)
+    if (pointerY > bottom - zone) return Math.round((max * Math.min(zone, pointerY - (bottom - zone))) / zone)
+    return 0
+}

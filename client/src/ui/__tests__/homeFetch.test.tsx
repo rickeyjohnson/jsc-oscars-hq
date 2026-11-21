@@ -30,4 +30,20 @@ describe("useHomeData fetch plan", () => {
         expect(api.fetchAllVotes).not.toHaveBeenCalled()
         expect(api.fetchMembers).not.toHaveBeenCalled()
     })
+
+    it("reloads when the tab becomes visible again after a minute, not before", async () => {
+        api.fetchCurrentSeason.mockResolvedValue({ id: "S", name: "F", ceremony_at: null, location: null, results_released_at: null })
+        const { result } = renderHook(() => useHomeData(false))
+        await waitFor(() => expect(result.current.data).not.toBeNull())
+        expect(api.fetchCurrentSeason).toHaveBeenCalledTimes(1)
+        document.dispatchEvent(new Event("visibilitychange"))
+        expect(api.fetchCurrentSeason).toHaveBeenCalledTimes(1) // too soon
+        vi.useFakeTimers({ toFake: ["Date"], now: Date.now() + 61_000 })
+        try {
+            document.dispatchEvent(new Event("visibilitychange"))
+        } finally {
+            vi.useRealTimers()
+        }
+        await waitFor(() => expect(api.fetchCurrentSeason).toHaveBeenCalledTimes(2))
+    })
 })

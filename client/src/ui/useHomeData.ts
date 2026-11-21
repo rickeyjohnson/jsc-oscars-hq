@@ -7,6 +7,8 @@ import { loadHomeData, type HomeData, type HomeIO } from "./logic/homeData"
 
 const realIO: HomeIO = { fetchCurrentSeason, fetchBallotSummaries, fetchSeasonResults, fetchReleaseStatus, fetchAllVotes, fetchMembers }
 
+const STALE_MS = 60_000
+
 export type HomeDataState = { data: HomeData | null; loading: boolean; error: Error | null; reload: () => void }
 
 /** One load for the whole Home screen. Committee-only data is fetched only when isCommittee. */
@@ -26,6 +28,17 @@ export function useHomeData(isCommittee: boolean): HomeDataState {
         return () => {
             seq.current++
         }
+    }, [reload])
+    // Coming back to a tab that sat in the background for over a minute: refresh (the old data stays on screen meanwhile).
+    useEffect(() => {
+        let last = Date.now()
+        const onVisible = () => {
+            if (document.visibilityState !== "visible" || Date.now() - last < STALE_MS) return
+            last = Date.now()
+            reload()
+        }
+        document.addEventListener("visibilitychange", onVisible)
+        return () => document.removeEventListener("visibilitychange", onVisible)
     }, [reload])
     return { ...state, reload }
 }
