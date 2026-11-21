@@ -20,6 +20,7 @@ import { useReleaseWatch } from "../ui/useReleaseWatch"
 import { parseResultsTab, type ResultsTab } from "../ui/logic/resultsTab"
 import { hasSeenEnvelope, markEnvelopeSeen, safeStorage } from "../ui/logic/reveal"
 import { WinnersView } from "./results/WinnersView"
+import { SeasonSwitch } from "./results/SeasonSwitch"
 import { LeaderboardView } from "./results/LeaderboardView"
 import type { You } from "./results/YouCard"
 
@@ -113,6 +114,9 @@ const ResultsPage = () => {
         const at = load.state === "sealed" && load.season.ceremony_at ? new Date(load.season.ceremony_at) : null
         return (
             <Screen title="Results">
+                <div className="mb-4">
+                    <SeasonSwitch value="current" />
+                </div>
                 <section className="rounded-card border-l-4 border-pebble-lemon bg-surface p-5">
                     <Clapperboard aria-hidden className="size-10 text-pebble-lemon" />
                     <h2 className="mt-3 font-display text-title-1">Results are sealed.</h2>
@@ -146,6 +150,7 @@ const ResultsPage = () => {
                         Preview: members can't see this yet. Nothing is revealed until you open the envelope.
                     </p>
                 )}
+                <SeasonSwitch value="current" />
                 <SegmentedControl label="Results view" idPrefix="results" options={TABS} value={tab} onChange={setTab} />
                 <div role="tabpanel" aria-labelledby={`results-tab-${tab}`}>
                     {tab === "winners" ? (

@@ -12,6 +12,7 @@ const TITLES: [RegExp, string][] = [
     [/^\/app\/ballots\/[^/]+\/submit\/?$/, "Submit ballot"],
     [/^\/app\/ballots\/[^/]+\/?$/, "Vote"],
     [/^\/app\/ballots\/?$/, "Ballots"],
+    [/^\/app\/results\/previous\/?$/, "Previous Oscars"],
     [/^\/app\/results\/?$/, "Results"],
     [/^\/app\/profile\/settings\/myoc\/?$/, "MYOC"],
     [/^\/app\/profile\/settings\/?$/, "Settings"],
