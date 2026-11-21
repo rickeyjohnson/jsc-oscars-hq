@@ -1,6 +1,10 @@
 import { useState } from "react"
-import type { Category, Member } from "../../types"
+import { Check } from "lucide-react"
+import type { Category, Member, Nominee } from "../../types"
 import { groupCandidates, selectableNominees } from "../../lib/voting"
+import { Avatar } from "../../ui/Avatar"
+import { avatarFallback } from "../../ui/logic/avatar"
+import { PEBBLE_CLASS, PEBBLE_EDGE } from "../../ui/logic/pebble"
 import GroupPicker from "./GroupPicker"
 
 type Props = {
@@ -9,104 +13,103 @@ type Props = {
     total: number
     selectedId: string | undefined
     pending: boolean
-    expanded: boolean
+    current: boolean
     readOnly: boolean
     myMemberId: string | null
     members: Member[]
+    avatars: Record<string, string | null>
     error: string | null
     registerRef: (el: HTMLElement | null) => void
-    onToggle: () => void
     onVote: (nomineeId: string) => void
     onClear: () => void
     onAddOption: (name: string) => void
     onAddGroup: (memberIds: string[]) => void
 }
 
+/** The stable identity of a nominee: the member id for one person (so their color matches everywhere), else the nominee id. */
+export const nomineeKey = (n: Nominee): string => (n.member_ids.length === 1 ? n.member_ids[0] : n.id)
+
+/** One category, one page. Each nominee is a dark card with a pebble edge; the chosen one fills with its pebble. */
 const CategoryVoteCard = (p: Props) => {
-    const { category, selectedId, pending, expanded, readOnly } = p
+    const { category, selectedId, pending, readOnly } = p
     const [typed, setTyped] = useState("")
     const options = selectableNominees(category.nominees, p.myMemberId)
-    const chosen = options.find((n) => n.id === selectedId)
-    const open = expanded || !selectedId
 
     return (
         <section
             ref={p.registerRef}
             tabIndex={-1}
             aria-label={`Category ${p.index + 1} of ${p.total}: ${category.name}`}
-            className="scroll-mt-24 rounded-2xl bg-[#27272a] p-3 outline-none focus-visible:ring-2 focus-visible:ring-[#fffadd]"
+            className={`tab-enter outline-none ${p.current ? "" : "hidden"}`}
         >
-            <div className="flex items-start justify-between gap-2">
-                <div>
-                    <h2 className="font-semibold">{category.name}</h2>
-                    {category.description && <p className="text-xs opacity-60">{category.description}</p>}
+            <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                    <h2 className="font-display text-title-1">{category.name}</h2>
+                    {category.description && <p className="mt-1 text-subhead text-label-2">{category.description}</p>}
                 </div>
-                {selectedId && !pending && !p.error && <span className="whitespace-nowrap text-xs text-green-300">✓ Voted</span>}
-                {pending && <span className="whitespace-nowrap text-xs opacity-60">Saving...</span>}
+                <span className="whitespace-nowrap pt-2 text-footnote text-label-2" aria-live="polite">
+                    {pending ? "Saving..." : selectedId && !p.error ? "✓ Voted" : ""}
+                </span>
             </div>
 
-            {selectedId && !open && (
-                <button type="button" onClick={p.onToggle} className="mt-2 block text-left">
-                    <span className="inline-block rounded-full bg-[#fffadd] px-3 py-1 text-xs font-medium text-black">{chosen?.display_name ?? "Your pick"}</span>
-                    <span className="mt-1 block text-xs opacity-60">Tap to change ▾</span>
-                </button>
+            <div role="radiogroup" aria-label={category.name} className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
+                {options.map((n) => {
+                    const on = n.id === selectedId
+                    const key = nomineeKey(n)
+                    const peb = avatarFallback(key)
+                    const c = PEBBLE_CLASS[peb]
+                    return (
+                        <button
+                            key={n.id}
+                            type="button"
+                            role="radio"
+                            aria-checked={on}
+                            disabled={readOnly}
+                            onClick={() => (on ? p.onClear() : p.onVote(n.id))}
+                            className={`flex min-h-16 w-full items-center gap-3 rounded-card border-l-4 p-3 text-left transition-colors duration-150 motion-reduce:transition-none ${PEBBLE_EDGE[peb]} ${on ? `${c.bg} ${c.text}` : "bg-surface"} ${readOnly ? "opacity-70" : "cursor-pointer active:scale-[0.99]"}`}
+                        >
+                            <Avatar id={key} name={n.display_name} src={n.member_ids.length === 1 ? p.avatars[n.member_ids[0]] : null} size={40} ring="pebble" decorative />
+                            <span className="min-w-0 flex-1">
+                                <span className="block text-headline">{n.display_name}</span>
+                                {n.secondary_text && <span className={`block text-footnote ${on ? "" : "text-label-2"}`}>{n.secondary_text}</span>}
+                            </span>
+                            {on && <Check aria-hidden strokeWidth={3} className="size-6 shrink-0" />}
+                        </button>
+                    )
+                })}
+                {options.length === 0 && <p className="text-callout text-label-2">No options yet.</p>}
+            </div>
+
+            {category.nominee_mode === "preset" && category.allow_member_add && !readOnly && (
+                <form
+                    className="mt-4 flex gap-2"
+                    onSubmit={(e) => {
+                        e.preventDefault()
+                        if (typed.trim()) {
+                            p.onAddOption(typed)
+                            setTyped("")
+                        }
+                    }}
+                >
+                    <input
+                        value={typed}
+                        onChange={(e) => setTyped(e.target.value)}
+                        placeholder="Add an option"
+                        aria-label="Add an option"
+                        className="h-13 min-w-0 flex-1 rounded-control bg-surface-2 px-4 text-body text-label outline-none placeholder:text-label-3 focus-visible:ring-2 focus-visible:ring-accent"
+                    />
+                    <button type="submit" disabled={!typed.trim()} className="h-13 rounded-full bg-inverse px-5 text-subhead font-bold text-on-inverse disabled:opacity-40">
+                        Add
+                    </button>
+                </form>
             )}
 
-            {open && (
-                <>
-                    <div role="radiogroup" aria-label={category.name} className="mt-2 space-y-2">
-                        {options.map((n) => {
-                            const on = n.id === selectedId
-                            return (
-                                <button
-                                    key={n.id}
-                                    type="button"
-                                    role="radio"
-                                    aria-checked={on}
-                                    disabled={readOnly}
-                                    onClick={() => p.onVote(n.id)}
-                                    className={`flex w-full items-center gap-3 rounded-xl p-3 text-left ${on ? "bg-[#fffadd] text-black" : "bg-[#3f3f46]"}`}
-                                >
-                                    <span className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-[#71717a] text-xs font-semibold text-white">
-                                        {n.display_name.charAt(0).toUpperCase()}
-                                    </span>
-                                    <span className="flex-1">
-                                        {n.display_name}
-                                        {n.secondary_text && <span className="block text-xs opacity-60">{n.secondary_text}</span>}
-                                    </span>
-                                    <span className={`ml-auto h-4 w-4 flex-none rounded-full border-2 ${on ? "border-black bg-black" : "border-[#fffadd]/50"}`} />
-                                </button>
-                            )
-                        })}
-                        {options.length === 0 && <p className="text-sm opacity-60">No options yet.</p>}
-                    </div>
-
-                    {category.nominee_mode === "preset" && category.allow_member_add && !readOnly && (
-                        <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); if (typed.trim()) { p.onAddOption(typed); setTyped("") } }}>
-                            <input
-                                value={typed}
-                                onChange={(e) => setTyped(e.target.value)}
-                                placeholder="Add an option"
-                                aria-label="Add an option"
-                                className="flex-1 rounded-xl bg-[#3f3f46] px-3 py-2 text-sm placeholder:text-[#fffadd]/40"
-                            />
-                            <button type="submit" disabled={!typed.trim()} className="rounded-xl bg-[#fffadd] px-3 py-2 text-sm font-medium text-black disabled:opacity-40">Add</button>
-                        </form>
-                    )}
-
-                    {category.nominee_mode === "group" && !readOnly && (
-                        <GroupPicker candidates={groupCandidates(p.members, p.myMemberId)} disabled={readOnly} onSubmit={p.onAddGroup} />
-                    )}
-
-                    {selectedId && !readOnly && (
-                        <div className="mt-3 flex justify-end gap-4 text-xs">
-                            <button type="button" onClick={p.onToggle} className="opacity-70 underline">Collapse</button>
-                            <button type="button" onClick={p.onClear} className="opacity-70 underline">Clear</button>
-                        </div>
-                    )}
-                </>
+            {category.nominee_mode === "group" && !readOnly && <GroupPicker candidates={groupCandidates(p.members, p.myMemberId)} disabled={readOnly} onSubmit={p.onAddGroup} />}
+            {p.error && (
+                <p role="alert" className="mt-3 text-footnote text-danger">
+                    {p.error}
+                </p>
             )}
-            {p.error && <p role="alert" className="mt-2 text-xs text-red-400">{p.error}</p>}
         </section>
     )
 }

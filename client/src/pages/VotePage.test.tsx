@@ -18,9 +18,11 @@ vi.mock("../context/UserContenxt", () => ({ useUserData: () => userState.value }
 
 // ADAPTER (Task 21 may change these helpers, never the assertions)
 const radio = (name: RegExp) => screen.getByRole("radio", { name })
-const section = (cat: RegExp) => screen.getByRole("region", { name: cat })   // old: <section aria-label="Category 1 of 2: …">
-const expandCard = async (cat: RegExp) => { fireEvent.click(await within(section(cat)).findByRole("button", { name: /tap to change/i })) }
-const clearButton = (cat: RegExp) => within(section(cat)).getByRole("button", { name: /clear/i })
+// One category per page: only the current region is visible; the others are display:none.
+const section = (cat: RegExp) => screen.getByRole("region", { name: cat })
+const expandCard = async (_cat: RegExp) => {} // options are always shown now
+// Tapping the chosen card again clears the vote (no separate Clear button).
+const clearButton = (_cat: RegExp) => screen.getByRole("radio", { checked: true })
 const nextUnvoted = () => screen.getByRole("button", { name: /next unvoted/i })
 const loadError = () => screen.findByText(/couldn't load/i)
 // END ADAPTER
@@ -242,5 +244,24 @@ describe("VotePage behavior", () => {
         fireEvent.click(submit)
         await waitFor(() => expect(castVote).toHaveBeenCalledWith("B1", "c1", "n-grp"))
         expect(addNominee).toHaveBeenCalledWith("c1", "", ["m-Ann", "m-Bo"])
+    })
+})
+
+describe("VotePage one-per-page flow", () => {
+    it("Next moves to the next category and shows it", async () => {
+        await loaded()
+        expect(section(C1).className).not.toMatch(/\bhidden\b/)
+        expect(section(C2).className).toMatch(/\bhidden\b/)
+        fireEvent.click(screen.getByRole("button", { name: /next category/i }))
+        expect(section(C1).className).toMatch(/\bhidden\b/)
+        expect(section(C2).className).not.toMatch(/\bhidden\b/)
+        fireEvent.click(screen.getByRole("button", { name: /previous category/i }))
+        expect(section(C1).className).not.toMatch(/\bhidden\b/)
+    })
+    it("the chosen nominee shows a check and the same pebble edge in every category", async () => {
+        await loaded(undefined, { c1: "n-ann" })
+        expect(radio(ANN).className).toMatch(/border-pebble-/)
+        expect(radio(ANN).querySelector("svg")).toBeTruthy()
+        expect(radio(BO).querySelector("svg")).toBeNull()
     })
 })

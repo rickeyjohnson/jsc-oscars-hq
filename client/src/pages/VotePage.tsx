@@ -1,15 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useParams } from "react-router-dom"
-import NavigationBar from "../components/NavigationBar"
-import NavigationTabs from "../components/NavigationTabs"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import CategoryVoteCard from "../components/vote/CategoryVoteCard"
 import { fetchBallotDetail } from "../api/ballots"
-import { fetchMembers } from "../api/members"
+import { fetchMemberAvatars, fetchMembers } from "../api/members"
 import { addNominee, castVote, clearVote, fetchMyVotes } from "../api/votes"
 import { useUserData } from "../context/UserContenxt"
 import { closesInLabel, opensAtLabel } from "../lib/time"
 import { dashStates, findMatchingNominee, nextUnvotedIndex, selectableNominees, votedCount } from "../lib/voting"
 import type { BallotDetail, Member } from "../types"
+import { Screen } from "../ui/Screen"
+import { Sheet } from "../ui/Sheet"
+import { ListRow } from "../ui/ListRow"
+import { GroupedSection } from "../ui/GroupedSection"
+import { BottomAccessory } from "../ui/BottomAccessory"
+import { ProgressStrip } from "../ui/ProgressStrip"
 
 const SAVE_ERROR = "Couldn't save. Voting may be closed."
 
@@ -21,10 +26,12 @@ const VotePage = () => {
     const [members, setMembers] = useState<Member[]>([])
     const [myVotes, setMyVotes] = useState<Record<string, string>>({})
     const [pending, setPending] = useState<Record<string, boolean>>({})
-    const [expanded, setExpanded] = useState<Record<string, boolean>>({})
     const [errors, setErrors] = useState<Record<string, string | null>>({})
     const [loadError, setLoadError] = useState<string | null>(null)
-    const [activeId, setActiveId] = useState<string | null>(null)
+    const [idx, setIdx] = useState(0)
+    const [jumpOpen, setJumpOpen] = useState(false)
+    const [avatars, setAvatars] = useState<Record<string, string | null>>({})
+    const scrollOnChange = useRef(false)
     // Per-category save queue: saves run in tap order; confirmed holds the last value the DB accepted.
     const chains = useRef<Record<string, Promise<void>>>({})
     const seqs = useRef<Record<string, number>>({})
@@ -47,6 +54,11 @@ const VotePage = () => {
                 confirmed.current = { ...votes }
                 setBallot(detail)
                 setMyVotes(votes)
+                try {
+                    fetchMemberAvatars().then((a) => !cancelled && setAvatars(a), () => {})
+                } catch {
+                    /* faces fall back to initials */
+                }
                 if (detail.categories.some((c) => c.nominee_mode === "group")) setMembers(await fetchMembers())
             } catch {
                 if (!cancelled) setLoadError("Couldn't load this ballot.")
@@ -57,18 +69,15 @@ const VotePage = () => {
 
     const ids = useMemo(() => ballot?.categories.map((c) => c.id) ?? [], [ballot])
 
+    // After a Prev/Next/jump, bring the new category into view and move focus to it.
     useEffect(() => {
-        if (ids.length === 0) return
-        const obs = new IntersectionObserver(
-            (entries) => { for (const e of entries) if (e.isIntersecting) setActiveId((e.target as HTMLElement).dataset.cid ?? null) },
-            { rootMargin: "-35% 0px -55% 0px" },
-        )
-        for (const id of ids) {
-            const el = cardEls.current[id]
-            if (el) { el.dataset.cid = id; obs.observe(el) }
-        }
-        return () => obs.disconnect()
-    }, [ids])
+        if (!scrollOnChange.current) return
+        scrollOnChange.current = false
+        const el = cardEls.current[ids[idx]]
+        if (!el) return
+        el.scrollIntoView({ behavior: "smooth", block: "start" })
+        el.focus({ preventScroll: true })
+    }, [idx, ids])
 
     const setError = (cid: string, msg: string | null) => setErrors((e) => ({ ...e, [cid]: msg }))
 
@@ -77,7 +86,6 @@ const VotePage = () => {
         seqs.current[cid] = seq
         setError(cid, null)
         setPending((p) => ({ ...p, [cid]: true }))
-        setExpanded((x) => ({ ...x, [cid]: false }))
         setMyVotes((v) => {
             const next = { ...v }
             if (nomineeId) next[cid] = nomineeId
@@ -110,27 +118,26 @@ const VotePage = () => {
         return task
     }
 
-    if (userLoading || (!loadError && myMemberId && !ballot)) return <Shell><p className="p-6 opacity-60">Loading...</p></Shell>
-    if (!myMemberId) return <Shell><p className="p-6">Your account isn't linked to a member name yet. Ask a committee member.</p></Shell>
-    if (loadError) return <Shell><p className="p-6">{loadError}</p></Shell>
-    if (!ballot || !ballotId) return <Shell><p className="p-6 opacity-60">Loading...</p></Shell>
-    if (ballot.categories.length === 0) return <Shell><p className="p-6">This ballot has no categories.</p></Shell>
+    if (userLoading || (!loadError && myMemberId && !ballot)) return <Shell><p className="text-callout text-label-2">Loading...</p></Shell>
+    if (!myMemberId) return <Shell><p className="text-callout">Your account isn't linked to a member name yet. Ask a committee member.</p></Shell>
+    if (loadError) return <Shell><p className="text-callout">{loadError}</p></Shell>
+    if (!ballot || !ballotId) return <Shell><p className="text-callout text-label-2">Loading...</p></Shell>
+    if (ballot.categories.length === 0) return <Shell><p className="text-callout">This ballot has no categories.</p></Shell>
 
     const now = Date.now()
     const readOnly = ballot.status !== "open" || now < new Date(ballot.opens_at).getTime() || now >= new Date(ballot.closes_at).getTime()
     const total = ballot.categories.length
     const voted = votedCount(myVotes, ids)
     const left = total - voted
-    const states = dashStates(ids, myVotes, ids.indexOf(activeId ?? ""))
+    const states = dashStates(ids, myVotes, idx)
 
     const jump = (i: number) => {
-        const el = cardEls.current[ids[i]]
-        if (!el) return
-        el.scrollIntoView({ behavior: "smooth", block: "start" })
-        el.focus({ preventScroll: true })
+        if (i < 0 || i >= total) return
+        scrollOnChange.current = true
+        setIdx(i)
     }
     const jumpNextUnvoted = () => {
-        const i = nextUnvotedIndex(ids, myVotes, ids.indexOf(activeId ?? ""))
+        const i = nextUnvotedIndex(ids, myVotes, idx)
         if (i >= 0) jump(i)
     }
 
@@ -159,39 +166,24 @@ const VotePage = () => {
     }
 
     return (
-        <Shell>
-            <div className="sticky top-0 z-30 overflow-x-auto bg-zinc-900 px-2 [&::-webkit-scrollbar]:hidden">
-                <div className="flex min-w-max gap-[2px]" style={{ width: "100%" }}>
-                    {states.map((s, i) => (
-                        <button
-                            key={ids[i]}
-                            type="button"
-                            onClick={() => jump(i)}
-                            aria-label={`Category ${i + 1}: ${ballot.categories[i].name}, ${s.voted ? "voted" : "not voted"}`}
-                            aria-current={s.current ? "step" : undefined}
-                            className="flex-1 basis-0 min-w-[10px] py-3"
-                        >
-                            <span className={`block w-full rounded-sm ${s.current ? "h-3 ring-1 ring-[#fffadd]" : "h-2"} ${s.voted ? "bg-[#fffadd]" : "bg-white/15"}`} />
-                        </button>
-                    ))}
-                </div>
+        <Shell title={ballot.name}>
+            <div className="sticky top-0 z-30 -mx-gutter bg-bg px-gutter">
+                <ProgressStrip states={states} labels={ballot.categories.map((c) => c.name)} onJump={jump} onOpenJump={() => setJumpOpen(true)} />
             </div>
 
-            <div className="space-y-3 px-4 pt-3">
-                <div>
-                    <Link to="/app/ballots" className="text-xs opacity-70">← Back to ballots</Link>
-                    <div className="mt-1 flex items-baseline justify-between">
-                        <b className="text-base">{ballot.name}</b>
-                        <span className="text-xs opacity-60">{closesInLabel(new Date(ballot.closes_at), new Date())}</span>
-                    </div>
-                    <div className="mt-1 text-xs opacity-60">{voted} of {total} voted</div>
+            <div className="mt-2 flex items-baseline justify-between text-subhead text-label-2">
+                <span>
+                    {voted} of {total} voted
+                </span>
+                <span>{closesInLabel(new Date(ballot.closes_at), new Date())}</span>
+            </div>
+            {readOnly && (
+                <div role="status" className="mt-3 rounded-card bg-surface-2 p-3 text-center text-subhead">
+                    {ballot.status === "open" && now < new Date(ballot.opens_at).getTime() ? opensAtLabel(new Date(ballot.opens_at)) : "Voting is closed"}
                 </div>
-                {readOnly && (
-                    <div role="status" className="rounded-xl bg-[#3f3f46] p-2 text-center text-sm">
-                        {ballot.status === "open" && now < new Date(ballot.opens_at).getTime() ? opensAtLabel(new Date(ballot.opens_at)) : "Voting is closed"}
-                    </div>
-                )}
+            )}
 
+            <div className="mt-5">
                 {ballot.categories.map((c, i) => (
                     <CategoryVoteCard
                         key={c.id}
@@ -200,47 +192,66 @@ const VotePage = () => {
                         total={total}
                         selectedId={myVotes[c.id]}
                         pending={Boolean(pending[c.id])}
-                        expanded={Boolean(expanded[c.id])}
+                        current={i === idx}
                         readOnly={readOnly}
                         myMemberId={myMemberId}
                         members={members}
+                        avatars={avatars}
                         error={errors[c.id] ?? null}
                         registerRef={(el) => { cardEls.current[c.id] = el }}
-                        onToggle={() => setExpanded((x) => ({ ...x, [c.id]: !x[c.id] }))}
                         onVote={(nid) => { save(c.id, nid, () => castVote(ballotId, c.id, nid)) }}
                         onClear={() => { save(c.id, null, () => clearVote(ballotId, c.id)) }}
                         onAddOption={(name) => { addOption(c.id, name) }}
                         onAddGroup={(mids) => { addGroup(c.id, mids) }}
                     />
                 ))}
-
-                {left === 0 && (
-                    <div className="rounded-2xl bg-[#27272a] p-4 text-center">
-                        <p className="font-semibold">All done — {voted} of {total} voted</p>
-                        <Link to="/app/ballots" className="mt-3 inline-block rounded-full bg-[#fffadd] px-5 py-2 text-sm font-medium text-black">Back to ballots</Link>
-                    </div>
-                )}
             </div>
 
-            <NavigationTabs activeTab="ballots">
-                <div className="border-t border-[#fffadd]/10 bg-zinc-900/95 px-6 py-3 backdrop-blur-sm">
-                    <div className="mx-auto flex max-w-2xl items-center justify-between">
-                        <span className="text-sm opacity-70">{left} left</span>
-                        <button type="button" disabled={left === 0} onClick={jumpNextUnvoted} className="rounded-full bg-[#fffadd] px-4 py-2 text-sm font-medium text-black disabled:opacity-40">
-                            Jump to next unvoted ↓
-                        </button>
-                    </div>
+            {left === 0 && (
+                <div className="mt-6 rounded-card border-l-4 border-pebble-lime bg-surface p-4">
+                    <p className="text-headline">All done — {voted} of {total} voted</p>
+                    <Link to="/app/ballots" className="mt-1 inline-block min-h-11 py-2 text-subhead font-bold text-accent">Back to ballots</Link>
                 </div>
-            </NavigationTabs>
+            )}
+
+            <BottomAccessory>
+                <div className="mx-auto flex w-full max-w-[1040px] items-center gap-3 bg-bg px-gutter py-3">
+                    <button type="button" aria-label="Previous category" disabled={idx === 0} onClick={() => jump(idx - 1)} className="grid size-11 shrink-0 place-items-center rounded-full bg-fill text-label disabled:opacity-40">
+                        <ChevronLeft aria-hidden className="size-5" />
+                    </button>
+                    <button type="button" disabled={left === 0} onClick={jumpNextUnvoted} className="h-11 min-w-0 flex-1 rounded-full bg-inverse px-4 text-subhead font-bold text-on-inverse disabled:opacity-40">
+                        Next unvoted · {left} left
+                    </button>
+                    <button type="button" aria-label="Next category" disabled={idx >= total - 1} onClick={() => jump(idx + 1)} className="grid size-11 shrink-0 place-items-center rounded-full bg-fill text-label disabled:opacity-40">
+                        <ChevronRight aria-hidden className="size-5" />
+                    </button>
+                </div>
+            </BottomAccessory>
+
+            <Sheet open={jumpOpen} onClose={() => setJumpOpen(false)} title="Jump to a category" detents={["large"]}>
+                <GroupedSection>
+                    {ballot.categories.map((c, i) => (
+                        <ListRow
+                            key={c.id}
+                            title={c.name}
+                            subtitle={myVotes[c.id] ? "Voted" : "Not voted"}
+                            selected={i === idx}
+                            onClick={() => {
+                                setJumpOpen(false)
+                                jump(i)
+                            }}
+                        />
+                    ))}
+                </GroupedSection>
+            </Sheet>
         </Shell>
     )
 }
 
-const Shell = ({ children }: { children: React.ReactNode }) => (
-    <div className="min-h-screen bg-zinc-900 pb-44 text-[#fffadd]">
-        <div><NavigationBar /></div>
+const Shell = ({ title = "Ballot", children }: { title?: string; children: React.ReactNode }) => (
+    <Screen title={title} back={{ to: "/app/ballots", label: "Ballots" }} width="wide">
         {children}
-    </div>
+    </Screen>
 )
 
 export default VotePage
