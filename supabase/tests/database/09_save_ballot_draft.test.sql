@@ -7,6 +7,7 @@ create table public.__ids (k text primary key, v uuid);
 grant select, insert on public.__tap to authenticated, anon;
 grant usage on sequence public.__tap_n_seq to authenticated, anon;
 grant select on public.__ids to authenticated, anon;
+grant insert on public.__ids to authenticated; -- the committee user stores the id save_ballot_draft returns
 create function public.__id(p_k text) returns uuid language sql stable security definer set search_path = '' as
   $$ select v from public.__ids where k = p_k $$;
 
