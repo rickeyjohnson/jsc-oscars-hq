@@ -35,8 +35,13 @@ export function NavBar({
                         </Link>
                     )}
                 </div>
-                <div aria-hidden className="pointer-events-none absolute inset-x-16 flex justify-center transition-opacity duration-200 motion-reduce:transition-none" style={{ opacity: progress }}>
-                    {brandHeader ? <OscarLogo size="xxsmall" decorative /> : <span className="truncate text-headline">{title}</span>}
+                <div aria-hidden className="pointer-events-none absolute inset-x-16 inset-y-0 flex items-center justify-center transition-opacity duration-200 motion-reduce:transition-none" style={{ opacity: progress }}>
+                    {brandHeader ? (
+                        // pb-2 offsets the logo's negative bottom margin so it centers on the icon with equal space above and below.
+                        <div className="py-2 pb-4">
+                            <OscarLogo size="xxsmall" decorative />
+                        </div>
+                    ) : <span className="truncate text-headline">{title}</span>}
                 </div>
                 <div className="flex flex-1 items-center justify-end">{trailing}</div>
             </div>
