@@ -36,6 +36,7 @@ const VotePage = () => {
     const [loadError, setLoadError] = useState<string | null>(null)
     const [idx, setIdx] = useState(0)
     const [jumpOpen, setJumpOpen] = useState(false)
+    const [groupOpenFor, setGroupOpenFor] = useState<string | null>(null)
     const [avatars, setAvatars] = useState<Record<string, string | null>>({})
     const scrollOnChange = useRef(false)
     // Per-category save queue: saves run in tap order; confirmed holds the last value the DB accepted.
@@ -302,6 +303,8 @@ const VotePage = () => {
                         onClear={() => { save(c.id, null, () => clearVote(ballotId, c.id)) }}
                         onAddOption={(name) => { addOption(c.id, name) }}
                         onAddGroup={(mids) => { addGroup(c.id, mids) }}
+                        groupOpen={groupOpenFor === c.id}
+                        onGroupOpenChange={(o) => setGroupOpenFor(o ? c.id : null)}
                     />
                 ))}
             </div>
@@ -316,21 +319,26 @@ const VotePage = () => {
             )}
 
             <BottomAccessory>
-                <div className="mx-auto flex w-full max-w-[1040px] items-center gap-3 bg-bg px-gutter py-3">
+                <div className="mx-auto flex w-full max-w-[1040px] items-center gap-3 bg-bg px-gutter py-3 lg:justify-end">
+                    {!readOnly && !reviewing && ballot.categories[idx].nominee_mode === "group" && (
+                        <Button size="md" variant="ghost" className="mr-auto hidden lg:inline-flex" onClick={() => setGroupOpenFor(ids[idx])}>
+                            + Add a group
+                        </Button>
+                    )}
                     {readOnly ? (
-                        <Button size="md" fullWidth to="/app/ballots">
+                        <Button size="md" className="w-full lg:w-auto" to="/app/ballots">
                             Back to ballots
                         </Button>
                     ) : reviewing ? (
-                        <Button size="md" variant="secondary" className="flex-1" onClick={() => jump(total - 1)}>
+                        <Button size="md" variant="secondary" className="flex-1 lg:min-w-32 lg:flex-none" onClick={() => jump(total - 1)}>
                             Back
                         </Button>
                     ) : (
                         <>
-                            <Button size="md" variant="secondary" className="flex-1" disabled={idx === 0 || busy} onClick={() => jump(idx - 1)}>
+                            <Button size="md" variant="secondary" className="flex-[0.45] lg:min-w-32 lg:flex-none" disabled={idx === 0 || busy} onClick={() => jump(idx - 1)}>
                                 Back
                             </Button>
-                            <Button size="md" variant={onLast || myVotes[ids[idx]] ? "primary" : "tinted"} className="flex-1" disabled={busy} onClick={goNext}>
+                            <Button size="md" variant={onLast || myVotes[ids[idx]] ? "primary" : "tinted"} className="flex-1 lg:min-w-32 lg:flex-none" disabled={busy} onClick={goNext}>
                                 {nextLabel}
                             </Button>
                         </>

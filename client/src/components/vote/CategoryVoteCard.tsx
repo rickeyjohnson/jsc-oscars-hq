@@ -27,6 +27,8 @@ type Props = {
     onClear: () => void
     onAddOption: (name: string) => void
     onAddGroup: (memberIds: string[]) => void
+    groupOpen: boolean
+    onGroupOpenChange: (open: boolean) => void
 }
 
 export { nomineeKey }
@@ -35,7 +37,6 @@ export { nomineeKey }
 const CategoryVoteCard = (p: Props) => {
     const { category, selectedId, pending, readOnly, message } = p
     const [typed, setTyped] = useState("")
-    const [groupOpen, setGroupOpen] = useState(false)
     const [lockedPick, setLockedPick] = useState<string | null>(null)
     const options = selectableNominees(category.nominees, p.myMemberId)
     const locked = lockedNominees(category.nominees, p.myMemberId)
@@ -164,16 +165,16 @@ const CategoryVoteCard = (p: Props) => {
 
             {isGroup && !readOnly && (
                 <>
-                    <Button className="mt-4" fullWidth variant="secondary" onClick={() => setGroupOpen(true)}>
+                    <Button className="mt-4 lg:hidden" fullWidth variant="ghost" onClick={() => p.onGroupOpenChange(true)}>
                         + Add a group
                     </Button>
                     <GroupSheet
-                        open={groupOpen}
+                        open={p.groupOpen}
                         candidates={groupCandidates(p.members, p.myMemberId)}
                         myName={p.myName}
-                        onClose={() => setGroupOpen(false)}
+                        onClose={() => p.onGroupOpenChange(false)}
                         onSubmit={(ids) => {
-                            setGroupOpen(false)
+                            p.onGroupOpenChange(false)
                             p.onAddGroup(ids)
                         }}
                     />

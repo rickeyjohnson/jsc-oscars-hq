@@ -429,6 +429,13 @@ describe("VotePage group category", () => {
         expect(await within(section(C1)).findByText(/already exists/i)).toBeTruthy()
     })
 
+    it("the footer Add a group button (desktop) opens the same sheet", async () => {
+        await loaded(ballot({ categories: groupCats() }))
+        const footer = screen.getAllByRole("button", { name: /add a group/i }).find((b) => !section(C1).contains(b))!
+        fireEvent.click(footer)
+        expect(await screen.findByRole("button", { name: /pick 2 or 3 people/i })).toBeTruthy()
+    })
+
     it("caps a group at three people", async () => {
         await loaded(ballot({ categories: groupCats() }))
         fireEvent.click(within(section(C1)).getByRole("button", { name: /add a group/i }))

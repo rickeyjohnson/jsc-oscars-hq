@@ -28,6 +28,8 @@ describe("variants", () => {
     it("maps button variants", () => {
         expect(buttonClasses({ variant: "primary" })).toContain("bg-inverse")
         expect(buttonClasses({ variant: "primary" })).toContain("text-on-inverse")
+        expect(buttonClasses({ variant: "ghost" })).toContain("border-2")
+        expect(buttonClasses({ variant: "link" })).toContain("text-pebble-sky")
         expect(buttonClasses({ variant: "secondary" })).toContain("bg-surface-2")
         expect(buttonClasses({ variant: "tinted" })).toContain("bg-fill")
         expect(buttonClasses({ variant: "destructive" })).toContain("text-danger")
