@@ -21,7 +21,7 @@ export function Countdown({ target, onColor = false }: { target: Date | null; on
     return (
         <div role="timer" aria-live="off" aria-label={view.ariaLabel}>
             <p aria-hidden className="flex items-baseline gap-2 font-display tabular-nums">
-                <span className={onColor ? "text-title-1" : "text-display"}>{view.main}</span>
+                <span className={onColor ? "text-title-1" : "text-title-1 sm:text-display"}>{view.main}</span>
                 <span className={onColor ? "text-title-3" : "text-title-2 text-label-2"}>{view.seconds}</span>
             </p>
             <p aria-hidden className={`mt-1 text-footnote ${onColor ? "" : "text-label-2"}`}>{view.dateLabel}</p>

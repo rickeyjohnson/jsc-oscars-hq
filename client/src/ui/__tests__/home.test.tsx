@@ -256,6 +256,15 @@ describe("Home rework", () => {
         expect(screen.getByText("Date, place, calendar")).toBeTruthy()
         expect(screen.getAllByText(/appears after results are released/i)).toHaveLength(2) // Leaderboard, Your stats
     })
+    it("phones lay half-width widgets two-up; full-width widgets span both columns", () => {
+        const { container } = renderHome()
+        expect(container.querySelector("[class*='grid-cols-2']")).toBeTruthy()
+        expect(container.querySelector("[class*='grid-cols-1']")).toBeNull()
+        const wrap = (name: string) => screen.getByRole("region", { name }).parentElement!
+        expect(wrap("Oscar night").className).toMatch(/\bcol-span-2\b/)
+        expect(wrap("Countdown").className).not.toMatch(/col-span-2/)
+        expect(wrap("Your progress").className).not.toMatch(/col-span-2/)
+    })
     it("customize: the Move up/down twins are never keyboard tab stops", () => {
         renderHome()
         fireEvent.click(screen.getByRole("button", { name: "Customize Home" }))

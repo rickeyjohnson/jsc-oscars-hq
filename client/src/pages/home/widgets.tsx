@@ -35,7 +35,7 @@ function Widget({ id, status, retry, to, children }: { id: WidgetId; status: Sta
     const title = titleOf(id)
     const ready = status === "ready"
     return (
-        <section aria-labelledby={hid} className={`relative rounded-card border-l-4 bg-surface p-4 ${EDGE[widgetColor(id)]}`}>
+        <section aria-labelledby={hid} className={`relative min-w-0 break-words rounded-card border-l-4 bg-surface p-3 sm:p-4 ${EDGE[widgetColor(id)]}`}>
             <h2 id={hid} className="mb-2 text-caption-2 uppercase tracking-wider text-label-2">
                 {to && ready ? (
                     <Link to={to} className={STRETCH}>
@@ -169,7 +169,7 @@ function Progress({ state, now }: Props) {
                 <p className="text-title-3">No open ballots right now.</p>
             ) : (
                 <>
-                    <p className="text-title-1 font-display tabular-nums">
+                    <p className="text-title-2 sm:text-title-1 font-display tabular-nums">
                         {voted} / {total}
                     </p>
                     <p className="mt-1 text-footnote text-label-2">
@@ -338,7 +338,7 @@ function LiveTimer({ target }: { target: Date }) {
     const label = `${p.days}d ${p.hours}h ${p.minutes}m`
     return (
         <p role="timer" aria-live="off" aria-label={`Closes in ${label}`} className="flex items-baseline gap-2 font-display tabular-nums">
-            <span className="text-title-1">{label}</span>
+            <span className="text-title-2 sm:text-title-1">{label}</span>
             <span className="text-title-3 text-label-2">{pad(p.seconds)}</span>
         </p>
     )
@@ -376,7 +376,7 @@ function YourStats({ state, memberId }: Props) {
                         ["Win rate", `${rate}%`],
                     ].map(([k, v]) => (
                         <div key={k}>
-                            <dd className="text-title-1 font-display tabular-nums">{v}</dd>
+                            <dd className="text-title-2 sm:text-title-1 font-display tabular-nums">{v}</dd>
                             <dt className="text-footnote text-label-2">{k}</dt>
                         </div>
                     ))}
@@ -399,7 +399,7 @@ function BallotHealth({ state }: Props) {
                 <p className="text-callout text-label-2">There's no open main ballot right now.</p>
             ) : (
                 <>
-                    <p className="text-title-1 font-display tabular-nums">
+                    <p className="text-title-2 sm:text-title-1 font-display tabular-nums">
                         {votesIn} / {possible}
                     </p>
                     <p className="text-footnote text-label-2">votes in</p>
@@ -421,7 +421,7 @@ function Tiebreak({ state, now }: Props) {
                 <p className="text-callout text-label-2">No tiebreak rounds are open.</p>
             ) : (
                 <>
-                    <p className="text-title-1 font-display tabular-nums">{rounds.length}</p>
+                    <p className="text-title-2 sm:text-title-1 font-display tabular-nums">{rounds.length}</p>
                     <p className="text-footnote text-label-2">open {rounds.length === 1 ? "round" : "rounds"}</p>
                     <p className="mt-1 text-footnote text-label-2">
                         {left} {left === 1 ? "category" : "categories"} left
@@ -444,7 +444,7 @@ function RevealReadiness({ state }: Props) {
                 <p className="text-title-3">The envelope is open.</p>
             ) : (
                 <>
-                    <p className="text-title-1 font-display tabular-nums">
+                    <p className="text-title-2 sm:text-title-1 font-display tabular-nums">
                         {ok} / {checks.length}
                     </p>
                     <p className="text-footnote text-label-2">checks ready</p>
