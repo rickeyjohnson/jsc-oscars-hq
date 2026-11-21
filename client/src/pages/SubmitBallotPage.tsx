@@ -1,7 +1,6 @@
 import { useEffect, useReducer, useRef, useState } from "react"
 import { Link, Navigate, useParams } from "react-router-dom"
 import { Check, ChevronLeft, TriangleAlert } from "lucide-react"
-import OscarLogo from "../components/OscarLogo"
 import { vibrate } from "../ui/haptics"
 import { fetchBallotDetail } from "../api/ballots"
 import { fetchMyVotes } from "../api/votes"
@@ -23,13 +22,12 @@ const pill = "inline-flex min-h-14 items-center justify-center rounded-full bg-b
 
 const Page = ({ backTo, children }: { backTo: string; children: React.ReactNode }) => (
     <div className="min-h-dvh bg-pebble-lime text-on-pebble-lime">
-        <main className="mx-auto flex min-h-dvh max-w-[560px] flex-col gap-6 px-gutter py-6 pt-safe pb-safe">
-            <div className="flex items-center justify-between">
-                <Link to={backTo} className="-ml-2 inline-flex min-h-11 min-w-11 items-center gap-0.5 rounded-control pr-3 text-body font-bold">
+        <main className="mx-auto flex min-h-dvh max-w-[560px] flex-col gap-6 px-gutter pb-safe pt-safe">
+            <div className="flex min-h-14 items-center">
+                <Link to={backTo} aria-label="Back" className="-ml-2 inline-flex min-h-11 items-center gap-1 rounded-control pl-1 pr-4 text-body font-bold">
                     <ChevronLeft aria-hidden className="size-6" />
-                    <span>Back to voting</span>
+                    <span>Back</span>
                 </Link>
-                <OscarLogo size="small" decorative tone="onLime" />
             </div>
             {children}
         </main>
@@ -120,7 +118,6 @@ const SubmitBallotPage = () => {
         return (
             <Page backTo={back}>
                 <div role="status" className="space-y-4 pt-4">
-                    <div className="text-caption-1 font-bold tracking-[0.25em]">{ballot.name.toUpperCase()}</div>
                     <h1 className="text-display">Ballot submitted</h1>
                     <p className="text-body">
                         {voted} of {total} categories voted. Submitted {closesLabel(new Date(doneAt))}.
@@ -139,27 +136,29 @@ const SubmitBallotPage = () => {
     const progress = holdProgress(hold, now)
     const down = (pointerId: number, x: number, y: number) => ready && dispatch({ type: "down", t: performance.now(), pointerId, x, y })
 
+    const skipped = Math.max(0, total - voted)
     return (
         <Page backTo={back}>
-            <div className="space-y-4 pt-4">
-                <div className="text-caption-1 font-bold tracking-[0.25em]">{ballot.name.toUpperCase()}</div>
+            <div className="space-y-3 pt-4">
                 <h1 className="text-display">Submit your ballot?</h1>
-                <p className="text-title-3">Make it official.</p>
+                <p className="text-title-3">
+                    {voted} of {total} {total === 1 ? "category" : "categories"} voted{skipped > 0 ? `, ${skipped} skipped` : ""}.
+                </p>
             </div>
-            <ul className="space-y-2">
+            <ul className="space-y-1">
                 {list.items.map((c) => (
-                    <li key={c.id} className="flex min-h-11 items-center gap-3 rounded-card bg-on-pebble-lime/10 px-4 py-3 text-callout">
+                    <li key={c.id} className="flex min-h-11 items-center gap-3 text-callout">
                         {c.ok ? <Check aria-hidden className="size-5 shrink-0" /> : <TriangleAlert aria-hidden className="size-5 shrink-0" />}
                         <span className="flex-1">{c.label}</span>
                         {!c.ok && c.id === "voted" && <Link to={back} className="inline-flex min-h-11 items-center font-bold underline underline-offset-4">Finish voting</Link>}
                     </li>
                 ))}
             </ul>
-            <div className="mt-auto space-y-3">
+            <div className="mt-auto space-y-3 pb-4">
                 <HoldButton
                     ready={ready}
                     busy={false}
-                    label="Hold to submit"
+                    label="Submit my ballot"
                     hint={ready ? "Press and hold for 3 seconds" : "Vote in at least one category to submit"}
                     progress={progress}
                     onDown={down}
@@ -167,7 +166,7 @@ const SubmitBallotPage = () => {
                     onUp={(id) => dispatch({ type: "up", pointerId: id })}
                     onCancel={() => dispatch({ type: "cancel" })}
                 />
-                <div className="text-center"><Link to={back} className={quietLink}>Not yet, back to voting</Link></div>
+                <div className="text-center"><Link to={back} className={quietLink}>Back to ballot</Link></div>
             </div>
         </Page>
     )
