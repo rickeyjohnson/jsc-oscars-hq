@@ -206,6 +206,37 @@ describe("Home rework", () => {
         expect(screen.getByRole("button", { name: "Move Countdown down" })).toBeTruthy()
         expect(screen.getByRole("switch", { name: "Ballot closes" }).getAttribute("aria-checked")).toBe("false")
     })
+    it("customize: keyboard reorder on the handle (grab, arrow, drop), announced, persisted; Esc restores", () => {
+        renderHome()
+        fireEvent.click(screen.getByRole("button", { name: "Customize Home" }))
+        const handle = screen.getByRole("button", { name: "Reorder Countdown" })
+        expect(handle.getAttribute("aria-roledescription")).toBe("sortable")
+        handle.focus()
+        fireEvent.keyDown(handle, { key: " " })
+        expect(screen.getByText(/picked up countdown/i)).toBeTruthy()
+        fireEvent.keyDown(handle, { key: "ArrowDown" })
+        expect(screen.getByText(/moved countdown to position 3 of/i)).toBeTruthy()
+        let order = JSON.parse(mem.get("jsc.home.v1.u1")!).order as string[]
+        expect(order.indexOf("countdown")).toBeGreaterThan(order.indexOf("pending"))
+        fireEvent.keyDown(screen.getByRole("button", { name: "Reorder Countdown" }), { key: " " })
+        expect(screen.getByText(/dropped countdown at position 3/i)).toBeTruthy()
+        // grab again, move, Escape puts it back
+        const h2 = screen.getByRole("button", { name: "Reorder Countdown" })
+        fireEvent.keyDown(h2, { key: "Enter" })
+        fireEvent.keyDown(h2, { key: "ArrowUp" })
+        fireEvent.keyDown(screen.getByRole("button", { name: "Reorder Countdown" }), { key: "Escape" })
+        order = JSON.parse(mem.get("jsc.home.v1.u1")!).order as string[]
+        expect(order.indexOf("countdown")).toBeGreaterThan(order.indexOf("pending"))
+        expect(screen.getByText(/cancelled\. countdown is back at position 3/i)).toBeTruthy()
+    })
+    it("customize: the Move up/down twins are never keyboard tab stops", () => {
+        renderHome()
+        fireEvent.click(screen.getByRole("button", { name: "Customize Home" }))
+        const twin = screen.getByRole("button", { name: "Move Countdown down" })
+        expect(twin.tabIndex).toBe(-1)
+        expect(twin.className).toMatch(/sr-only/)
+        expect(twin.className).not.toMatch(/not-sr-only/)
+    })
     it("new widgets render when turned on", () => {
         profile.is_committee = true
         mem.set("jsc.home.v1.u1", JSON.stringify({ version: 1, order: ["ballotCloses", "ballotHealth", "tiebreak", "revealReadiness"], hidden: [] }))

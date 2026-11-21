@@ -23,15 +23,62 @@ function moveVisible(p: HomePrefs, group: WidgetId[], id: WidgetId, dir: -1 | 1)
 
 type Drag = { id: WidgetId; from: number; startY: number; y: number; gap: number; rects: { top: number; height: number }[]; listTop: number }
 
-// Hidden until focused: the keyboard route to reordering (the visible route is dragging the handle).
-const KEY_BTN = "sr-only focus-visible:not-sr-only focus-visible:grid focus-visible:size-11 focus-visible:place-items-center rounded-full text-label disabled:text-label-3 cursor-pointer disabled:cursor-default"
+// Screen-reader-only twins of the handle's keyboard reorder. Never focusable by Tab and never shown, so nothing shifts.
+const KEY_BTN = "sr-only"
+const HELP_ID = "customize-reorder-help"
 
-function Group({ defs, prefs, onChange }: { defs: WidgetDef[]; prefs: HomePrefs; onChange: (p: HomePrefs) => void }) {
+type Grab = { id: WidgetId; orig: HomePrefs }
+
+function Group({ defs, prefs, onChange, announce }: { defs: WidgetDef[]; prefs: HomePrefs; onChange: (p: HomePrefs) => void; announce: (msg: string) => void }) {
     const ids = defs.map((d) => d.id)
     const hidden = new Set(prefs.hidden)
     const listRef = useRef<HTMLUListElement>(null)
     const rowRefs = useRef<(HTMLLIElement | null)[]>([])
     const [drag, setDrag] = useState<Drag | null>(null)
+    const [grab, setGrab] = useState<Grab | null>(null)
+    const handleRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+
+    // Moving a row re-parents its node, which can drop focus: put it back on the grabbed handle.
+    useEffect(() => {
+        if (!grab) return
+        const el = handleRefs.current[grab.id]
+        if (el && document.activeElement !== el) el.focus()
+    })
+
+    // Keyboard reorder on the handle: Space/Enter grabs, Up/Down move one place, Space/Enter drops, Esc puts it back.
+    const onHandleKey = (e: React.KeyboardEvent<HTMLButtonElement>, w: WidgetDef, i: number) => {
+        const n = defs.length
+        const pick = e.key === " " || e.key === "Enter"
+        if (grab?.id !== w.id) {
+            if (!pick) return
+            e.preventDefault()
+            setGrab({ id: w.id, orig: prefs })
+            announce(`Picked up ${w.title}. Position ${i + 1} of ${n}. Use the up and down arrow keys to move, Space to drop, Escape to cancel.`)
+            return
+        }
+        if (pick) {
+            e.preventDefault()
+            setGrab(null)
+            announce(`Dropped ${w.title} at position ${i + 1} of ${n}.`)
+        } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+            e.preventDefault()
+            const dir = e.key === "ArrowUp" ? -1 : 1
+            const to = i + dir
+            if (to < 0 || to >= n) {
+                announce(`${w.title} is already ${dir < 0 ? "first" : "last"}.`)
+                return
+            }
+            onChange(moveVisible(prefs, ids, w.id, dir))
+            announce(`Moved ${w.title} to position ${to + 1} of ${n}.`)
+        } else if (e.key === "Escape") {
+            e.preventDefault()
+            e.stopPropagation()
+            const back = grab.orig.order.filter((id) => ids.includes(id)).indexOf(w.id) + 1
+            onChange(grab.orig)
+            setGrab(null)
+            announce(`Cancelled. ${w.title} is back at position ${back} of ${n}.`)
+        }
+    }
 
     // Esc cancels an in-progress drag.
     useEffect(() => {
@@ -76,7 +123,17 @@ function Group({ defs, prefs, onChange }: { defs: WidgetDef[]; prefs: HomePrefs;
                     >
                         <button
                             type="button"
+                            ref={(el) => {
+                                handleRefs.current[w.id] = el
+                            }}
                             aria-label={`Reorder ${w.title}`}
+                            aria-roledescription="sortable"
+                            aria-describedby={HELP_ID}
+                            aria-pressed={grab?.id === w.id}
+                            onKeyDown={(e) => onHandleKey(e, w, i)}
+                            onBlur={(e) => {
+                                if (grab?.id === w.id && e.relatedTarget) setGrab(null)
+                            }}
                             onPointerDown={(e) => start(e, i)}
                             onPointerMove={move}
                             onPointerUp={end}
@@ -88,10 +145,10 @@ function Group({ defs, prefs, onChange }: { defs: WidgetDef[]; prefs: HomePrefs;
                         <span aria-hidden className={`size-2.5 shrink-0 rounded-full ${dot}`} />
                         <span className="min-w-0 flex-1 truncate pl-1 text-headline">{w.title}</span>
                         {w.adminOnly && <Chip>Committee</Chip>}
-                        <button type="button" aria-label={`Move ${w.title} up`} disabled={i === 0} onClick={() => onChange(moveVisible(prefs, ids, w.id, -1))} className={KEY_BTN}>
+                        <button type="button" tabIndex={-1} aria-label={`Move ${w.title} up`} disabled={i === 0} onClick={() => onChange(moveVisible(prefs, ids, w.id, -1))} className={KEY_BTN}>
                             <ChevronUp aria-hidden className="size-5" />
                         </button>
-                        <button type="button" aria-label={`Move ${w.title} down`} disabled={i === defs.length - 1} onClick={() => onChange(moveVisible(prefs, ids, w.id, 1))} className={KEY_BTN}>
+                        <button type="button" tabIndex={-1} aria-label={`Move ${w.title} down`} disabled={i === defs.length - 1} onClick={() => onChange(moveVisible(prefs, ids, w.id, 1))} className={KEY_BTN}>
                             <ChevronDown aria-hidden className="size-5" />
                         </button>
                         <Switch label={w.title} checked={!hidden.has(w.id)} onChange={(on) => onChange(toggleWidget(prefs, w.id, on))} />
@@ -107,15 +164,22 @@ export function CustomizeHomeSheet({ open, onClose, prefs, isCommittee, onChange
     const byId = new Map(WIDGETS.map((w) => [w.id, w]))
     const ordered = prefs.order.map((id) => byId.get(id)).filter((w): w is WidgetDef => Boolean(w))
     const general = ordered.filter((w) => !w.adminOnly)
+    const [message, setMessage] = useState("")
     const admin = isCommittee ? ordered.filter((w) => w.adminOnly) : []
     return (
         <Sheet open={open} onClose={onClose} title="Customize Home" detents={["large"]} trailing={<Button variant="plain" size="md" onClick={onClose}>{COPY.done}</Button>}>
-            <p className="mb-3 text-callout text-label-2">Hold the handle and drag to reorder. Switch widgets on or off.</p>
-            <Group defs={general} prefs={prefs} onChange={onChange} />
+            <p className="mb-3 text-callout text-label-2">Hold the handle and drag to reorder, or focus a handle and press Space, then the arrow keys. Switch widgets on or off.</p>
+            <p id={HELP_ID} className="sr-only">
+                Press Space to pick up, the up and down arrow keys to move, Space to drop, Escape to cancel.
+            </p>
+            <div role="status" aria-live="polite" className="sr-only">
+                {message}
+            </div>
+            <Group defs={general} prefs={prefs} onChange={onChange} announce={setMessage} />
             {admin.length > 0 && (
                 <>
                     <h3 className="mb-2 mt-5 px-1 text-caption-2 tracking-wider text-label-2">COMMITTEE ONLY</h3>
-                    <Group defs={admin} prefs={prefs} onChange={onChange} />
+                    <Group defs={admin} prefs={prefs} onChange={onChange} announce={setMessage} />
                 </>
             )}
             <div className="mt-5">
