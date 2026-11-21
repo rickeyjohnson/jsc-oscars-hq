@@ -78,3 +78,23 @@ export const PEBBLE_INK_FACE: Record<PebbleName, string> = {
 
 /** Footnote text on a selected card: pebbles whose ink is under 4.5:1 (grape) put it in a small dark pill. */
 export const selectedSmallTextClass = (n: PebbleName): string => (SMALL_TEXT_OK.includes(n) ? "" : "w-fit rounded-full bg-bg/80 px-2 text-label")
+
+// SVG paint for a member's pebble (charts). Literal strings so Tailwind's scanner sees every class.
+export const PEBBLE_FILL: Record<PebbleName, string> = {
+    strawberry: "fill-pebble-strawberry",
+    cherry: "fill-pebble-cherry",
+    tangerine: "fill-pebble-tangerine",
+    lemon: "fill-pebble-lemon",
+    lime: "fill-pebble-lime",
+    sky: "fill-pebble-sky",
+    grape: "fill-pebble-grape",
+}
+export const PEBBLE_STROKE: Record<PebbleName, string> = {
+    strawberry: "stroke-pebble-strawberry",
+    cherry: "stroke-pebble-cherry",
+    tangerine: "stroke-pebble-tangerine",
+    lemon: "stroke-pebble-lemon",
+    lime: "stroke-pebble-lime",
+    sky: "stroke-pebble-sky",
+    grape: "stroke-pebble-grape",
+}
