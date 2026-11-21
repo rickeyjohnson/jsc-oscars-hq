@@ -19,9 +19,7 @@ type Load = { state: "loading" } | { state: "error"; message: string } | { state
 const RELEASE_FAILED = "Couldn't open the envelope. Check your connection and hold again."
 
 const Page = ({ children }: { children: React.ReactNode }) => (
-    <div className="min-h-dvh bg-bg text-label">
-        <main className="mx-auto flex min-h-dvh w-full max-w-[520px] flex-col px-gutter pb-safe pt-safe">{children}</main>
-    </div>
+    <main className="mx-auto flex min-h-[calc(100dvh-var(--content-pb,32px))] w-full max-w-[520px] flex-col px-gutter pt-safe [@media(max-height:640px)]:gap-1">{children}</main>
 )
 const quietLink = "flex min-h-11 items-center justify-center rounded-control text-subhead font-bold text-pebble-sky"
 

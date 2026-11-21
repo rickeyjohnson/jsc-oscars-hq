@@ -71,33 +71,6 @@ const App = () => {
                     }
                 />
 
-                {/* Full-bleed, no shell. UX gate only; RLS is the real protection for committee actions. */}
-                <Route
-                    path="/app/profile/release"
-                    element={
-                        <RequireAuth>
-                            <UserDataProvider>
-                                <RequireCommittee>
-                                    <ReleasePage />
-                                </RequireCommittee>
-                            </UserDataProvider>
-                        </RequireAuth>
-                    }
-                />
-
-                <Route
-                    path="/app/ballots/:ballotId/submit"
-                    element={
-                        <RequireAuth>
-                            <UserDataProvider>
-                                <ClaimGate>
-                                    <SubmitBallotPage />
-                                </ClaimGate>
-                            </UserDataProvider>
-                        </RequireAuth>
-                    }
-                />
-
                 <Route
                     path="/app"
                     element={
@@ -113,6 +86,7 @@ const App = () => {
                     <Route index element={<HomePage />} />
                     <Route path="ballots" element={<BallotsPage />} />
                     <Route path="ballots/:ballotId" element={<VotePage />} />
+                    <Route path="ballots/:ballotId/submit" element={<SubmitBallotPage />} />
                     <Route path="results" element={<ResultsPage />} />
                     <Route path="stats" element={<Navigate to="/app/results?view=leaderboard" replace />} />
                     <Route path="profile" element={<ProfilePage />} />
@@ -129,6 +103,7 @@ const App = () => {
                         <Route path="profile/ballots" element={<ManageBallotsPage />} />
                         <Route path="profile/ballots/:ballotId" element={<BallotAdminPage />} />
                         <Route path="profile/members" element={<MemberNamesPage />} />
+                        <Route path="profile/release" element={<ReleasePage />} />
                     </Route>
                     <Route path="*" element={<NotFound />} />
                 </Route>

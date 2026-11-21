@@ -49,6 +49,8 @@ describe("SubmitBallotPage", () => {
         expect(screen.getByText(/Skipping is fine\..*you can still change votes until/)).toBeTruthy()
         expect(screen.getByText(/1 of 2 voted/)).toBeTruthy()
         expect(screen.queryByRole("link", { name: "Back" })).toBeNull()
+        // lives inside the app shell content area, not a full-screen takeover
+        expect(document.querySelector(".min-h-dvh, .h-dvh")).toBeNull()
         expect(document.querySelector("svg[aria-label*='Oscars' i], img[alt*='Oscars' i]")).toBeNull()
         expect(document.querySelectorAll(".bg-pebble-sky").length).toBe(1)
         expect(document.querySelectorAll(".border-dashed").length).toBe(1)

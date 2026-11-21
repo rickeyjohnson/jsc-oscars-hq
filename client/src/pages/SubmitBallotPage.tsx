@@ -18,9 +18,7 @@ type Load =
     | { state: "ready"; ballot: BallotDetail; voted: number; total: number; states: DashState[]; labels: string[]; submittedAt: string | null }
 
 const Page = ({ children }: { children: React.ReactNode }) => (
-    <div className="h-dvh overflow-hidden bg-bg text-label">
-        <main className="mx-auto flex h-dvh max-w-[520px] flex-col px-gutter pb-safe pt-safe [@media(max-height:640px)]:gap-1">{children}</main>
-    </div>
+    <main className="mx-auto flex min-h-[calc(100dvh-var(--content-pb,32px))] w-full max-w-[520px] flex-col px-gutter pt-safe [@media(max-height:640px)]:gap-1">{children}</main>
 )
 
 const ARM_MS = 4000
