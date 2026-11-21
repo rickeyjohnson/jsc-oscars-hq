@@ -155,6 +155,10 @@ export const reviewRows = (categories: Category[], myVotes: Record<string, strin
 /** First category with no vote, or -1 when all are voted. */
 export const firstUnvotedIndex = (categoryIds: string[], myVotes: Record<string, string>): number => categoryIds.findIndex((id) => !myVotes[id])
 
-/** Open ballots where the member has voted at least once and has not already submitted on this device. */
-export const submitCandidates = (summaries: BallotSummary[], now: Date, submitted: (ballotId: string) => boolean): BallotSummary[] =>
-    summaries.filter((b) => b.category_count > 0 && b.my_vote_count >= 1 && ballotCardStatus(b, b.category_count, b.my_vote_count, now) === "open" && !submitted(b.id))
+/** Home "Your ballots": every running ballot (drafts and not-yet-open ones excluded), not fully voted first, then soonest closing. */
+export const openBallotRows = (summaries: BallotSummary[], now: Date): BallotSummary[] => {
+    const full = (b: BallotSummary) => b.category_count > 0 && b.my_vote_count >= b.category_count
+    return summaries
+        .filter((b) => b.status !== "draft" && (() => { const s = ballotCardStatus(b, b.category_count, b.my_vote_count, now); return s === "open" || s === "voted" })())
+        .sort((a, b) => Number(full(a)) - Number(full(b)) || new Date(a.closes_at).getTime() - new Date(b.closes_at).getTime())
+}

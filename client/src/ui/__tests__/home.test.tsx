@@ -78,18 +78,30 @@ describe("Home widgets", () => {
         expect(within(nv).getAllByRole("columnheader")).toHaveLength(2)
     })
 
-    it("shows the pending ballot with a Continue link and N left", () => {
+    it("Your ballots is a list: name, when it closes, X/Y voted; row links, no buttons", () => {
         renderHome()
         const r = screen.getByRole("region", { name: "Your ballots" })
-        expect(within(r).getByText("3 left")).toBeTruthy()
-        expect((within(r).getByRole("link", { name: /continue main ballot/i }) as HTMLAnchorElement).getAttribute("href")).toBe("/app/ballots/b1")
+        expect(within(r).getByText("Main Ballot")).toBeTruthy()
+        expect(within(r).getByText(/^Closes in /)).toBeTruthy()
+        expect(within(r).getByText(/\d\/5 voted/)).toBeTruthy()
+        expect((within(r).getByRole("link", { name: /Main Ballot/ }) as HTMLAnchorElement).getAttribute("href")).toBe("/app/ballots/b1")
         expect(within(r).queryByRole("button")).toBeNull()
     })
 
-    it("pending empty state links to Ballots", () => {
-        hook.state = ready(data({ summaries: [ballot({ my_vote_count: 5 })] }))
+    it("a fully voted ballot still shows, as All voted, after the unfinished ones; max 5 rows then +N more", () => {
+        const mk = (id: string, voted: number, hrs: number) => ballot({ id, name: `B${id}`, my_vote_count: voted, closes_at: new Date(Date.now() + hrs * 3_600_000 + 60_000).toISOString() })
+        hook.state = ready(data({ summaries: [mk("1", 5, 1), mk("2", 0, 5), mk("3", 0, 4), mk("4", 0, 3), mk("5", 0, 2), mk("6", 0, 6), mk("7", 0, 7)] }))
         renderHome()
-        expect(screen.getByText("You're all caught up.")).toBeTruthy()
+        const r = screen.getByRole("region", { name: "Your ballots" })
+        expect(within(r).getAllByRole("link")).toHaveLength(5)
+        expect(within(r).getByText("+2 more")).toBeTruthy()
+        expect(within(r).queryByText("All voted")).toBeNull() // the finished one is last, past the 5th row
+    })
+
+    it("pending empty state links to Ballots", () => {
+        hook.state = ready(data({ summaries: [ballot({ status: "closed", closes_at: new Date(Date.now() - DAY).toISOString() })] }))
+        renderHome()
+        expect(screen.getByText("Nothing to vote on yet.")).toBeTruthy()
         expect((screen.getByRole("link", { name: "Your ballots" }) as HTMLAnchorElement).getAttribute("href")).toBe("/app/ballots")
     })
 
@@ -130,7 +142,7 @@ describe("Home widgets", () => {
         const nv = screen.getByRole("region", { name: "Who hasn't voted" })
         fireEvent.click(within(nv).getByRole("button", { name: /try again/i }))
         expect(reload).toHaveBeenCalled()
-        expect(screen.getByRole("region", { name: "Your ballots" }).textContent).toMatch(/3 left/)
+        expect(screen.getByRole("region", { name: "Your ballots" }).textContent).toMatch(/voted/)
         expect(within(screen.getByRole("region", { name: "Oscar night" })).getByRole("button", { name: /^Add to calendar, / })).toBeTruthy()
     })
 

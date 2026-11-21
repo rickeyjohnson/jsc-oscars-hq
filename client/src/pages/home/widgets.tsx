@@ -4,21 +4,18 @@ import { Mail } from "lucide-react"
 import { Avatar } from "../../ui/Avatar"
 import { MemberAvatar } from "../../ui/MemberAvatar"
 import { Countdown } from "../../ui/Countdown"
-import { SUBMIT_ENABLED } from "../../ui/copy"
 import { ErrorState } from "../../ui/ErrorState"
 import { Podium } from "../../ui/Podium"
 import { Skeleton, SkeletonScreen } from "../../ui/Skeleton"
 import { noBallotNote } from "../../ui/logic/ballotsView"
 import { attentionItems } from "../../ui/logic/attention"
-import { ballotCardStatus, pendingBallots, submitCandidates, type BallotSummary } from "../../lib/voting"
-import { submittedHere } from "../../api/submissions"
-import { useUserData } from "../../context/UserContenxt"
+import { ballotCardStatus, openBallotRows } from "../../lib/voting"
 import { DEFAULT_CEREMONY_MINUTES, buildIcs, downloadIcs, icsFileName } from "../../ui/logic/ics"
 import { WIDGETS, widgetColor, type WidgetId } from "../../ui/logic/homeWidgets"
 import { buildResultCards } from "../../lib/resultsView"
 import { leaderboard } from "../../lib/leaderboard"
 import { nomineeStats } from "../../lib/stats"
-import { closesInLabel, countdownParts, urgency } from "../../lib/time"
+import { closesShort, countdownParts, urgency } from "../../lib/time"
 import type { Nominee } from "../../types"
 import { PEBBLE_EDGE as EDGE } from "../../ui/logic/pebble"
 import { ceremonyDate, ceremonyTime, mapsUrl } from "./format"
@@ -105,60 +102,40 @@ function Ceremony({ state }: Props) {
     )
 }
 
-function PendingBallot({ ballot, now, showName }: { ballot: BallotSummary; now: Date; showName: boolean }) {
-    const closes = new Date(ballot.closes_at)
-    const urgent = urgency(closes, now) === "urgent"
-    const left = ballot.category_count - ballot.my_vote_count
-    return (
-        <li className="relative rounded-control bg-elevated p-3">
-            <div className="flex items-start justify-between gap-3">
-                <p className="min-w-0 truncate text-headline">
-                    <Link to={`/app/ballots/${ballot.id}`} aria-label={`Continue ${ballot.name}`} className="after:absolute after:inset-0 after:rounded-control after:content-['']">
-                        {showName ? ballot.name : `${left} left`}
-                    </Link>
-                </p>
-                <span className={`text-footnote font-bold ${urgent ? "text-warn" : "text-label-2"}`}>{closesInLabel(closes, now)}</span>
-            </div>
-            <div aria-hidden className="mt-3 flex gap-0.5">
-                {Array.from({ length: ballot.category_count }, (_, i) => (
-                    <span key={i} className={`h-1 flex-1 rounded-full ${i < ballot.my_vote_count ? "bg-pebble-lime" : "bg-strip-off"}`} />
-                ))}
-            </div>
-            {showName && <p className="mt-2 text-subhead font-bold">{left} left</p>}
-        </li>
-    )
-}
-
 function Pending({ state, now }: Props) {
-    const pending = state.data ? pendingBallots(state.data.summaries, now) : []
-    const { profile } = useUserData()
-    const uid = profile?.user_id ?? ""
-    // Submitting is a per-device confirmation: once done here, stop asking.
-    const ready = state.data ? submitCandidates(state.data.summaries, now, (id) => submittedHere(id, uid)) : []
+    const rows = state.data ? openBallotRows(state.data.summaries, now) : []
+    const MAX = 5
     return (
-        <Widget id="pending" status={baseStatus(state)} retry={state.reload} to={pending.length === 0 ? "/app/ballots" : undefined}>
-            {pending.length > 0 ? (
-                <ul className="space-y-2 list-none p-0">
-                    {pending.map((b) => (
-                        <PendingBallot key={b.id} ballot={b} now={now} showName={pending.length > 1} />
-                    ))}
-                </ul>
-            ) : (
-                state.data && state.data.summaries.every((b) => ballotCardStatus(b, b.category_count, b.my_vote_count, now) !== "open" && ballotCardStatus(b, b.category_count, b.my_vote_count, now) !== "voted") ? (
+        <Widget id="pending" status={baseStatus(state)} retry={state.reload} to={rows.length === 0 ? "/app/ballots" : undefined}>
+            {rows.length > 0 ? (
+                <>
+                    <ul className="list-none divide-y divide-sep p-0">
+                        {rows.slice(0, MAX).map((b) => {
+                            const all = b.category_count > 0 && b.my_vote_count >= b.category_count
+                            const urgent = urgency(new Date(b.closes_at), now) === "urgent"
+                            return (
+                                <li key={b.id}>
+                                    <Link to={`/app/ballots/${b.id}`} className="flex min-h-11 items-center justify-between gap-3 py-2">
+                                        <span className="min-w-0 flex-1">
+                                            <span className="block truncate text-headline">{b.name}</span>
+                                            <span className={`block text-footnote ${urgent ? "font-bold text-warn" : "text-label-2"}`}>{closesShort(new Date(b.closes_at), now)}</span>
+                                        </span>
+                                        <span className={`shrink-0 text-subhead tabular-nums ${all ? "font-bold" : "text-label-2"}`}>{all ? "All voted" : `${b.my_vote_count}/${b.category_count} voted`}</span>
+                                    </Link>
+                                </li>
+                            )
+                        })}
+                    </ul>
+                    {rows.length > MAX && <p className="mt-1 text-footnote text-label-2">+{rows.length - MAX} more</p>}
+                </>
+            ) : state.data && state.data.summaries.every((b) => ballotCardStatus(b, b.category_count, b.my_vote_count, now) !== "open" && ballotCardStatus(b, b.category_count, b.my_vote_count, now) !== "voted") ? (
                 <>
                     <p className="text-title-3">Nothing to vote on yet.</p>
                     <p className="mt-1 text-footnote text-label-2">{noBallotNote(state.data.summaries, now)}</p>
                 </>
             ) : (
                 <p className="text-title-3">You're all caught up.</p>
-            )
             )}
-            {SUBMIT_ENABLED &&
-                ready.map((b) => (
-                    <Link key={b.id} to={`/app/ballots/${b.id}/submit`} className="relative z-10 mt-2 inline-flex min-h-11 items-center text-subhead font-bold text-accent">
-                        Submit {b.name}
-                    </Link>
-                ))}
         </Widget>
     )
 }

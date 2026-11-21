@@ -44,3 +44,19 @@ export const toLocalInput = (iso: string): string => {
     const p = (n: number) => String(n).padStart(2, "0")
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`
 }
+
+// Short "when does it close" for list rows: "Closes in 2d 4h", "Closes in 5h", "Closes in 20m", or the date past a week.
+export const closesShort = (closesAt: Date, now: Date): string => {
+    const ms = closesAt.getTime() - now.getTime()
+    if (ms <= 0) return "Closed"
+    const d = Math.floor(ms / 86_400_000)
+    const h = Math.floor(ms / 3_600_000) % 24
+    if (d >= 7) {
+        const day = closesAt.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
+        const time = closesAt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+        return `Closes ${day} ${time}`
+    }
+    if (d >= 1) return `Closes in ${d}d ${h}h`
+    if (h >= 1) return `Closes in ${h}h`
+    return `Closes in ${Math.max(1, Math.floor(ms / 60_000))}m`
+}

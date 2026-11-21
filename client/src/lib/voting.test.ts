@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { pendingBallots, selectableNominees, groupCandidates, votedCount, dashStates, nextUnvotedIndex, findMatchingNominee, ballotCardStatus, completionByMember, chipStatus, lockedNominees, nomineePebbles, findGroupBySet, joinNames, classifySaveError, saveErrorMessage, submitCandidates, reviewRows, firstUnvotedIndex } from "./voting"
+import { pendingBallots, selectableNominees, groupCandidates, votedCount, dashStates, nextUnvotedIndex, findMatchingNominee, ballotCardStatus, completionByMember, chipStatus, lockedNominees, nomineePebbles, findGroupBySet, joinNames, classifySaveError, saveErrorMessage, openBallotRows, reviewRows, firstUnvotedIndex } from "./voting"
 import { avatarFallback } from "../ui/logic/avatar"
 import type { Ballot, Member, Nominee } from "../types"
 
@@ -202,12 +202,18 @@ describe("group vote helpers", () => {
     })
 })
 
-describe("submitCandidates (P1-4)", () => {
+describe("openBallotRows (Home list)", () => {
     const now = new Date("2026-11-26T12:00:00Z")
-    const b = (id: string, voted: number): never => ({ id, season_id: "S", parent_ballot_id: null, name: id, round: "main", status: "open", opens_at: "2026-11-25T00:00:00Z", closes_at: "2026-11-30T00:00:00Z", category_count: 3, my_vote_count: voted }) as never
-    it("lists voted, open ballots and hides ones already submitted here", () => {
-        const list = [b("a", 1), b("b", 0), b("c", 2)]
-        expect(submitCandidates(list, now, () => false).map((x) => x.id)).toEqual(["a", "c"])
-        expect(submitCandidates(list, now, (id) => id === "a").map((x) => x.id)).toEqual(["c"])
+    const mk = (id: string, o: object): never => ({ id, season_id: "S", parent_ballot_id: null, name: id, round: "main", status: "open", opens_at: "2026-11-25T00:00:00Z", closes_at: "2026-11-30T00:00:00Z", category_count: 4, my_vote_count: 1, ...o }) as never
+    it("includes fully voted ones, sorts unfinished first then soonest closing, drops scheduled, closed and drafts", () => {
+        const list = [
+            mk("done-soon", { my_vote_count: 4, closes_at: "2026-11-27T00:00:00Z" }),
+            mk("later", { closes_at: "2026-12-05T00:00:00Z" }),
+            mk("soon", { closes_at: "2026-11-28T00:00:00Z" }),
+            mk("scheduled", { opens_at: "2026-12-01T00:00:00Z" }),
+            mk("closed", { status: "closed" }),
+            mk("draft", { status: "draft" }),
+        ]
+        expect(openBallotRows(list, now).map((b) => b.id)).toEqual(["soon", "later", "done-soon"])
     })
 })

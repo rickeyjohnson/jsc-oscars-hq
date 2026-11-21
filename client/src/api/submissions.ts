@@ -35,12 +35,3 @@ const browserStorage = (): Storage | null => {
 }
 
 export let submissionIO: (userId: string) => SubmissionIO = (userId) => localSubmissionIO(browserStorage(), userId, () => new Date())
-
-/** Synchronous read for screens that only need to know whether this device already submitted. */
-export const submittedHere = (ballotId: string, userId: string): boolean => {
-    try {
-        return Boolean(browserStorage()?.getItem(submissionKey(ballotId, userId)))
-    } catch {
-        return false
-    }
-}
