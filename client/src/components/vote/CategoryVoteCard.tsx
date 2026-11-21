@@ -3,7 +3,7 @@ import { Check, Lock } from "lucide-react"
 import type { Category, Member } from "../../types"
 import { groupCandidates, lockedNominees, nomineeKey, nomineePebbles, selectableNominees, type VoteMessage } from "../../lib/voting"
 import { Avatar } from "../../ui/Avatar"
-import { Button } from "../../ui/Button"
+import { Button, Spinner } from "../../ui/Button"
 import { Sheet } from "../../ui/Sheet"
 import { PEBBLE_CLASS } from "../../ui/logic/pebble"
 import { VoteBanner } from "./VoteBanner"
@@ -51,9 +51,14 @@ const CategoryVoteCard = (p: Props) => {
             className={`tab-enter outline-none ${p.current ? "" : "hidden"}`}
         >
             <h2 className="font-display text-title-1">{category.name}</h2>
-            <p className="mt-1 text-subhead text-label-2">{hint}</p>
-            <p className="mt-1 min-h-5 text-footnote text-label-2" aria-live="polite">
-                {pending ? "Saving..." : selectedId && !message ? "Saved. Tap another to change it." : ""}
+            <p className="mt-1 text-subhead text-label-2">{selectedId && !pending && !message && !readOnly ? "Your vote is saved. Tap another to change it." : hint}</p>
+            <p className="mt-1 flex min-h-5 items-center gap-2 text-footnote text-label-2" aria-live="polite">
+                {pending && (
+                    <>
+                        <Spinner />
+                        <span>Saving...</span>
+                    </>
+                )}
             </p>
 
             {message && <VoteBanner className="mt-2" tone={message.tone} title={message.title} detail={message.detail} retry={message.retry} />}
@@ -70,6 +75,7 @@ const CategoryVoteCard = (p: Props) => {
                             type="button"
                             role="radio"
                             aria-checked={on}
+                            aria-busy={on && pending ? true : undefined}
                             disabled={readOnly}
                             onClick={() => {
                                 if (!on) p.onVote(n.id)
@@ -94,7 +100,7 @@ const CategoryVoteCard = (p: Props) => {
                                     n.secondary_text && <span className={`block text-footnote ${on ? "" : "text-label-2"}`}>{n.secondary_text}</span>
                                 )}
                             </span>
-                            {on && <Check aria-hidden strokeWidth={3} className="size-6 shrink-0" />}
+                            {on && (pending ? <Spinner /> : <Check aria-hidden strokeWidth={3} className="size-6 shrink-0" />)}
                         </button>
                     )
                 })}

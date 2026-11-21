@@ -153,6 +153,7 @@ const VotePage = () => {
         const i = firstUnvotedIndex(ids, myVotes)
         if (i >= 0) jump(i)
     }
+    const busy = Boolean(pending[ids[idx]])
     const onLast = idx >= total - 1
     const nextLabel = onLast ? "Review" : myVotes[ids[idx]] ? "Next" : "Skip"
     const goNext = () => {
@@ -258,10 +259,10 @@ const VotePage = () => {
                         </Button>
                     ) : (
                         <>
-                            <Button size="md" variant="secondary" className="flex-1" disabled={idx === 0} onClick={() => jump(idx - 1)}>
+                            <Button size="md" variant="secondary" className="flex-1" disabled={idx === 0 || busy} onClick={() => jump(idx - 1)}>
                                 Back
                             </Button>
-                            <Button size="md" variant={onLast || myVotes[ids[idx]] ? "primary" : "tinted"} className="flex-1" onClick={goNext}>
+                            <Button size="md" variant={onLast || myVotes[ids[idx]] ? "primary" : "tinted"} className="flex-1" disabled={busy} onClick={goNext}>
                                 {nextLabel}
                             </Button>
                         </>
