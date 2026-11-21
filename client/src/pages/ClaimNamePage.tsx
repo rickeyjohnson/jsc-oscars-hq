@@ -5,6 +5,7 @@ import { useUserData } from "../context/UserContenxt"
 import { fetchMemberNameStatus, type MemberNameStatus } from "../api/members"
 import { clearPendingName, getPendingName } from "../lib/claimName"
 import { AuthLayout } from "../ui/AuthLayout"
+import { useConfirm } from "../ui/ConfirmProvider"
 import { Button } from "../ui/Button"
 import { NameChips } from "../ui/NameChips"
 import { Skeleton, SkeletonScreen } from "../ui/Skeleton"
@@ -16,6 +17,7 @@ const TAKEN = "That name isn't available. Pick another or ask a committee member
 const ClaimNamePage = () => {
     const { member, refetch } = useUserData()
     const navigate = useNavigate()
+    const confirm = useConfirm()
     const [names, setNames] = useState<MemberNameStatus[]>([])
     const [loading, setLoading] = useState(true)
     const [loadError, setLoadError] = useState(false)
@@ -119,7 +121,7 @@ const ClaimNamePage = () => {
                 </p>
             )}
             <div className={`mt-6 ${claiming ? "hidden" : ""}`}>
-                <Button variant="primary" size="lg" fullWidth disabled={!picked} loading={busy} loadingLabel="Claiming…" onClick={() => void claim(picked)}>
+                <Button variant="primary" size="lg" fullWidth disabled={!picked} loading={busy} loadingLabel="Claiming…" onClick={async () => { if (await confirm({ title: `Claim ${picked}?`, message: `You're claiming ${picked}. Only the committee can change this later.`, confirmLabel: `Yes, I'm ${picked}`, cancelLabel: "Pick again" })) void claim(picked) }}>
                     Continue
                 </Button>
             </div>

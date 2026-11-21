@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import { MemoryRouter } from "react-router-dom"
+import { ConfirmProvider } from "../ConfirmProvider"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { settledLayout } from "../logic/settle"
 
@@ -22,7 +23,7 @@ import LandingPage from "../../pages/LandingPage"
 import LoginPage from "../../pages/LoginPage"
 import SignupPage from "../../pages/SignupPage"
 
-const wrap = (ui: React.ReactElement) => render(<MemoryRouter>{ui}</MemoryRouter>)
+const wrap = (ui: React.ReactElement) => render(<MemoryRouter><ConfirmProvider>{ui}</ConfirmProvider></MemoryRouter>)
 
 beforeEach(() => {
     window.matchMedia = ((q: string) => ({ matches: false, media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => false })) as never
@@ -122,6 +123,7 @@ describe("Signup", () => {
         fireEvent.change(screen.getByLabelText("Email"), { target: { value: "cy@x.co" } })
         fireEvent.change(screen.getByLabelText("Password"), { target: { value: "secret12" } })
         fireEvent.click(screen.getByRole("button", { name: "Create account" }))
+        fireEvent.click(await screen.findByRole("button", { name: /^Yes, I'm / }))
         await waitFor(() => expect(navigate).toHaveBeenCalledWith("/app"))
         const arg = signUp.mock.calls[0][0]
         expect(arg.options.data).toEqual({ username: "cy", member_name: "Cy" })
@@ -135,6 +137,7 @@ describe("Signup", () => {
         fireEvent.change(screen.getByLabelText("Email"), { target: { value: "a@x.co" } })
         fireEvent.change(screen.getByLabelText("Password"), { target: { value: "secret12" } })
         fireEvent.click(screen.getByRole("button", { name: "Create account" }))
+        fireEvent.click(await screen.findByRole("button", { name: /^Yes, I'm / }))
         expect(await screen.findByRole("dialog", { name: "Check your email" })).toBeTruthy()
         expect(navigate).not.toHaveBeenCalled()
     })

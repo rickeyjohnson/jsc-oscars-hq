@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import { MemoryRouter } from "react-router-dom"
+import { ConfirmProvider } from "../ConfirmProvider"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const signInOAuth = vi.fn()
@@ -36,7 +37,7 @@ import { BALL_RADIUS_MAX, BALL_RADIUS_MIN, ballKey, ballRadius, ballRingColor } 
 import { pebbleFor } from "../logic/pebble"
 import { PEBBLE_COLORS } from "../tokens"
 
-const wrap = (ui: React.ReactElement) => render(<MemoryRouter>{ui}</MemoryRouter>)
+const wrap = (ui: React.ReactElement) => render(<MemoryRouter><ConfirmProvider>{ui}</ConfirmProvider></MemoryRouter>)
 const NAMES = [
     { name: "Ann", taken: false },
     { name: "Bo", taken: true },
@@ -188,6 +189,7 @@ describe("Signup rework", () => {
         fireEvent.click(await screen.findByRole("radio", { name: "Cy" }))
         expect(screen.getByRole("button", { name: /continue with google/i }).getAttribute("aria-disabled")).toBeNull()
         fireEvent.click(screen.getByRole("button", { name: /continue with google/i }))
+        fireEvent.click(await screen.findByRole("button", { name: /^Yes, I'm / }))
         await waitFor(() => expect(signInOAuth).toHaveBeenCalled())
         expect(sessionStorage.getItem("jsc.pendingName")).toBe("Cy")
         fireEvent.click(screen.getByRole("button", { name: /use email instead/i }))
@@ -257,6 +259,7 @@ describe("Claim name page", () => {
         expect((screen.getByRole("button", { name: "Continue" }) as HTMLButtonElement).disabled).toBe(true)
         fireEvent.click(screen.getByRole("radio", { name: "Cy" }))
         fireEvent.click(screen.getByRole("button", { name: "Continue" }))
+        fireEvent.click(await screen.findByRole("button", { name: /^Yes, I'm / }))
         await waitFor(() => expect(navigate).toHaveBeenCalledWith("/app", { replace: true }))
         expect(rpc).toHaveBeenCalledWith("claim_member_name", { p_name: "Cy" })
         expect(refetch).toHaveBeenCalled()
@@ -267,6 +270,7 @@ describe("Claim name page", () => {
         fireEvent.click(await screen.findByRole("radio", { name: "Ann" }))
         status.mockResolvedValue([{ name: "Ann", taken: true }, ...NAMES.slice(1)])
         fireEvent.click(screen.getByRole("button", { name: "Continue" }))
+        fireEvent.click(await screen.findByRole("button", { name: /^Yes, I'm / }))
         expect((await screen.findByRole("alert")).textContent).toMatch(/isn't available/)
         await waitFor(() => expect(status).toHaveBeenCalledTimes(2))
         await waitFor(() => expect(screen.getByRole("radio", { name: /Ann/ }).getAttribute("aria-disabled")).toBe("true"))
@@ -291,6 +295,7 @@ describe("Claim name page", () => {
         wrap(<ClaimNamePage />)
         fireEvent.click(await screen.findByRole("radio", { name: "Ann" }))
         fireEvent.click(screen.getByRole("button", { name: "Continue" }))
+        fireEvent.click(await screen.findByRole("button", { name: /^Yes, I'm / }))
         expect((await screen.findByRole("alert")).textContent).toMatch(/Name claiming isn't set up yet/)
         expect(navigate).not.toHaveBeenCalled()
     })
@@ -312,5 +317,18 @@ describe("Claim name page", () => {
         member = { id: "m", name: "Ann", user_id: "u1" }
         wrap(<ClaimNamePage />)
         await waitFor(() => expect(navigate).toHaveBeenCalledWith("/app", { replace: true }))
+    })
+})
+
+describe("claiming a name asks first (P1-7)", () => {
+    it("the confirm names the member, and cancelling claims nothing", async () => {
+        wrap(<ClaimNamePage />)
+        fireEvent.click(await screen.findByRole("radio", { name: "Cy" }))
+        fireEvent.click(screen.getByRole("button", { name: "Continue" }))
+        const dlg = await screen.findByRole("alertdialog")
+        expect(dlg.textContent).toContain("You're claiming Cy. Only the committee can change this later.")
+        fireEvent.click(screen.getByRole("button", { name: "Pick again" }))
+        await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull())
+        expect(rpc).not.toHaveBeenCalled()
     })
 })

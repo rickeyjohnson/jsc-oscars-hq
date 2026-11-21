@@ -80,8 +80,8 @@ const MemberNamesPage = () => {
         }
         try {
             setConfirm(null)
-            setNotice(`${row.name} can sign up again. Delete their login in Supabase → Authentication → Users.`)
-            if (!(await load())) setNotice(`Reset done, but the list couldn't refresh. ${row.name} can sign up again; delete their login in Supabase → Authentication → Users.`)
+            setNotice(`${row.name} can sign up again.`)
+            if (!(await load())) setNotice(`Reset done, but the list couldn't refresh. ${row.name} can sign up again.`)
         } finally {
             setBusy(false)
         }

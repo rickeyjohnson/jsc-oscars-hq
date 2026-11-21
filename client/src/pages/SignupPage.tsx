@@ -16,6 +16,7 @@ import { GoogleButton } from "../ui/GoogleButton"
 import { googleAuthEnabled, signInWithGoogle, useResetOnPageShow } from "../lib/googleAuth"
 import { EmailToggle } from "../ui/EmailToggle"
 import { setPendingName } from "../lib/claimName"
+import { useConfirm } from "../ui/ConfirmProvider"
 
 type SignupDate = {
     email: string
@@ -65,6 +66,7 @@ const SignupPage = () => {
         image: null,
     })
     const navigate = useNavigate()
+    const confirm = useConfirm()
     useResetOnPageShow(() => setGoogleLoading(false))
 
     const handleChange = (
@@ -76,8 +78,11 @@ const SignupPage = () => {
         })
     }
 
+    const confirmName = (name: string) => confirm({ title: `Claim ${name}?`, message: `You're claiming ${name}. Only the committee can change this later.`, confirmLabel: `Yes, I'm ${name}`, cancelLabel: "Pick again" })
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+        if (!(await confirmName(signupData.name))) return
         setLoader(true)
 
         const email = signupData.email
@@ -116,6 +121,7 @@ const SignupPage = () => {
 
     const handleGoogle = async () => {
         if (!signupData.name) return // the "Pick your name first." hint beside the chips already says why
+        if (!(await confirmName(signupData.name))) return
         setSignupError("")
         setGoogleLoading(true)
         setPendingName(signupData.name)
