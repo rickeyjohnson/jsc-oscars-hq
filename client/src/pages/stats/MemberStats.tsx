@@ -1,13 +1,13 @@
 import { useMemo, useState, type ReactNode } from "react"
-import { Activity, Crown, Lock, TrendingUp } from "lucide-react"
+import { Lock } from "lucide-react"
 import { MemberAvatar } from "../../ui/MemberAvatar"
 import { useMemberPebble } from "../../ui/useMemberPebble"
 import { PEBBLE_CLASS, PEBBLE_TEXT } from "../../ui/logic/pebble"
 import { DotStrip, ExpectedChart, NomsWinsChart, TrendChart } from "../../ui/charts/StatsCharts"
 import { ordinal } from "../../lib/resultsView"
 import {
-    APPROX_MARK, MIN_RATE_NOMS_ALL, bestWorst, consistency, crowns, expectedWins, fmtRate, groupRates, hasStats, metricValues, nameOf, placement,
-    rateSeries, streaks, totals, VERDICT_LABEL, type MetricKey, type StatsModel,
+    APPROX_MARK, MIN_RATE_NOMS_ALL, expectedWins, fmtRate, groupRates, hasStats, metricValues, nameOf, placement,
+    rateSeries, totals, VERDICT_LABEL, type MetricKey, type StatsModel,
 } from "../../lib/statsLab"
 import { HowCalculatedSheet } from "./HowCalculatedSheet"
 
@@ -39,7 +39,6 @@ export function MemberStats({ model, memberId, viewer = true, pendingLabel }: { 
     const [how, setHow] = useState(false)
     const name = nameOf(model, memberId)
     const pebble = pebbleOf(memberId, name)
-    const you = viewer ? "you" : name
     const t = totals(model, memberId)
     const names = useMemo(() => Object.fromEntries(model.members.map((m) => [m.id, m.name])), [model])
 
@@ -67,17 +66,12 @@ export function MemberStats({ model, memberId, viewer = true, pendingLabel }: { 
     const series = rateSeries(model, memberId)
     const group = groupRates(model).map((g) => (g === null ? null : g * 100))
     const exp = expectedWins(model, memberId)
-    const bw = bestWorst(model, memberId)
-    const st = streaks(model, memberId)
-    const cons = consistency(model, memberId)
-    const cr = crowns(model, memberId)
     const lowRate = t.noms < MIN_RATE_NOMS_ALL
     const tiles: { label: string; value: string; rank: string }[] = [
         { label: "Wins", value: String(t.wins), rank: rankText("wins") },
         { label: "Noms", value: `${approx(t.approx)}${t.noms}`, rank: rankText("noms") },
         { label: "Win rate", value: `${approx(t.approx)}${fmtRate(t.rate)}`, rank: lowRate ? "Not ranked" : rankText("rate") },
     ]
-    const semName = (k: number) => model.sems[k].label
     const cards: { key: MetricKey; label: string; fmt: (v: number) => string }[] = [
         { key: "wins", label: "Wins", fmt: (v) => `${Math.round(v)} wins` },
         { key: "noms", label: "Noms", fmt: (v) => `${Math.round(v)} noms` },
@@ -166,43 +160,6 @@ export function MemberStats({ model, memberId, viewer = true, pendingLabel }: { 
                 </div>
             </Card>
 
-            <div className="flex flex-col lg:col-span-2">
-                <Card title="Highlights">
-                    {bw ? (
-                        <div className="grid grid-cols-2 gap-2">
-                            <div className="rounded-control bg-bg p-3">
-                                <p className="text-caption-1 uppercase tracking-wider text-label-2">Best semester</p>
-                                <p className="text-headline text-success">{semName(bw.best.k)}</p>
-                                <p className={NOTE}>{fmtRate(bw.best.rate)} · {bw.best.wins} of {bw.best.noms}</p>
-                            </div>
-                            <div className="rounded-control bg-bg p-3">
-                                <p className="text-caption-1 uppercase tracking-wider text-label-2">Roughest semester</p>
-                                <p className="text-headline text-warn">{semName(bw.worst.k)}</p>
-                                <p className={NOTE}>{fmtRate(bw.worst.rate)} · {bw.worst.wins} of {bw.worst.noms}</p>
-                            </div>
-                        </div>
-                    ) : (
-                        <p className={NOTE}>Best and roughest semester need at least 2 semesters with 5+ noms.</p>
-                    )}
-                    <ul className="mt-2 list-none divide-y divide-sep p-0">
-                        {st && (
-                            <Callout icon={<TrendingUp aria-hidden className="size-4" />}>
-                                <b>{st.current ? `${st.current} semester${st.current > 1 ? "s" : ""} in a row` : "Not currently"} at or above the group average.</b>
-                                <span className="block text-label-2">Longest run: {st.longest}. Semesters {you === "you" ? "you were" : "they were"} not in are skipped, not counted as a break.</span>
-                            </Callout>
-                        )}
-                        {cons && (
-                            <Callout icon={<Activity aria-hidden className="size-4" />}>
-                                <b>{cons.label}.</b> {viewer ? "Your" : "Their"} win rate moves about {Math.round(cons.sd)} points between semesters.
-                            </Callout>
-                        )}
-                        <Callout icon={<Crown aria-hidden className="size-4" />}>
-                            <b>{cr} semester crown{cr === 1 ? "" : "s"}.</b> <span className="text-label-2">Semesters where nobody had more wins than {viewer ? "you" : "them"} (ties count).</span>
-                        </Callout>
-                    </ul>
-                </Card>
-            </div>
-
             {pendingLabel && (
                 <div className="lg:col-span-2">
                     <LockedNote label={pendingLabel} />
@@ -215,13 +172,6 @@ export function MemberStats({ model, memberId, viewer = true, pendingLabel }: { 
         </div>
     )
 }
-
-const Callout = ({ icon, children }: { icon: ReactNode; children: ReactNode }) => (
-    <li className="flex items-start gap-3 py-3 text-callout">
-        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-bg">{icon}</span>
-        <span className="min-w-0">{children}</span>
-    </li>
-)
 
 function LockedNote({ label }: { label: string }) {
     return (

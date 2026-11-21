@@ -41,7 +41,7 @@ describe("My stats (You tab)", () => {
         expect(screen.getByText(/~ = counted from slides/)).toBeTruthy()
         expect(screen.getAllByText(/in 6 of 6 semesters/).length).toBeGreaterThan(0)
     })
-    it("shows every chart as an image with a summary, plus Highlights and the how-it-works sheet", async () => {
+    it("shows every chart as an image with a summary and the how-it-works sheet", async () => {
         view()
         await screen.findByText("Win rate trend")
         const imgs = screen.getAllByRole("img").map((i) => i.getAttribute("aria-label") ?? "")
@@ -51,8 +51,8 @@ describe("My stats (You tab)", () => {
         expect(screen.getByText("Expected vs actual wins")).toBeTruthy()
         expect(screen.getByText("Where you stand")).toBeTruthy()
         expect(screen.getAllByText(/^Top \d+%/).length).toBeGreaterThan(0)
-        expect(screen.getByText("Best semester")).toBeTruthy()
-        expect(screen.getByText(/semester crown/)).toBeTruthy()
+        expect(screen.queryByText("Highlights")).toBeNull()
+        expect(screen.queryByText(/semester crown|Best semester/)).toBeNull()
         fireEvent.click(screen.getByRole("button", { name: "How these are calculated" }))
         const dlg = await screen.findByRole("dialog", { name: "How these are calculated" })
         expect(within(dlg).getAllByRole("button", { name: "Close" })).toHaveLength(1)
@@ -64,7 +64,7 @@ describe("My stats (You tab)", () => {
         const grid = container.querySelector("[data-stat-card]")!.parentElement!.closest(".grid")!
         expect(grid.className).toContain("items-stretch")
         const cards = [...container.querySelectorAll("[data-stat-card]")]
-        expect(cards.length).toBe(5)
+        expect(cards.length).toBe(4)
         for (const c of cards) {
             expect(c.className).toContain("h-full")
             expect(c.querySelector("h3")!.className).toContain("line-clamp-1")

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
-    bestWorst, buildModel, compareMembers, consistency, crowns, expectedWins, fmtRate, groupRate, leaderboardEntries, metricValues,
-    perSemesterAverage, placement, rate, shortLabel, streaks, totals, verdictOf, type StatsModel,
+    buildModel, compareMembers, expectedWins, fmtRate, groupRate, leaderboardEntries, metricValues,
+    perSemesterAverage, placement, rate, shortLabel, totals, verdictOf, type StatsModel,
 } from "./statsLab"
 import type { PastStatRow } from "./pastStats"
 
@@ -120,66 +120,6 @@ describe("metricValues", () => {
         expect(v[A]).toBeCloseTo(13 / 4)
         expect(v[D]).toBe(3)
         expect(metricValues(m, "wins", { perSem: true, k: 1 })[A]).toBe(4)
-    })
-})
-
-describe("streaks", () => {
-    it("counts semesters at or above the group, skipping gaps", () => {
-        const s = streaks(m, A)!
-        expect(s.played).toBe(4)
-        expect(s.longest).toBeGreaterThanOrEqual(s.current)
-    })
-    it("needs 2 semesters in", () => {
-        expect(streaks(m, D)).toBeNull()
-        expect(streaks(m, R)).toBeNull()
-    })
-    it("a gap is not a break", () => {
-        const g = buildModel({ rows: [row("S1", 0, "Ann", 10, 5), row("S1", 0, "Bo", 10, 1), row("S2", 1, "Bo", 10, 1), row("S3", 2, "Ann", 10, 5), row("S3", 2, "Bo", 10, 1)], members })
-        expect(streaks(g, A)).toEqual({ current: 2, longest: 2, played: 2 })
-    })
-})
-
-describe("consistency", () => {
-    it("needs 3 semesters", () => {
-        expect(consistency(m, D)).toBeNull()
-        expect(consistency(buildModel({ rows: rows.filter((r) => r.season_order < 2), members }), A)).toBeNull()
-    })
-    it("labels by spread: Steady under 8, Streaky 8-15, Rollercoaster over 15", () => {
-        const mk = (rs: number[]) => buildModel({ rows: rs.map((w, i) => row(`S${i}`, i, "Ann", 10, w)), members })
-        expect(consistency(mk([3, 3, 3]), A)).toMatchObject({ sd: 0, label: "Steady" })
-        expect(consistency(mk([3, 3, 4]), A)?.label).toBe("Steady") // sd 4.7
-        expect(consistency(mk([2, 4, 3]), A)?.label).toBe("Streaky") // sd 8.2
-        expect(consistency(mk([0, 5, 10]), A)?.label).toBe("Rollercoaster") // sd 40.8
-    })
-})
-
-describe("best and worst semester", () => {
-    it("only semesters with 5+ noms; needs 2", () => {
-        const bw = bestWorst(m, A)!
-        expect(bw.best.k).toBe(3) // 6/13 = 46%
-        expect(bw.worst.k).toBe(0) // 1/8 = 12.5%
-        expect(bestWorst(m, D)).toBeNull()
-        expect(bestWorst(m, R)).toBeNull()
-    })
-    it("ties go to the more recent semester", () => {
-        const t = buildModel({ rows: [row("S1", 0, "Ann", 10, 5), row("S2", 1, "Ann", 10, 5)], members })
-        const bw = bestWorst(t, A)!
-        expect(bw.best.k).toBe(1)
-        expect(bw.worst.k).toBe(1)
-    })
-    it("a 2-of-3 semester (under 5 noms) is ignored", () => {
-        const t = buildModel({ rows: [row("S1", 0, "Ann", 3, 3), row("S2", 1, "Ann", 10, 5), row("S3", 2, "Ann", 10, 2)], members })
-        expect(bestWorst(t, A)?.best).toMatchObject({ k: 1, rate: 50 })
-    })
-})
-
-describe("semester crowns", () => {
-    it("counts semesters with the most wins, ties included, not empty ones", () => {
-        expect(crowns(m, B)).toBe(2) // F23 (5 > 1) and the S24 tie at 4
-        expect(crowns(m, A)).toBe(3) // S24 tie, F24 (2 > 1), S25 (6)
-        expect(crowns(m, R)).toBe(0)
-        const none = buildModel({ rows: [row("S1", 0, "Ann", 4, 0), row("S1", 0, "Bo", 4, 0)], members })
-        expect(crowns(none, A)).toBe(0)
     })
 })
 

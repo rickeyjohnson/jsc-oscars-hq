@@ -14,7 +14,6 @@ export const APPROX_LABELS = ["Fall 23", "Fall 24"]
 export const APPROX_MARK = "~"
 export const MIN_RATE_NOMS_ALL = 10
 export const MIN_RATE_NOMS_SEM = 5
-export const MIN_BEST_NOMS = 5
 /** Expected vs actual is "on par" within this many wins. */
 export const PAR_BAND = 0.5
 
@@ -142,59 +141,6 @@ export function metricValues(m: StatsModel, key: MetricKey, o: { k?: number | nu
         }
     }
     return out
-}
-
-export type Streak = { current: number; longest: number; played: number }
-/** Consecutive semesters at or above the group win rate. Semesters not in are skipped, not breaks. Needs 2+ semesters in. */
-export function streaks(m: StatsModel, id: string): Streak | null {
-    const g = groupRates(m)
-    let run = 0
-    let longest = 0
-    let played = 0
-    cellsOf(m, id).forEach((c, k) => {
-        const gr = g[k]
-        if (!c || gr === null) return
-        played++
-        if (c.wins / c.noms >= gr - 1e-9) {
-            run++
-            longest = Math.max(longest, run)
-        } else run = 0
-    })
-    return played >= 2 ? { current: run, longest, played } : null
-}
-
-export type ConsistencyLabel = "Steady" | "Streaky" | "Rollercoaster"
-/** Standard deviation (percentage points) of the per-semester win rate. Needs 3+ semesters in. Steady under 8, Streaky 8-15, Rollercoaster over 15. */
-export function consistency(m: StatsModel, id: string): { sd: number; label: ConsistencyLabel } | null {
-    const v = rateSeries(m, id).filter((x): x is number => x !== null)
-    if (v.length < 3) return null
-    const mean = v.reduce((a, b) => a + b, 0) / v.length
-    const sd = Math.sqrt(v.reduce((a, b) => a + (b - mean) ** 2, 0) / v.length)
-    return { sd, label: sd < 8 ? "Steady" : sd <= 15 ? "Streaky" : "Rollercoaster" }
-}
-
-export type SemPick = { k: number; rate: number; wins: number; noms: number }
-/** Highest and lowest win rate among semesters with MIN_BEST_NOMS+ noms. Ties go to the more recent semester. Needs 2+ such semesters. */
-export function bestWorst(m: StatsModel, id: string): { best: SemPick; worst: SemPick } | null {
-    const ps: SemPick[] = []
-    cellsOf(m, id).forEach((c, k) => {
-        if (c && c.noms >= MIN_BEST_NOMS) ps.push({ k, rate: (c.wins / c.noms) * 100, wins: c.wins, noms: c.noms })
-    })
-    if (ps.length < 2) return null
-    const best = ps.reduce((a, b) => (b.rate >= a.rate ? b : a))
-    const worst = ps.reduce((a, b) => (b.rate <= a.rate ? b : a))
-    return { best, worst }
-}
-
-/** Semesters where nobody had more wins than this member (ties count; a semester with no wins at all is no crown). */
-export function crowns(m: StatsModel, id: string): number {
-    let n = 0
-    cellsOf(m, id).forEach((c, k) => {
-        if (!c || c.wins <= 0) return
-        const top = Math.max(...Object.values(m.cells).map((row) => row[k]?.wins ?? 0))
-        if (c.wins >= top) n++
-    })
-    return n
 }
 
 /** Average per semester played (wins and noms). Null when never in a semester. */
