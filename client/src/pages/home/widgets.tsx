@@ -38,7 +38,7 @@ function Widget({ id, status, retry, to, children }: { id: WidgetId; status: Sta
     const title = titleOf(id)
     const ready = status === "ready"
     return (
-        <section aria-labelledby={hid} className={`relative min-w-0 break-words rounded-card border-l-4 bg-surface p-3 sm:p-4 ${EDGE[widgetColor(id)]}`}>
+        <section aria-labelledby={hid} className={`@container relative min-w-0 break-words rounded-card border-l-4 bg-surface p-3 sm:p-4 ${EDGE[widgetColor(id)]}`}>
             <h2 id={hid} className="mb-2 text-caption-2 uppercase tracking-wider text-label-2">
                 {to && ready ? (
                     <Link to={to} className={STRETCH}>
@@ -343,7 +343,7 @@ function LiveTimer({ target }: { target: Date }) {
     const pad = (n: number) => String(n).padStart(2, "0")
     const label = `${p.days}d ${p.hours}h ${p.minutes}m`
     return (
-        <p role="timer" aria-live="off" aria-label={`Closes in ${label}`} className="flex items-baseline gap-2 font-display tabular-nums">
+        <p role="timer" aria-live="off" aria-label={`Closes in ${label}`} className="flex flex-wrap items-baseline gap-x-2 font-display tabular-nums">
             <span className="text-title-2 sm:text-title-1">{label}</span>
             <span className="text-title-3 text-label-2">{pad(p.seconds)}</span>
         </p>
@@ -375,7 +375,7 @@ function YourStats({ state, memberId }: Props) {
             {!memberId ? (
                 <p className="text-callout text-label-2">Claim your name to see your stats.</p>
             ) : (
-                <dl className="grid grid-cols-3 gap-2 text-center">
+                <dl className="grid grid-cols-1 gap-1 text-center @[17rem]:grid-cols-3 @[17rem]:gap-2">
                     {[
                         ["Wins", String(tally.wins)],
                         ["Nominations", String(tally.noms)],

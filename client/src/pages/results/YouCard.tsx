@@ -22,7 +22,7 @@ export function YouCard({ you }: { you: You }) {
                     return (
                         <div key={t.label} className={`rounded-control py-3 ${peb.bg} ${peb.text}`}>
                             <div className="font-display text-title-1">{t.value}</div>
-                            <div className="text-caption-1">{t.label}</div>
+                            <div className="break-words text-caption-1">{t.label}</div>
                         </div>
                     )
                 })}

@@ -77,7 +77,7 @@ const ProfilePage = () => {
                                         ) : (
                                             <p className="font-display text-title-1 tabular-nums">{s.value}</p>
                                         )}
-                                        <p className="text-caption-1 text-label-2">{s.locked ? s.value : s.label}</p>
+                                        <p className="break-words text-caption-1 text-label-2">{s.locked ? s.value : s.label}</p>
                                     </div>
                                 ))}
                             </div>

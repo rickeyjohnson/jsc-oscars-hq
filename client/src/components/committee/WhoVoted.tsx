@@ -29,7 +29,7 @@ export default function WhoVoted({ rows, id }: { rows: MemberCompletion[]; id?: 
                 {sum.finished} of {sum.claimed} finished
                 {sum.unclaimed > 0 && <span className="text-subhead text-label-2">{` · ${sum.unclaimed} not signed up`}</span>}
             </p>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
                 <button type="button" aria-pressed={filter === "all"} onClick={() => setFilter("all")} className={chip(filter === "all")}>All {rows.length}</button>
                 <button type="button" aria-pressed={filter === "left"} onClick={() => setFilter("left")} className={chip(filter === "left")}>Not finished {sum.left}</button>
             </div>

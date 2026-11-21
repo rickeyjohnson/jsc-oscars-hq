@@ -25,7 +25,7 @@ export function LeaderboardView({ seasonName, rows, avatars, you }: { seasonName
     return (
         <div className="grid grid-cols-1 gap-4 min-[1024px]:grid-cols-2 min-[1024px]:items-start">
             <section className={`rounded-card border-l-4 bg-surface p-4 ${PEBBLE_EDGE.lime}`}>
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                     <h2 className="text-title-3">Season leaders</h2>
                     <Chip>{seasonName}</Chip>
                 </div>
@@ -55,7 +55,7 @@ export function LeaderboardView({ seasonName, rows, avatars, you }: { seasonName
                         <ol start={hasWins ? 4 : 1} className="mt-1 list-none divide-y divide-sep p-0">
                             {shown.map((r) => (
                                 <li key={r.member_id} className="flex min-h-11 items-center gap-3 py-2 text-subhead">
-                                    <span className="w-7 text-footnote text-label-2">
+                                    <span className="w-7 shrink-0 text-footnote text-label-2">
                                         <span aria-hidden="true">{rankLabel(r)}</span>
                                         <span className="sr-only">{r.tied ? `tied ${ordinal(r.rank)}` : ordinal(r.rank)}: </span>
                                     </span>

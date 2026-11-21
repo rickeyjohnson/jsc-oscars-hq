@@ -73,7 +73,7 @@ const CategoryVoteCard = (p: Props) => {
             aria-label={`Category ${p.index + 1} of ${p.total}: ${category.name}`}
             className={`tab-enter outline-none ${p.current ? "" : "hidden"}`}
         >
-            <h2 className="font-display text-title-1">{category.name}</h2>
+            <h2 className="break-words font-display text-title-1">{category.name}</h2>
             {!readOnly && <p className="mt-1 text-subhead text-label-2">{selectedId && !pending && !message ? "Your vote is saved. Tap another to change it." : hint}</p>}
             <p className="mt-1 flex min-h-5 items-center gap-2 text-footnote text-label-2" aria-live="polite">
                 {pending && (
@@ -117,7 +117,7 @@ const CategoryVoteCard = (p: Props) => {
                                 decorative
                             />
                             <span className="min-w-0 flex-1">
-                                <span className="block text-headline">{n.display_name}</span>
+                                <span className="block break-words text-headline">{n.display_name}</span>
                                 {group ? (
                                     <span className={`block text-footnote ${on ? selectedSmallTextClass(peb) : "text-label-2"}`}>{n.member_ids.length} people</span>
                                 ) : (
@@ -147,7 +147,7 @@ const CategoryVoteCard = (p: Props) => {
                                     <Lock className="size-4" />
                                 </span>
                                 <span className="min-w-0 flex-1">
-                                    <span className="block text-headline">{n.display_name}</span>
+                                    <span className="block break-words text-headline">{n.display_name}</span>
                                     <span className="block text-footnote">You're in this group</span>
                                 </span>
                             </button>
