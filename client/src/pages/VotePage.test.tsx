@@ -375,6 +375,36 @@ describe("VotePage save failures", () => {
         await waitFor(() => expect(within(section(C1)).queryByRole("alert")).toBeNull())
     })
 
+    it("RLS denial on a ballot the committee closed by hand reads as closed, not self-vote", async () => {
+        await loaded()
+        vi.mocked(castVote).mockRejectedValueOnce({ code: "42501", message: "new row violates row-level security" })
+        vi.mocked(fetchBallotDetail).mockResolvedValue(ballot({ status: "closed", categories: twoCategories() }))
+        fireEvent.click(radio(ANN))
+        const note = await within(section(C1)).findByRole("status")
+        expect(note.textContent).toMatch(/voting closed at/i)
+        expect(section(C1).textContent).not.toMatch(/group you're in/i)
+        expect(within(note).queryByRole("button", { name: /try again/i })).toBeNull()
+    })
+
+    it("RLS denial on an open ballot still says you can't vote for yourself", async () => {
+        await loaded()
+        vi.mocked(castVote).mockRejectedValueOnce({ code: "42501", message: "violates row-level security" })
+        fireEvent.click(radio(ANN))
+        const alert = await within(section(C1)).findByRole("alert")
+        expect(alert.textContent).toMatch(/yourself/i)
+    })
+
+    it("an add_nominee server rule shows its own message with no retry", async () => {
+        await loaded(ballot({ categories: twoCategories({ allow_member_add: true }) }))
+        vi.mocked(addNominee).mockRejectedValueOnce({ message: "a different nominee with this name already exists" })
+        const box = within(section(C1)).getByLabelText(/add an option/i)
+        fireEvent.change(box, { target: { value: "Zed" } })
+        fireEvent.submit(box.closest("form")!)
+        const alert = await within(section(C1)).findByRole("alert")
+        expect(alert.textContent).toMatch(/already taken/i)
+        expect(within(alert).queryByRole("button", { name: /try again/i })).toBeNull()
+    })
+
     it("closed window says so, with no retry", async () => {
         await loaded()
         vi.mocked(castVote).mockImplementationOnce(async () => {
@@ -386,8 +416,8 @@ describe("VotePage save failures", () => {
         vi.useFakeTimers({ toFake: ["Date"], now: Date.now() + 2 * 86_400_000 })
         try {
             fireEvent.click(radio(ANN))
-            const alert = await within(section(C1)).findByRole("alert")
-            expect(alert.textContent).toMatch(/voting has closed/i)
+            const alert = await within(section(C1)).findByRole("status")
+            expect(alert.textContent).toMatch(/voting closed at/i)
             expect(within(alert).queryByRole("button", { name: /try again/i })).toBeNull()
         } finally {
             vi.useRealTimers()

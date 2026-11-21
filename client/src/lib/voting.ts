@@ -2,6 +2,7 @@ import type { Ballot, Category, Member, Nominee } from "../types"
 import type { PebbleName } from "../ui/tokens"
 import { avatarFallback } from "../ui/logic/avatar"
 import { pebbleAt } from "../ui/logic/pebble"
+import { closedAtLabel } from "./time"
 
 // Members never see nominees linked to themselves (includes groups they are in).
 export const selectableNominees = (nominees: Nominee[], myMemberId: string | null): Nominee[] =>
@@ -101,26 +102,36 @@ export const findGroupBySet = (nominees: Nominee[], memberIds: string[]): Nomine
 }
 
 export type VoteMessage = { tone: "error" | "info" | "warn"; title: string; detail: string; retry?: () => void }
-export type SaveErrorKind = "closed" | "network" | "rule" | "generic"
+export type SaveErrorKind = "closed" | "network" | "rule" | "groupSize" | "nameTaken" | "unlinked" | "generic"
 
 /** Sort a failed save into the one message that tells the voter what to do. */
-export const classifySaveError = (e: unknown, closesAt: Date, now: Date, online = true): SaveErrorKind => {
-    if (now.getTime() >= closesAt.getTime()) return "closed"
+export const classifySaveError = (e: unknown, closesAt: Date, now: Date, online = true, status: string = "open"): SaveErrorKind => {
+    if (now.getTime() >= closesAt.getTime() || status !== "open") return "closed"
     const err = e as { code?: string; message?: string } | null
     const msg = String(err?.message ?? "")
     if (!online || e instanceof TypeError || /failed to fetch|network|load failed/i.test(msg)) return "network"
+    if (/ballot is not open/i.test(msg)) return "closed"
+    if (/a group needs at least two/i.test(msg)) return "groupSize"
+    if (/a different nominee with this name already exists/i.test(msg)) return "nameTaken"
+    if (/account is not linked/i.test(msg)) return "unlinked"
     if (err?.code === "42501" || /row-level security|violates/i.test(msg)) return "rule"
     return "generic"
 }
 
-export const saveErrorMessage = (kind: SaveErrorKind): Omit<VoteMessage, "retry" | "tone"> & { canRetry: boolean } => {
+export const saveErrorMessage = (kind: SaveErrorKind, closesAt?: Date): Omit<VoteMessage, "retry" | "tone"> & { canRetry: boolean } => {
     switch (kind) {
         case "closed":
-            return { title: "Voting has closed", detail: "Your last saved vote stands.", canRetry: false }
+            return { title: closesAt ? closedAtLabel(closesAt) : "Voting has closed", detail: "Your last saved vote stands. Cards are read-only.", canRetry: false }
         case "network":
             return { title: "Couldn't save your vote", detail: "No connection. Your previous vote is still saved.", canRetry: true }
         case "rule":
             return { title: "Couldn't save your vote", detail: "You can't vote for yourself or a group you're in.", canRetry: false }
+        case "groupSize":
+            return { title: "Couldn't add the group", detail: "Pick one more person.", canRetry: false }
+        case "nameTaken":
+            return { title: "Couldn't add that option", detail: "That name is already taken. Pick it from the list.", canRetry: false }
+        case "unlinked":
+            return { title: "Couldn't save your vote", detail: "Your account isn't linked to a member. Ask a committee member.", canRetry: false }
         default:
             return { title: "Couldn't save your vote", detail: "Something went wrong. Try again.", canRetry: true }
     }

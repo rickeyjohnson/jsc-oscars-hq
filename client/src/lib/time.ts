@@ -34,3 +34,6 @@ export const urgency = (closesAt: Date, now: Date): "urgent" | "soon" | "normal"
 
 export const opensAtLabel = (opensAt: Date): string =>
     `Voting opens ${opensAt.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`
+
+export const closedAtLabel = (closesAt: Date): string =>
+    `Voting closed at ${closesAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`

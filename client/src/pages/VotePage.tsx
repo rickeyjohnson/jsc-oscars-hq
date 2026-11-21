@@ -85,10 +85,24 @@ const VotePage = () => {
     const setMessage = (cid: string, msg: VoteMessage | null) => setMessages((m) => ({ ...m, [cid]: msg }))
 
     // Turn a failed save into the one message that says what happened, with Try again where retrying can help.
-    const fail = (cid: string, e: unknown, retry: () => void) => {
-        const kind = classifySaveError(e, new Date(ballot?.closes_at ?? Date.now() + 1), new Date(), typeof navigator === "undefined" ? true : navigator.onLine !== false)
-        const m = saveErrorMessage(kind)
-        setMessage(cid, { tone: "error", title: m.title, detail: m.detail, retry: m.canRetry ? retry : undefined })
+    // A "rule" denial may really be a committee close: refetch the ballot once and reclassify before showing it.
+    const fail = async (cid: string, e: unknown, retry: () => void) => {
+        const seq = seqs.current[cid]
+        const online = typeof navigator === "undefined" ? true : navigator.onLine !== false
+        let b: BallotDetail | null = ballot
+        let kind = classifySaveError(e, new Date(b?.closes_at ?? Date.now() + 1), new Date(), online, b?.status)
+        if (kind === "rule" && ballotId) {
+            try {
+                b = await fetchBallotDetail(ballotId)
+                setBallot(b)
+                kind = classifySaveError(e, new Date(b.closes_at), new Date(), online, b.status)
+            } catch {
+                /* keep the rule message */
+            }
+        }
+        if (seqs.current[cid] !== seq) return // a newer tap owns the UI state
+        const m = saveErrorMessage(kind, b ? new Date(b.closes_at) : undefined)
+        setMessage(cid, { tone: kind === "closed" ? "warn" : "error", title: m.title, detail: m.detail, retry: m.canRetry ? retry : undefined })
     }
 
     const save = (cid: string, nomineeId: string | null, run: () => Promise<void>) => {
@@ -123,7 +137,7 @@ const VotePage = () => {
                     else delete next[cid]
                     return next
                 })
-                fail(cid, failure, () => { save(cid, nomineeId, run) })
+                void fail(cid, failure, () => { save(cid, nomineeId, run) })
             }
         })
         chains.current[cid] = task
@@ -173,7 +187,7 @@ const VotePage = () => {
             await refreshDetail().catch(() => setMessage(cid, refreshFailed()))
             await save(cid, nomineeId, () => castVote(ballotId, cid, nomineeId))
         } catch (e) {
-            fail(cid, e, () => { addOption(cid, name) })
+            void fail(cid, e, () => { addOption(cid, name) })
         }
     }
 
@@ -191,7 +205,7 @@ const VotePage = () => {
             await refreshDetail().catch(() => setMessage(cid, refreshFailed()))
             await save(cid, nomineeId, () => castVote(ballotId, cid, nomineeId))
         } catch (e) {
-            fail(cid, e, () => { addGroup(cid, memberIds) })
+            void fail(cid, e, () => { addGroup(cid, memberIds) })
         }
     }
 
