@@ -22,7 +22,8 @@ export function NavBar({
     ceremony?: PebbleName
 }) {
     const collapsed = progress >= 1
-    const surface = ceremony ? "" : collapsed ? "material-bar" : ""
+    // Always opaque: scrolling content never shows through or collides with the back button and title.
+    const surface = ceremony ? "" : collapsed ? "material-bar" : "bg-bg"
     const tone = ceremony ? PEBBLE_CLASS[ceremony].text : ""
     return (
         <header className={`sticky top-0 z-30 pt-safe ${surface} ${tone} ${collapsed && !ceremony ? "border-b border-sep" : ""}`} data-collapsed={collapsed || undefined}>

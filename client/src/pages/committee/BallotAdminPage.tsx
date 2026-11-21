@@ -14,7 +14,7 @@ import { useConfirm } from "../../ui/ConfirmProvider"
 import { closesInLabel } from "../../lib/time"
 import { Screen } from "../../ui/Screen"
 import { Button } from "../../ui/Button"
-import { ColorBlock } from "../../ui/ColorBlock"
+import { PEBBLE_EDGE } from "../../ui/logic/pebble"
 import { ErrorState } from "../../ui/ErrorState"
 import { Skeleton, SkeletonScreen } from "../../ui/Skeleton"
 import { COPY } from "../../ui/copy"
@@ -93,14 +93,14 @@ const BallotAdminPage = ({ resultsAction, resultsBody }: Props) => {
             {ballot && !error && status && (
                 <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] lg:items-start">
                     <div className="space-y-4">
-                        <ColorBlock pebble={statusPebble(status) ?? "grape"} as="section">
+                        <section aria-label="Status" className={`rounded-card border-l-4 bg-surface p-4 ${PEBBLE_EDGE[statusPebble(status) ?? "grape"]}`}>
                             <div className="flex items-center justify-between gap-3">
                                 <p className="text-callout">
                                     Closes {fmt(ballot.closes_at)} · {closesInLabel(new Date(ballot.closes_at), new Date()).replace(/^Closes /, "")}
                                 </p>
-                                <StatusChip status={status} onColor />
+                                <StatusChip status={status} />
                             </div>
-                        </ColorBlock>
+                        </section>
 
                         {ballot.status === "open" && (
                             <Button
@@ -136,13 +136,13 @@ const BallotAdminPage = ({ resultsAction, resultsBody }: Props) => {
                     </div>
 
                     <div className="space-y-4">
-                        <ColorBlock pebble="lemon" as="section">
+                        <section aria-label="Results" className={`rounded-card border-l-4 bg-surface p-4 ${PEBBLE_EDGE.lemon}`}>
                             <div className="flex items-center justify-between gap-3">
                                 <h3 className="text-title-3">Results</h3>
                                 {resultsAction ?? <ExportCsvButton ballotId={ballot.id} ballotName={ballot.name} />}
                             </div>
-                            <p className="mt-2 text-footnote">The CSV works any time, including mid-vote.</p>
-                        </ColorBlock>
+                            <p className="mt-2 text-footnote text-label-2">The CSV works any time, including mid-vote.</p>
+                        </section>
                         {resultsBody ?? <TallyPanel key={`${ballot.id}-${ballot.status}`} ballot={ballot} />}
                     </div>
                 </div>

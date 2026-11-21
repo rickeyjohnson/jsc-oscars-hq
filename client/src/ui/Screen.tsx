@@ -7,7 +7,8 @@ import { PEBBLE_CLASS } from "./logic/pebble"
 import type { PebbleName } from "./tokens"
 
 const WIDTH = { column: "max-w-[720px] mx-auto", wide: "max-w-[1040px] mx-auto", full: "" } as const
-const COLLAPSE_AFTER_PX = 40
+// About the large title's height: the bar title appears only once the large one has scrolled under the bar.
+const COLLAPSE_AFTER_PX = 56
 
 function useCollapse(force?: boolean): number {
     const [progress, setProgress] = useState(0)
