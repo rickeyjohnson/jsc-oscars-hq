@@ -68,7 +68,7 @@ export function CompareSheet({ open, onClose, model, ranked, viewerId }: { open:
                         <span><span aria-hidden className={`mr-1.5 inline-block size-2.5 rounded-sm align-middle opacity-60 ${PEBBLE_CLASS[pebbleOf(a, nameA)].bg}`} />{nameA}</span>
                         <span><span aria-hidden className={`mr-1.5 inline-block size-2.5 rounded-sm align-middle ${PEBBLE_CLASS[pebbleOf(b, nameB)].bg}`} />{nameB}</span>
                     </p>
-                    <CompareChart sems={model.sems} series={cmp.series} a={{ name: nameA, pebble: pebbleOf(a, nameA) }} b={{ name: nameB, pebble: pebbleOf(b, nameB) }} />
+                    <div className="min-h-56"><CompareChart sems={model.sems} series={cmp.series} a={{ name: nameA, pebble: pebbleOf(a, nameA) }} b={{ name: nameB, pebble: pebbleOf(b, nameB) }} /></div>
                     <table className="w-full border-collapse text-callout">
                         <thead className="sr-only">
                             <tr><th scope="col">Stat</th><th scope="col">{nameA}</th><th scope="col">{nameB}</th></tr>

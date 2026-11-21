@@ -58,6 +58,20 @@ describe("My stats (You tab)", () => {
         expect(within(dlg).getAllByRole("button", { name: "Close" })).toHaveLength(1)
         expect(within(dlg).getByText(/Expected wins/)).toBeTruthy()
     })
+    it("every stat card shares one layout: stretch, same min-height, clamped header", async () => {
+        const { container } = view()
+        await screen.findByText("Win rate trend")
+        const grid = container.querySelector("[data-stat-card]")!.parentElement!.closest(".grid")!
+        expect(grid.className).toContain("items-stretch")
+        const cards = [...container.querySelectorAll("[data-stat-card]")]
+        expect(cards.length).toBe(5)
+        for (const c of cards) {
+            expect(c.className).toContain("h-full")
+            expect(c.querySelector("h3")!.className).toContain("line-clamp-1")
+            expect(c.children[1].className).toContain("min-h-[3.75rem]")
+            expect(c.children[2].className).toContain("min-h-64")
+        }
+    })
     it("before release the live season is completely hidden: not requested, locked note, totals unchanged", async () => {
         view()
         await screen.findByText(/Fall 2026 is locked/)

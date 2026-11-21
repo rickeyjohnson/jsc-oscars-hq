@@ -17,10 +17,10 @@ const PILL = { over: "bg-success text-bg", under: "bg-warn text-bg", par: "bg-in
 
 function Card({ title, sub, children }: { title: string; sub?: string; children: ReactNode }) {
     return (
-        <section className={CARD}>
-            <h3 className="text-title-3">{title}</h3>
-            {sub && <p className={`mt-1 ${NOTE}`}>{sub}</p>}
-            <div className="mt-3">{children}</div>
+        <section data-stat-card className={`${CARD} flex h-full flex-col`}>
+            <h3 className="line-clamp-1 text-title-3">{title}</h3>
+            <p className={`mt-1 line-clamp-3 min-h-[3.75rem] ${NOTE}`}>{sub ?? " "}</p>
+            <div className="mt-3 min-h-64 flex-1">{children}</div>
         </section>
     )
 }
@@ -85,7 +85,7 @@ export function MemberStats({ model, memberId, viewer = true, pendingLabel }: { 
     ]
 
     return (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
+        <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
             <div className="lg:col-span-2">
                 <div className="grid grid-cols-3 gap-2">
                     {tiles.map((x) => (
@@ -166,7 +166,7 @@ export function MemberStats({ model, memberId, viewer = true, pendingLabel }: { 
                 </div>
             </Card>
 
-            <div className="lg:col-span-2">
+            <div className="flex flex-col lg:col-span-2">
                 <Card title="Highlights">
                     {bw ? (
                         <div className="grid grid-cols-2 gap-2">
