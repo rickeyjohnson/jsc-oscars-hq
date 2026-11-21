@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { SlidersHorizontal } from "lucide-react"
+import { ErrorState } from "../ui/ErrorState"
 import ProfileSetup from "../components/ProfileSetup"
 import { useAuth } from "../context/AuthContext"
 import { useUserData } from "../context/UserContenxt"
@@ -30,7 +31,10 @@ const HomeBody = ({ userId, isCommittee, name, memberId }: { userId: string; isC
     const [prefs, setPrefs] = useState<HomePrefs>(() => loadHomePrefs(storage(), userId, isCommittee))
     const [customizing, setCustomizing] = useState(false)
     const released = Boolean(state.data?.released)
-    const widgets = useMemo(() => resolveWidgets(prefs, { isCommittee, released }), [prefs, isCommittee, released])
+    // Until the first load answers, lay out release-gated widgets as skeletons so nothing pops in (or shifts) afterwards.
+    const layoutReleased = state.data ? released : true
+    const widgets = useMemo(() => resolveWidgets(prefs, { isCommittee, released: layoutReleased }), [prefs, isCommittee, layoutReleased])
+    const totalFailure = !state.data && Boolean(state.error)
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const now = useMemo(() => new Date(), [state.data])
 
@@ -61,14 +65,15 @@ const HomeBody = ({ userId, isCommittee, name, memberId }: { userId: string; isC
         >
             <div className="mx-auto max-w-[1280px]">
                 <p className="mb-4 text-large-title">{name ? `Hey ${name}.` : "Hey."}</p>
+                {totalFailure && <ErrorState title="Couldn't load Home" body="Check your connection and try again." onRetry={state.reload} />}
                 <div className={GRID}>
-                    {memberWidgets.map((w) => (
+                    {!totalFailure && memberWidgets.map((w) => (
                         <div key={w.id} className={`h-full [&>section]:h-full ${w.span === 2 ? "lg:col-span-2" : ""}`}>
                             <HomeWidget id={w.id} state={state} now={now} memberId={memberId} />
                         </div>
                     ))}
                 </div>
-                {committeeWidgets.length > 0 && (
+                {!totalFailure && committeeWidgets.length > 0 && (
                     <div role="group" aria-label="Committee" className="mt-10">
                         <p className="mb-3 text-title-3 uppercase tracking-wider">Committee</p>
                         <div className={GRID}>

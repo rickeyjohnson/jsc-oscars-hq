@@ -136,8 +136,29 @@ describe("Home widgets", () => {
     it("shows loading skeletons per widget", () => {
         hook.state = { data: null, loading: true, error: null, reload: vi.fn(), directory: null }
         renderHome()
-        expect(screen.getAllByRole("status")).toHaveLength(5)
+        // 5 defaults plus the release-gated Leaderboard slot, so it cannot pop in after the load
+        expect(screen.getAllByRole("status")).toHaveLength(6)
         expect(screen.getByRole("status", { name: /loading countdown/i })).toBeTruthy()
+        expect(screen.getByRole("status", { name: /loading leaderboard/i })).toBeTruthy()
+    })
+
+    it("a gated widget slot that is not released drops out once the load answers", () => {
+        hook.state = ready(data({ released: false }))
+        renderHome()
+        expect(screen.queryByRole("region", { name: "Leaderboard" })).toBeNull()
+        expect(screen.queryByRole("status", { name: /loading leaderboard/i })).toBeNull()
+    })
+
+    it("a whole-load failure shows exactly one Try again; partial failures stay per widget", () => {
+        const reload = vi.fn()
+        profile.is_committee = true
+        hook.state = { data: null, loading: false, error: new Error("offline"), reload, directory: null }
+        renderHome()
+        const retry = screen.getAllByRole("button", { name: /try again/i })
+        expect(retry).toHaveLength(1)
+        expect(screen.getByText("Couldn't load Home")).toBeTruthy()
+        fireEvent.click(retry[0])
+        expect(reload).toHaveBeenCalledTimes(1)
     })
 
     it("null ceremony date disables Add to calendar with an explanation; null location hides directions", () => {
