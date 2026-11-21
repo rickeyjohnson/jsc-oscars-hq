@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from "react"
 import type { DashState } from "../lib/voting"
-import { dashAriaLabel, dashClass, progressLabel, segmentsTappable } from "./logic/progress"
+import { dashAriaLabel, dashClass, progressLabel, segmentsTappable, submitDashClass } from "./logic/progress"
 
 export function ProgressStrip({
     states,
@@ -8,13 +8,16 @@ export function ProgressStrip({
     orientation = "horizontal",
     onJump,
     onOpenJump,
+    tone = "vote",
 }: {
     states: DashState[]
     labels: string[]
     orientation?: "horizontal" | "vertical"
     onJump(i: number): void
     onOpenJump(): void
+    tone?: "vote" | "submit"
 }) {
+    const dash = (s: DashState, o: "horizontal" | "vertical") => (tone === "submit" ? submitDashClass(s) : dashClass(s, o))
     const ref = useRef<HTMLDivElement>(null)
     const [width, setWidth] = useState(0)
     useLayoutEffect(() => {
@@ -39,7 +42,7 @@ export function ProgressStrip({
                 <button type="button" aria-label={progressLabel(voted, states.length)} onClick={onOpenJump} className="flex min-h-11 w-full cursor-pointer items-center gap-0.5">
                     {states.map((s, i) => (
                         <span key={i} className="flex flex-1 items-center">
-                            <span className={dashClass(s, "horizontal")} />
+                            <span className={dash(s, "horizontal")} />
                         </span>
                     ))}
                 </button>
@@ -58,7 +61,7 @@ export function ProgressStrip({
                         onClick={() => onJump(i)}
                         className={`flex cursor-pointer items-center justify-center ${vertical ? "min-w-11 flex-1" : "min-h-11 flex-1"}`}
                     >
-                        <span className={dashClass(s, orientation)} />
+                        <span className={dash(s, orientation)} />
                     </button>
                 ))}
             </div>

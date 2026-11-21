@@ -45,6 +45,8 @@ const VotePage = () => {
     const [loadError, setLoadError] = useState<string | null>(null)
     const [attempt, setAttempt] = useState(0)
     const [idx, setIdx] = useState(0)
+    // The Submit page can send you straight to a skipped category.
+    const jumpToOnLoad = useRef((location.state as { jumpTo?: number } | null)?.jumpTo)
     const [jumpOpen, setJumpOpen] = useState(false)
     const [groupOpenFor, setGroupOpenFor] = useState<string | null>(null)
     const [avatars, setAvatars] = useState<Record<string, string | null>>({})
@@ -71,6 +73,9 @@ const VotePage = () => {
                 confirmed.current = { ...votes }
                 setBallot(detail)
                 setMyVotes(votes)
+                const j = jumpToOnLoad.current
+                if (typeof j === "number" && j >= 0 && j < detail.categories.length) setIdx(j)
+                jumpToOnLoad.current = undefined
                 try {
                     fetchMemberAvatars().then((a) => !cancelled && setAvatars(a), () => {})
                 } catch {

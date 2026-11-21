@@ -12,5 +12,9 @@ export function dashClass(s: DashState, orientation: "horizontal" | "vertical"):
     return `block rounded-full ${color} ${size}`
 }
 
+// Submit page strip: voted = solid sky, not voted = dashed outline (no fill). Nothing else carries meaning.
+export const submitDashClass = (s: DashState): string =>
+    `block h-[7px] w-full rounded-full ${s.voted ? "bg-pebble-sky" : "border-2 border-dashed border-label-2"}`
+
 export const dashAriaLabel = (i: number, label: string, s: DashState): string =>
     `Category ${i + 1}: ${label}, ${s.failed ? "couldn't save" : s.voted ? "voted" : "not voted"}${s.current ? ", current" : ""}`

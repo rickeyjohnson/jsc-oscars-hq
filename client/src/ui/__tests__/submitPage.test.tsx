@@ -8,6 +8,11 @@ import { castVote, clearVote, fetchMyVotes } from "../../api/votes"
 
 vi.mock("../../api/ballots", () => ({ fetchBallotDetail: vi.fn() }))
 vi.mock("../../api/votes", () => ({ fetchMyVotes: vi.fn(), castVote: vi.fn(), clearVote: vi.fn() }))
+const fail = vi.hoisted(() => ({ next: false }))
+vi.mock("../../api/submissions", async (orig) => {
+    const m = await orig<typeof import("../../api/submissions")>()
+    return { ...m, submissionIO: (u: string) => { const io = m.submissionIO(u); return { ...io, submit: (b: string) => (fail.next ? ((fail.next = false), Promise.reject(new Error("x"))) : io.submit(b)) } } }
+})
 vi.mock("../../context/UserContenxt", () => ({ useUserData: () => ({ profile: { user_id: "u1" } }) }))
 
 const DAY = 86_400_000
@@ -36,28 +41,47 @@ describe("SubmitBallotPage", () => {
         vi.mocked(clearVote).mockReset()
     })
 
-    it("shows the checklist with skipped categories and an enabled hold", async () => {
+    it("some skipped: one headline and sentence, no logo or back header, dashed strip", async () => {
         vi.mocked(fetchBallotDetail).mockResolvedValue(ballot() as never)
         vi.mocked(fetchMyVotes).mockResolvedValue({ c1: "a" })
         renderPage()
-        expect(await screen.findByRole("heading", { name: "Submit your ballot?" })).toBeTruthy()
-        expect(screen.getByText("1 category skipped")).toBeTruthy()
-        expect(screen.getByText("1 of 2 categories voted, 1 skipped.")).toBeTruthy()
-        // like the envelope page: no logo, no ballot-name eyebrow, no back header (Back to ballot is the way out)
-        expect(screen.queryByText("MAIN BALLOT")).toBeNull()
-        expect(document.querySelector("svg[aria-label*='Oscars' i], img[alt*='Oscars' i]")).toBeNull()
+        expect(await screen.findByRole("heading", { name: "1 skipped" })).toBeTruthy()
+        expect(screen.getByText(/Skipping is fine\..*you can still change votes until/)).toBeTruthy()
+        expect(screen.getByText(/1 of 2 voted/)).toBeTruthy()
         expect(screen.queryByRole("link", { name: "Back" })).toBeNull()
-        expect((screen.getByRole("button", { name: /submit my ballot/i }) as HTMLButtonElement).disabled).toBe(false)
-        expect(screen.getByRole("link", { name: "Back to ballot" }).getAttribute("href")).toBe("/app/ballots/B1")
+        expect(document.querySelector("svg[aria-label*='Oscars' i], img[alt*='Oscars' i]")).toBeNull()
+        expect(document.querySelectorAll(".bg-pebble-sky").length).toBe(1)
+        expect(document.querySelectorAll(".border-dashed").length).toBe(1)
+        expect(screen.getByRole("link", { name: "Keep editing" }).getAttribute("href")).toBe("/app/ballots/B1")
     })
 
-    it("zero votes: hold is aria-disabled", async () => {
+    it("all voted: All set?", async () => {
+        vi.mocked(fetchBallotDetail).mockResolvedValue(ballot() as never)
+        vi.mocked(fetchMyVotes).mockResolvedValue({ c1: "a", c2: "b" })
+        renderPage()
+        expect(await screen.findByRole("heading", { name: "All set?" })).toBeTruthy()
+        expect(document.querySelectorAll(".border-dashed").length).toBe(0)
+    })
+
+    it("zero votes: submit is disabled", async () => {
         vi.mocked(fetchBallotDetail).mockResolvedValue(ballot() as never)
         vi.mocked(fetchMyVotes).mockResolvedValue({})
         renderPage()
-        const hold = await screen.findByRole("button", { name: /submit my ballot/i })
-        expect((hold as HTMLButtonElement).disabled).toBe(true)
-        expect(screen.getByText("2 categories skipped")).toBeTruthy()
+        const btn = await screen.findByRole("button", { name: "Submit ballot" })
+        expect((btn as HTMLButtonElement).disabled).toBe(true)
+    })
+
+    it("tapping a skipped dash jumps to that category on the Vote page; voted dashes do nothing", async () => {
+        vi.mocked(fetchBallotDetail).mockResolvedValue(ballot() as never)
+        vi.mocked(fetchMyVotes).mockResolvedValue({ c1: "a" })
+        const w = vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(343)
+        renderPage()
+        await screen.findByRole("heading", { name: "1 skipped" })
+        fireEvent.click(screen.getByRole("button", { name: /Category 1:.*voted/ }))
+        expect(screen.queryByText("vote page")).toBeNull()
+        fireEvent.click(screen.getByRole("button", { name: /Category 2:.*not voted/ }))
+        expect(await screen.findByText("vote page")).toBeTruthy()
+        w.mockRestore()
     })
 
     it("closed ballot redirects to the ballot", async () => {
@@ -78,27 +102,40 @@ describe("SubmitBallotPage", () => {
         expect(clearVote).not.toHaveBeenCalled()
     })
 
-    it("tapping Submit opens a confirm sheet; Keep editing closes it without submitting", async () => {
+    it("first tap only arms (no sheet, nothing stored); Keep editing leaves", async () => {
         vi.mocked(fetchBallotDetail).mockResolvedValue(ballot() as never)
         vi.mocked(fetchMyVotes).mockResolvedValue({ c1: "a" })
         renderPage()
-        fireEvent.click(await screen.findByRole("button", { name: /submit my ballot/i }))
-        const dlg = await screen.findByRole("dialog", { name: "Submit your ballot?" })
-        expect(dlg.textContent).toContain("1 of 2 categories voted, 1 skipped.")
-        fireEvent.click(screen.getByRole("button", { name: "Keep editing" }))
-        await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull())
+        fireEvent.click(await screen.findByRole("button", { name: "Submit ballot" }))
+        expect(screen.getByRole("button", { name: "Tap again to confirm" })).toBeTruthy()
+        expect(screen.queryByRole("dialog")).toBeNull()
         expect(localStorage.getItem("jsc.submitted.v1.B1.u1")).toBeNull()
     })
 
-    it("confirming stores the submission and shows success, with no vote writes", async () => {
+    it("second tap stores the submission and shows done, with no vote writes", async () => {
         vi.mocked(fetchBallotDetail).mockResolvedValue(ballot() as never)
         vi.mocked(fetchMyVotes).mockResolvedValue({ c1: "a", c2: "b" })
         renderPage()
-        fireEvent.click(await screen.findByRole("button", { name: /submit my ballot/i }))
         fireEvent.click(await screen.findByRole("button", { name: "Submit ballot" }))
-        expect((await screen.findByRole("status")).textContent).toContain("Ballot submitted")
+        fireEvent.click(await screen.findByRole("button", { name: "Tap again to confirm" }))
+        const st = await screen.findByRole("status")
+        expect(st.textContent).toContain("Ballot submitted")
+        expect(st.textContent).toContain("you can still change votes until")
         await waitFor(() => expect(localStorage.getItem("jsc.submitted.v1.B1.u1")).toBeTruthy())
         expect(castVote).not.toHaveBeenCalled()
         expect(clearVote).not.toHaveBeenCalled()
+    })
+
+    it("a failed save stays on the page with an error line and Try again", async () => {
+        vi.mocked(fetchBallotDetail).mockResolvedValue(ballot() as never)
+        vi.mocked(fetchMyVotes).mockResolvedValue({ c1: "a" })
+        fail.next = true
+        renderPage()
+        fireEvent.click(await screen.findByRole("button", { name: "Submit ballot" }))
+        fireEvent.click(await screen.findByRole("button", { name: "Tap again to confirm" }))
+        expect((await screen.findByRole("alert")).textContent).toContain("Your votes are safe")
+        expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy()
+        fireEvent.click(screen.getByRole("button", { name: "Try again" }))
+        expect((await screen.findByRole("status")).textContent).toContain("Ballot submitted")
     })
 })
