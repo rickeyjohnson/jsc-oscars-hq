@@ -106,7 +106,7 @@ describe("AppShell", () => {
         expect((await screen.findAllByRole("radio")).length).toBeGreaterThan(0)
         expect(screen.getAllByRole("navigation", { name: "Main" })).toHaveLength(1)
         const slot = await screen.findByTestId("shell-accessory")
-        expect(await within(slot).findByRole("button", { name: /next unvoted/i })).toBeTruthy()
+        expect(await within(slot).findByRole("button", { name: /^review$/i })).toBeTruthy()
     })
 
     it("unknown /app path → Page not found", () => {

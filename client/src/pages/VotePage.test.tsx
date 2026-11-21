@@ -21,9 +21,12 @@ const radio = (name: RegExp) => screen.getByRole("radio", { name })
 // One category per page: only the current region is visible; the others are display:none.
 const section = (cat: RegExp) => screen.getByRole("region", { name: cat })
 const expandCard = async (_cat: RegExp) => {} // options are always shown now
-// Tapping the chosen card again clears the vote (no separate Clear button).
-const clearButton = (_cat: RegExp) => screen.getByRole("radio", { checked: true })
-const nextUnvoted = () => screen.getByRole("button", { name: /next unvoted/i })
+const clearButton = (_cat: RegExp) => screen.getByRole("button", { name: /clear my vote/i })
+const openJump = () => fireEvent.click(screen.getByRole("button", { name: /^jump to category$/i }))
+const goFirstUnvoted = () => {
+    openJump()
+    fireEvent.click(screen.getByRole("button", { name: /go to first unvoted/i }))
+}
 const loadError = () => screen.findByText(/couldn't load/i)
 // END ADAPTER
 
@@ -76,7 +79,7 @@ describe("VotePage behavior", () => {
         expect(radio(ANN).getAttribute("aria-checked")).toBe("true")
         d.resolve()
         await waitFor(() => expect(within(section(C1)).queryByText(/saving/i)).toBeNull())
-        expect(within(section(C1)).getByText(/voted/i)).toBeTruthy()
+        expect(within(section(C1)).getByText(/saved/i)).toBeTruthy()
         expect(screen.getByText(/1 of 2 voted/i)).toBeTruthy()
     })
 
@@ -199,10 +202,10 @@ describe("VotePage behavior", () => {
         expect(radio(BO)).toBeTruthy()
     })
 
-    it("next unvoted scrolls to the first unvoted category", async () => {
+    it("Go to first unvoted scrolls to the first unvoted category", async () => {
         await loaded(undefined, { c1: "n-ann" })
         const scroll = vi.mocked(Element.prototype.scrollIntoView)
-        fireEvent.click(nextUnvoted())
+        goFirstUnvoted()
         expect(scroll).toHaveBeenCalledTimes(1)
         expect(scroll.mock.contexts[0]).toBe(section(C2))
     })
@@ -234,34 +237,137 @@ describe("VotePage behavior", () => {
         vi.mocked(addNominee).mockResolvedValue("n-grp")
         await loaded(ballot({ categories: cats }))
         const sec = within(section(C1))
-        const submit = await sec.findByRole("button", { name: /vote for this group/i })
+        fireEvent.click(await sec.findByRole("button", { name: /add a group/i }))
+        const submit = await screen.findByRole("button", { name: /pick 2 or 3 people/i })
         expect((submit as HTMLButtonElement).disabled).toBe(true)
-        expect(sec.queryByLabelText("Me")).toBeNull() // never offered myself
-        fireEvent.click(await sec.findByLabelText("Ann"))
-        expect((submit as HTMLButtonElement).disabled).toBe(true)
-        fireEvent.click(sec.getByLabelText("Bo"))
-        expect((submit as HTMLButtonElement).disabled).toBe(false)
-        fireEvent.click(submit)
+        expect(screen.queryByRole("button", { name: /^me$/i })).toBeNull() // never offered myself
+        fireEvent.click(await screen.findByRole("button", { name: "Ann" }))
+        expect((screen.getByRole("button", { name: /pick 2 or 3 people/i }) as HTMLButtonElement).disabled).toBe(true)
+        fireEvent.click(screen.getByRole("button", { name: "Bo" }))
+        const go = screen.getByRole("button", { name: "Vote for Ann & Bo" })
+        expect((go as HTMLButtonElement).disabled).toBe(false)
+        fireEvent.click(go)
         await waitFor(() => expect(castVote).toHaveBeenCalledWith("B1", "c1", "n-grp"))
         expect(addNominee).toHaveBeenCalledWith("c1", "", ["m-Ann", "m-Bo"])
     })
 })
 
 describe("VotePage one-per-page flow", () => {
-    it("Next moves to the next category and shows it", async () => {
+    it("Skip moves to the next category and shows it; Back returns", async () => {
         await loaded()
         expect(section(C1).className).not.toMatch(/\bhidden\b/)
         expect(section(C2).className).toMatch(/\bhidden\b/)
-        fireEvent.click(screen.getByRole("button", { name: /next category/i }))
+        fireEvent.click(screen.getByRole("button", { name: /^skip$/i }))
         expect(section(C1).className).toMatch(/\bhidden\b/)
         expect(section(C2).className).not.toMatch(/\bhidden\b/)
-        fireEvent.click(screen.getByRole("button", { name: /previous category/i }))
+        fireEvent.click(screen.getByRole("button", { name: /^back$/i }))
         expect(section(C1).className).not.toMatch(/\bhidden\b/)
     })
-    it("the chosen nominee shows a check and the same pebble edge in every category", async () => {
+    it("the chosen nominee fills with its pebble, shows a check, and has no left edge", async () => {
         await loaded(undefined, { c1: "n-ann" })
-        expect(radio(ANN).className).toMatch(/border-pebble-/)
+        expect(radio(ANN).className).toMatch(/bg-pebble-/)
+        expect(radio(ANN).className).not.toMatch(/border-l|border-pebble-/)
+        expect(radio(BO).className).not.toMatch(/border-l|border-pebble-/)
         expect(radio(ANN).querySelector("svg")).toBeTruthy()
         expect(radio(BO).querySelector("svg")).toBeNull()
+    })
+
+    it("Next label is Skip until voted, then Next, then Review on the last category", async () => {
+        await loaded(undefined, { c1: "n-ann" })
+        expect(screen.getByRole("button", { name: /^next$/i })).toBeTruthy()
+        fireEvent.click(screen.getByRole("button", { name: /^next$/i }))
+        expect(screen.getByRole("button", { name: /^review$/i })).toBeTruthy()
+    })
+})
+
+describe("VotePage review step", () => {
+    it("lists picks, flags skipped categories, and Finish voting goes to submit", async () => {
+        await loaded(undefined, { c1: "n-ann" })
+        fireEvent.click(screen.getByRole("button", { name: /^next$/i }))
+        fireEvent.click(screen.getByRole("button", { name: /^review$/i }))
+        const rev = screen.getByRole("region", { name: /review your votes/i })
+        expect(within(rev).getByText("Ann")).toBeTruthy()
+        expect(within(rev).getByText(/1 not voted yet/i)).toBeTruthy()
+        expect(within(rev).getByRole("link", { name: /finish voting/i }).getAttribute("href")).toBe("/app/ballots/B1/submit")
+        fireEvent.click(within(rev).getByRole("button", { name: /vote in best dressed/i }))
+        expect(section(C2).className).not.toMatch(/\bhidden\b/)
+        expect(screen.queryByRole("region", { name: /review your votes/i })).toBeNull()
+    })
+})
+
+describe("VotePage group category", () => {
+    const grp = (id: string, name: string, ids: string[]) => nominee(id, name, { type: "group", member_ids: ids })
+    const groupCats = () => [
+        category("c1", "Best Picture", [grp("g1", "Ann & Bo", ["m-Ann", "m-Bo"]), grp("g2", "Me & Cy", ["m-me", "m-Cy"]), grp("g3", "Cy & Di", ["m-Cy", "m-Di"])], { nominee_mode: "group" }),
+        twoCategories()[1],
+    ]
+    beforeEach(() => {
+        vi.mocked(fetchMembers).mockResolvedValue([{ id: "m-me", name: "Me", user_id: "u-me" }, ...MEMBERS.slice(0, 4)])
+    })
+
+    it("shows groups I'm in locked with an explanation, never as a radio", async () => {
+        await loaded(ballot({ categories: groupCats() }))
+        expect(within(section(C1)).getAllByRole("radio")).toHaveLength(2) // Ann & Bo, Cy & Di only
+        expect(screen.queryByRole("radio", { name: /me & cy/i })).toBeNull()
+        fireEvent.click(screen.getByRole("button", { name: /me & cy, locked/i }))
+        expect(await screen.findByText(/you can't vote for yourself or a group you belong to/i)).toBeTruthy()
+        expect(castVote).not.toHaveBeenCalled()
+    })
+
+    it("non-member options take pebbles in list order", async () => {
+        await loaded(ballot({ categories: groupCats() }))
+        const r = within(section(C1)).getAllByRole("radio")
+        expect(r[0].querySelector("span")?.className).toMatch(/pebble-strawberry/)
+        expect(r[1].querySelector("span")?.className).toMatch(/pebble-cherry/)
+    })
+
+    it("a group of people that already exists is selected, not duplicated", async () => {
+        await loaded(ballot({ categories: groupCats() }))
+        fireEvent.click(within(section(C1)).getByRole("button", { name: /add a group/i }))
+        fireEvent.click(await screen.findByRole("button", { name: "Ann" }))
+        fireEvent.click(screen.getByRole("button", { name: "Bo" }))
+        fireEvent.click(screen.getByRole("button", { name: "Vote for Ann & Bo" }))
+        await waitFor(() => expect(castVote).toHaveBeenCalledWith("B1", "c1", "g1"))
+        expect(addNominee).not.toHaveBeenCalled()
+        expect(await within(section(C1)).findByText(/already exists/i)).toBeTruthy()
+    })
+
+    it("caps a group at three people", async () => {
+        await loaded(ballot({ categories: groupCats() }))
+        fireEvent.click(within(section(C1)).getByRole("button", { name: /add a group/i }))
+        for (const n of ["Ann", "Bo", "Cy"]) fireEvent.click(await screen.findByRole("button", { name: n }))
+        expect((screen.getByRole("button", { name: "Di" }) as HTMLButtonElement).disabled).toBe(true)
+    })
+})
+
+describe("VotePage save failures", () => {
+    it("network failure offers Try again, which saves", async () => {
+        await loaded()
+        vi.mocked(castVote).mockRejectedValueOnce(new TypeError("Failed to fetch"))
+        fireEvent.click(radio(ANN))
+        const alert = await within(section(C1)).findByRole("alert")
+        expect(alert.textContent).toMatch(/no connection/i)
+        fireEvent.click(within(alert).getByRole("button", { name: /try again/i }))
+        await waitFor(() => expect(castVote).toHaveBeenCalledTimes(2))
+        await waitFor(() => expect(within(section(C1)).queryByRole("alert")).toBeNull())
+    })
+
+    it("closed window says so, with no retry", async () => {
+        await loaded()
+        vi.mocked(castVote).mockImplementationOnce(async () => {
+            throw new Error("denied")
+        })
+        const b = vi.mocked(fetchBallotDetail)
+        b.mockResolvedValue(ballot({ closes_at: new Date(Date.now() - 1000).toISOString(), categories: twoCategories() }))
+        // the page already holds the open ballot; closing time is read from it, so fake the clock instead
+        vi.useFakeTimers({ toFake: ["Date"], now: Date.now() + 2 * 86_400_000 })
+        try {
+            fireEvent.click(radio(ANN))
+            const alert = await within(section(C1)).findByRole("alert")
+            expect(alert.textContent).toMatch(/voting has closed/i)
+            expect(within(alert).queryByRole("button", { name: /try again/i })).toBeNull()
+        } finally {
+            vi.useRealTimers()
+        }
     })
 })
