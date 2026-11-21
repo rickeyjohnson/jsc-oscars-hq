@@ -1,7 +1,7 @@
 import type { PebbleName } from "../tokens"
 import { PEBBLE_CLASS } from "./pebble"
 
-export type ButtonVariant = "primary" | "pebble" | "secondary" | "tinted" | "destructive" | "plain"
+export type ButtonVariant = "primary" | "pebble" | "secondary" | "tinted" | "destructive" | "plain" | "link" | "ghost"
 export type ButtonSize = "lg" | "md" | "sm"
 export type ChipTone = "neutral" | "success" | "warn" | "danger" | "gold" | Exclude<PebbleName, "grape">
 export type AvatarSize = 24 | 32 | 40 | 56 | 72 | 96
@@ -13,6 +13,10 @@ const BUTTON_VARIANT: Record<Exclude<ButtonVariant, "pebble">, string> = {
     tinted: "bg-fill text-label",
     destructive: "bg-fill text-danger",
     plain: "text-accent",
+    // Sky text on the dark bg (8.01:1).
+    link: "text-pebble-sky",
+    // Transparent with a 2px cream outline.
+    ghost: "border-2 border-label/33 text-label",
 }
 
 const BUTTON_SIZE: Record<ButtonSize, string> = {

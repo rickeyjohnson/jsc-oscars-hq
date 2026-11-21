@@ -247,15 +247,18 @@ const VotePage = () => {
                 <ProgressStrip states={states} labels={ballot.categories.map((c) => c.name)} onJump={jump} onOpenJump={() => setJumpOpen(true)} />
             </div>
 
-            <div className="mt-2 flex items-baseline justify-between text-subhead text-label-2">
+            <div className="mt-1 flex items-center justify-between">
+                <span className="text-subhead font-bold">{reviewing ? "Review" : `Category ${idx + 1} of ${total}`}</span>
+                <Button variant="link" size="md" className="-mr-5" onClick={() => setJumpOpen(true)}>
+                    Jump to…
+                </Button>
+            </div>
+            <div className="flex items-center justify-between text-subhead text-label-2">
                 <span>
                     {voted} of {total} voted
                 </span>
                 <span className={chipClasses("neutral")}>{closesInLabel(new Date(ballot.closes_at), new Date(now))}</span>
             </div>
-            <Button variant="plain" size="md" className="-ml-5" onClick={() => setJumpOpen(true)}>
-                Jump to category
-            </Button>
             {failedAway >= 0 && (
                 <VoteBanner
                     className="mt-3"

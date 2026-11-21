@@ -133,7 +133,7 @@ const CategoryVoteCard = (p: Props) => {
             )}
 
             {selectedId && !readOnly && (
-                <Button className="mt-2" variant="plain" size="md" onClick={p.onClear}>
+                <Button className="mt-2" variant="link" size="md" onClick={p.onClear}>
                     Clear my vote
                 </Button>
             )}

@@ -22,7 +22,7 @@ const radio = (name: RegExp) => screen.getByRole("radio", { name })
 const section = (cat: RegExp) => screen.getByRole("region", { name: cat })
 const expandCard = async (_cat: RegExp) => {} // options are always shown now
 const clearButton = (_cat: RegExp) => screen.getByRole("button", { name: /clear my vote/i })
-const openJump = () => fireEvent.click(screen.getByRole("button", { name: /^jump to category$/i }))
+const openJump = () => fireEvent.click(screen.getByRole("button", { name: /^jump to/i }))
 const goFirstUnvoted = () => {
     openJump()
     fireEvent.click(screen.getByRole("button", { name: /go to first unvoted/i }))
@@ -116,7 +116,7 @@ describe("VotePage behavior", () => {
         vi.mocked(castVote).mockReturnValueOnce(d.promise)
         fireEvent.click(radio(ANN))
         await waitFor(() => expect(castVote).toHaveBeenCalled())
-        fireEvent.click(screen.getByRole("button", { name: /^jump to category$/i }))
+        fireEvent.click(screen.getByRole("button", { name: /^jump to/i }))
         fireEvent.click(screen.getByRole("button", { name: /best dressed/i }))
         expect(section(C2).className).not.toMatch(/\bhidden\b/)
         d.reject(new Error("nope"))
@@ -316,6 +316,12 @@ describe("VotePage behavior", () => {
 })
 
 describe("VotePage one-per-page flow", () => {
+    it("shows Category N of M and a Jump to... link", async () => {
+        await loaded()
+        expect(screen.getByText("Category 1 of 2")).toBeTruthy()
+        fireEvent.click(screen.getByRole("button", { name: /^jump to/i }))
+        expect(screen.getByRole("button", { name: /go to first unvoted/i })).toBeTruthy()
+    })
     it("Skip moves to the next category and shows it; Back returns", async () => {
         await loaded()
         expect(section(C1).className).not.toMatch(/\bhidden\b/)
