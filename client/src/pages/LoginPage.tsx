@@ -157,7 +157,18 @@ const LoginPage = () => {
     }, [])
 
     return (
-        <AuthLayout title="Welcome back." subtitle="Log in to vote.">
+        <AuthLayout
+            title="Welcome back."
+            subtitle="Log in to vote."
+            footer={
+                <p className="text-callout text-label-2">
+                    New here?{" "}
+                    <Link to="/signup" className="text-label inline-flex min-h-11 items-center font-bold underline">
+                        Sign up
+                    </Link>
+                </p>
+            }
+        >
             <ForgotPasswordModal open={showForgotPasswordModal} closeModal={closeModal} />
             {google && (
                 <div className="mt-6 flex flex-col items-center gap-3">
@@ -227,14 +238,6 @@ const LoginPage = () => {
             </div>
             </div>
             )}
-            <div className="mt-4 flex flex-col items-center gap-1 text-center">
-                <p className="text-callout text-label-2 mt-3">
-                    New here?{" "}
-                    <Link to="/signup" className="text-label inline-flex min-h-11 items-center font-bold underline">
-                        Pick your name
-                    </Link>
-                </p>
-            </div>
         </AuthLayout>
     )
 }

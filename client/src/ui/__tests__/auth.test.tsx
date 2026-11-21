@@ -26,12 +26,16 @@ const wrap = (ui: React.ReactElement) => render(<MemoryRouter>{ui}</MemoryRouter
 
 beforeEach(() => {
     window.matchMedia = ((q: string) => ({ matches: false, media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => false })) as never
+    vi.stubEnv("VITE_GOOGLE_AUTH", "")
     signIn.mockReset()
     signUp.mockReset()
     navigate.mockReset()
     fetchNames.mockReset().mockResolvedValue(["Ann", "Bo", "Cy"])
 })
-afterEach(cleanup)
+afterEach(() => {
+    cleanup()
+    vi.unstubAllEnvs()
+})
 
 describe("settledLayout", () => {
     it("places every ball inside the box without overlap", () => {

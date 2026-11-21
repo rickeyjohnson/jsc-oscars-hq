@@ -148,7 +148,16 @@ const SignupPage = () => {
 
     const noNames = !namesLoading && !namesError && !memberNames.some((n) => !n.taken)
     return (
-        <AuthLayout title="Pick your name." subtitle="Crossed-out names are taken. Wrong one? Ask a committee member." step="Step 1 of 2">
+        <AuthLayout title="Pick your name." subtitle="Crossed-out names are taken. Wrong one? Ask a committee member." step="Step 1 of 2"
+            footer={
+                <p className="text-callout text-label-2">
+                    Already have an account?{" "}
+                    <Link to="/login" className="text-label inline-flex min-h-11 items-center font-bold underline">
+                        Log in
+                    </Link>
+                </p>
+            }
+        >
             <VerifyEmailModal open={showVerifyEmailModal} onDone={() => setShowVerifyEmailModal(false)} />
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <div role="group" aria-labelledby="name-heading">
@@ -244,12 +253,6 @@ const SignupPage = () => {
                 </Button>
                 )}
             </form>
-            <p className="text-callout text-label-2 mt-4 text-center">
-                Already have an account?{" "}
-                <Link to="/login" className="text-label inline-flex min-h-11 items-center font-bold underline">
-                    Log in
-                </Link>
-            </p>
         </AuthLayout>
     )
 }

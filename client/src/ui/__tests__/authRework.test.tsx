@@ -50,9 +50,12 @@ beforeEach(() => {
     refetch.mockResolvedValue(undefined)
     member = null
     sessionStorage.clear()
+    vi.stubEnv("VITE_GOOGLE_AUTH", "")
+})
+afterEach(() => {
+    cleanup()
     vi.unstubAllEnvs()
 })
-afterEach(cleanup)
 
 describe("Landing rework", () => {
     it("has no tagline and centers the buttons under the logo", () => {
@@ -99,7 +102,17 @@ describe("Login rework", () => {
         expect(arg.options.redirectTo).toMatch(/\/app$/)
         fireEvent.click(screen.getByRole("button", { name: /use email instead/i }))
         expect(screen.getByLabelText("Email")).toBeTruthy()
-        expect(screen.getByRole("link", { name: "Pick your name" })).toBeTruthy()
+        expect(screen.getByRole("link", { name: "Sign up" })).toBeTruthy()
+    })
+})
+
+describe("Auth layout", () => {
+    it("has the footer link at the bottom and no logo in the panel", () => {
+        const { container } = wrap(<LoginPage />)
+        expect(screen.getByRole("link", { name: "Sign up" })).toBeTruthy()
+        expect(screen.getByText(/new here\?/i)).toBeTruthy()
+        expect(container.querySelector("svg[aria-label*='Oscars' i], img[alt*='Oscars' i]")).toBeNull()
+        expect(container.querySelector("h1")?.textContent).toBe("Welcome back.")
     })
 })
 
