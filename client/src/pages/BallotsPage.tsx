@@ -1,69 +1,91 @@
-import NavigationBar from "../components/NavigationBar"
-import NavigationTabs from "../components/NavigationTabs"
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
+import { Inbox } from "lucide-react"
 import BallotCard from "../components/BallotCard"
+import { fetchBallotSummaries } from "../api/ballots"
+import type { BallotSummary } from "../lib/voting"
+import { Screen } from "../ui/Screen"
+import { SegmentedControl } from "../ui/SegmentedControl"
+import { Skeleton, SkeletonScreen } from "../ui/Skeleton"
+import { EmptyState } from "../ui/EmptyState"
+import { ErrorState } from "../ui/ErrorState"
+import { COPY } from "../ui/copy"
+import { opensAtLabel } from "../lib/time"
+import { useRefetchOnFocus } from "../ui/useRefetchOnFocus"
+import { ballotTabs, defaultTab, nextOpening, splitBallots, type BallotTab } from "../ui/logic/ballotsView"
 
 const BallotsPage = () => {
-    const [selectedCategory, setSelectedCategory] = useState("all")
-    const baseClasses =
-        "px-4 py-2 rounded-full text-sm whitespace-nowrap border transition-colors"
+    const [picked, setPicked] = useState<BallotTab | null>(null)
+    const [ballots, setBallots] = useState<BallotSummary[] | null>(null)
+    const [error, setError] = useState<string | null>(null)
+    const [reloadKey, setReloadKey] = useState(0)
+    const now = new Date()
 
-    const selectedClasses = "bg-amber-100 text-zinc-900 font-bold"
-    const unselectedClasses =
-        "bg-amber-100/10 text-amber-100 border-amber-100/20 font-medium"
+    useEffect(() => {
+        let cancelled = false
+        fetchBallotSummaries()
+            .then((b) => {
+                if (!cancelled) setBallots(b)
+            })
+            .catch((e) => {
+                if (!cancelled) setError(e instanceof Error ? e.message : "Could not load ballots")
+            })
+        return () => {
+            cancelled = true
+        }
+    }, [reloadKey])
+
+    const retry = () => {
+        setError(null)
+        setBallots(null)
+        setReloadKey((k) => k + 1)
+    }
+    // Quiet refresh: keeps the current list on screen.
+    const refresh = useCallback(() => setReloadKey((k) => k + 1), [])
+    useRefetchOnFocus(refresh)
+
+    const { open, voted, closed } = splitBallots(ballots ?? [], now)
+    // Open unless nothing is open and something is closed; the member's own pick wins once made.
+    const selected: BallotTab = picked ?? defaultTab(open.length, voted.length, closed.length)
+    const filtered = selected === "open" ? open : selected === "voted" ? voted : closed
 
     return (
-        <div>
-            <div className="bg-zinc-900 min-h-screen text-[#fffadd] pb-24">
-                <NavigationBar />
-                <main>
-                    <div className="space-y-6 p-6">
-                        <h2 className="text-3xl font-black">Ballots</h2>
-
-                        {/* Filter Tabs */}
-                        <div className="flex gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-2">
-                            {/* All Time */}
-                            <button
-                                onClick={() => setSelectedCategory("all")}
-                                className={`${baseClasses} ${
-                                    selectedCategory === "all"
-                                        ? selectedClasses
-                                        : unselectedClasses
-                                }`}
-                            >
-                                All
-                            </button>
-                            {["Open", "Voted", "Closed"].map((category) => (
-                                <button
-                                    key={category}
-                                    onClick={() =>
-                                        setSelectedCategory(category)
-                                    }
-                                    className={`${baseClasses} ${
-                                        selectedCategory === category
-                                            ? selectedClasses
-                                            : unselectedClasses
-                                    }`}
-                                >
-                                    {category}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Ballot Cards */}
-                        <div className="space-y-4">
-                            {[].map((ballot, index) => (
-                                <BallotCard key={index} ballot={ballot} />
-                            )) && (
-                                <div className="text-center">No ballots</div>
-                            )}{" "}
-                            {/* replace key */}
-                        </div>
+        <Screen title="Ballots" width="wide">
+            {!error && (
+                <div className="mb-5 max-w-md">
+                    <SegmentedControl label="Ballots" idPrefix="ballots-filter" options={ballotTabs(open.length, voted.length, closed.length)} value={selected} onChange={setPicked} />
+                </div>
+            )}
+            {error && <ErrorState title={COPY.somethingWrong} body={COPY.loadFailed("ballots")} onRetry={retry} />}
+            {!error && ballots === null && (
+                <SkeletonScreen label="Loading ballots">
+                    <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+                        <Skeleton shape="card" />
+                        <Skeleton shape="card" />
+                        <Skeleton shape="card" />
                     </div>
-                </main>
-                <NavigationTabs activeTab={"ballots"} />
-            </div>
-        </div>
+                </SkeletonScreen>
+            )}
+            {!error && ballots !== null && filtered.length > 0 && (
+                <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+                    {filtered.map((b) => (
+                        <BallotCard key={b.id} ballot={b} now={now} />
+                    ))}
+                </div>
+            )}
+            {!error && ballots !== null && filtered.length === 0 && (
+                <EmptyState
+                    icon={Inbox}
+                    title={selected === "open" ? "No open ballots right now." : selected === "voted" ? "You haven't finished voting on any ballot yet." : "No closed ballots yet."}
+                    body={
+                        selected === "open"
+                            ? nextOpening(ballots, now)
+                                ? `${opensAtLabel(new Date(nextOpening(ballots, now)!.opens_at))}.`
+                                : "Voting opens when the committee publishes a ballot. You'll see it here."
+                            : undefined
+                    }
+                />
+            )}
+        </Screen>
     )
 }
 

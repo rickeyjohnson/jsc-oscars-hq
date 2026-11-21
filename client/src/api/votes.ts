@@ -1,0 +1,64 @@
+import { supabase } from "../supabaseClient"
+import type { VoteRow } from "../types"
+import { fetchAllPages } from "../lib/paging"
+import { withTimeout } from "../lib/timeout"
+
+// votes.voter_id is the auth user id (default auth.uid()); RLS enforces window, self-vote and claim.
+// The id comes from the local session (no auth-server round trip on every tap); RLS still checks the JWT on the server.
+const currentUserId = async (): Promise<string> => {
+    const { data, error } = await supabase.auth.getSession()
+    if (error) throw error
+    if (!data.session) throw new Error("Not signed in")
+    return data.session.user.id
+}
+
+export const fetchMyVotes = (ballotId: string): Promise<Record<string, string>> => withTimeout(fetchMyVotesRaw(ballotId))
+const fetchMyVotesRaw = async (ballotId: string): Promise<Record<string, string>> => {
+    const uid = await currentUserId()
+    const { data, error } = await supabase.from("votes").select("category_id, nominee_id").eq("ballot_id", ballotId).eq("voter_id", uid)
+    if (error) throw error
+    return Object.fromEntries((data ?? []).map((v) => [v.category_id, v.nominee_id]))
+}
+
+export const castVote = (ballotId: string, categoryId: string, nomineeId: string): Promise<void> => withTimeout(castVoteRaw(ballotId, categoryId, nomineeId))
+const castVoteRaw = async (ballotId: string, categoryId: string, nomineeId: string): Promise<void> => {
+    const uid = await currentUserId()
+    const { error } = await supabase
+        .from("votes")
+        .upsert(
+            { ballot_id: ballotId, category_id: categoryId, nominee_id: nomineeId, voter_id: uid },
+            { onConflict: "ballot_id,category_id,voter_id" },
+        )
+    if (error) throw error
+}
+
+export const clearVote = (ballotId: string, categoryId: string): Promise<void> => withTimeout(clearVoteRaw(ballotId, categoryId))
+const clearVoteRaw = async (ballotId: string, categoryId: string): Promise<void> => {
+    const uid = await currentUserId()
+    const { error } = await supabase.from("votes").delete().eq("ballot_id", ballotId).eq("category_id", categoryId).eq("voter_id", uid)
+    if (error) throw error
+}
+
+export const addNominee = async (categoryId: string, displayName: string, memberIds: string[]): Promise<string> => {
+    const { data, error } = await supabase.rpc("add_nominee", {
+        p_category: categoryId,
+        p_display_name: displayName,
+        p_member_ids: memberIds,
+    })
+    if (error) throw error
+    return data as string
+}
+
+// Committee only (RLS): every vote on a ballot.
+export const fetchAllVotes = async (ballotId: string): Promise<VoteRow[]> =>
+    fetchAllPages<VoteRow>(async (from, to) => {
+        const { data, error } = await supabase
+            .from("votes")
+            .select("category_id, nominee_id, voter_id, updated_at")
+            .eq("ballot_id", ballotId)
+            .order("created_at")
+            .order("id")
+            .range(from, to)
+        if (error) throw error
+        return (data ?? []) as VoteRow[]
+    })

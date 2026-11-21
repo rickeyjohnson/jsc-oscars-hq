@@ -1,64 +1,10 @@
-import { BarChart3, Home, User, Vote } from "lucide-react"
-import { Link } from "react-router-dom"
+import type { ReactNode } from "react"
+import { BottomAccessory } from "../ui/BottomAccessory"
 
-const NavigationTabs = ({ activeTab = "home" }: { activeTab: string }) => {
-    return (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-zinc-900/95 backdrop-blur-sm border-t border-[#fffadd]/10 px-6 py-4">
-            <div className="flex justify-around items-center max-w-2xl mx-auto">
-                <Link to="/app">
-                    <button
-                        className={`flex flex-col items-center gap-1 transition ${
-                            activeTab === "home"
-                                ? "text-[#fffadd]"
-                                : "text-[#fffadd]/40"
-                        }`}
-                    >
-                        <Home className="w-6 h-6" />
-                        <span className="text-xs font-medium">Home</span>
-                    </button>
-                </Link>
-
-                <Link to={"/app/ballots"}>
-                    <button
-                        className={`flex flex-col items-center gap-1 transition ${
-                            activeTab === "ballots"
-                                ? "text-[#fffadd]"
-                                : "text-[#fffadd]/40"
-                        }`}
-                    >
-                        <Vote className="w-6 h-6" />
-                        <span className="text-xs font-medium">Ballots</span>
-                    </button>
-                </Link>
-
-                <Link to={"/app/stats"}>
-                    <button
-                        className={`flex flex-col items-center gap-1 transition ${
-                            activeTab === "stats"
-                                ? "text-[#fffadd]"
-                                : "text-[#fffadd]/40"
-                        }`}
-                    >
-                        <BarChart3 className="w-6 h-6" />
-                        <span className="text-xs font-medium">Stats</span>
-                    </button>
-                </Link>
-
-                <Link to={"/app/profile"}>
-                    <button
-                        className={`flex flex-col items-center gap-1 transition ${
-                            activeTab === "profile"
-                                ? "text-[#fffadd]"
-                                : "text-[#fffadd]/40"
-                        }`}
-                    >
-                        <User className="w-6 h-6" />
-                        <span className="text-xs font-medium">Profile</span>
-                    </button>
-                </Link>
-            </div>
-        </div>
-    )
+// Compat for legacy pages: the app shell now owns the tab bar. Pages that pass a bottom bar as
+// children (the Vote page) still get it, hosted in the shell's accessory slot above the tab bar.
+const NavigationTabs = ({ children }: { activeTab?: string; children?: ReactNode }) => {
+    return children ? <BottomAccessory>{children}</BottomAccessory> : null
 }
 
 export default NavigationTabs

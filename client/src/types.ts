@@ -1,0 +1,15 @@
+export type NomineeMode = "everyone" | "subset" | "preset" | "group"
+export type NomineeType = "person" | "group" | "outsider" | "noun"
+export type BallotStatus = "draft" | "open" | "closed" | "released"
+export type BallotRound = "main" | "tiebreak" | "committee"
+export type DecidedBy = "votes" | "tiebreak" | "committee_vote" | "manual"
+export type Member = { id: string; name: string; user_id: string | null }
+export type Season = { id: string; name: string; ceremony_at: string | null; location: string | null; results_released_at: string | null }
+export type Ballot = { id: string; season_id: string; parent_ballot_id: string | null; name: string; round: BallotRound; status: BallotStatus; opens_at: string; closes_at: string }
+export type Nominee = { id: string; display_name: string; secondary_text?: string; type: NomineeType; member_ids: string[] }
+export type Category = { id: string; name: string; description: string; order: number; nominee_mode: NomineeMode; allow_member_add: boolean; nominees: Nominee[]; /** Set on drafts that came from accepted MYOC ideas (builder shows a MYOC tag). Never saved. */ source?: "myoc" }
+export type BallotFormData = { season_id: string; name: string; opens_at: string; closes_at: string; categories: Category[] }
+export type BallotDetail = Ballot & { categories: Category[] }
+export type VoteRow = { category_id: string; nominee_id: string; voter_id: string; updated_at: string }
+export type Place = { nominee_id: string; slot: 1 | 2 | 3 | null; place: number; tied: boolean }
+export type ResultRow = { category_id: string; decided_ballot_id: string; winner_nominee_id: string | null; nominee_ids: string[]; top3_nominee_ids: string[]; decided_by: DecidedBy | null; places?: Place[] | null }

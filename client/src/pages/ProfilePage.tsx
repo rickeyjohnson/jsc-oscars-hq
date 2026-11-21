@@ -1,196 +1,81 @@
-import {
-    Award,
-    Calendar,
-    FlaskConical,
-    Laugh,
-    Plus,
-    Settings,
-    Shield,
-    SquareCheckBig,
-    Target,
-    TrendingUp,
-    User,
-    Users,
-} from "lucide-react"
-import NavigationBar from "../components/NavigationBar"
-import NavigationTabs from "../components/NavigationTabs"
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { Calendar, KeyRound, Laugh, LogOut, Pencil, Plus, Settings, SquareCheckBig, Users } from "lucide-react"
 import { supabase } from "../supabaseClient"
 import { useUserData } from "../context/UserContenxt"
-import ProfilePageButton from "../components/ProfilePageButton"
-import ManageOscarsModal from "../components/ManageOscarsModal"
-import { useState } from "react"
-import UserManagementModal from "../components/UserManagementModal"
+import { displayName } from "../lib/displayName"
+import { SeasonSheet } from "../components/committee/SeasonSheet"
 import JokeGeneratorModal from "../components/JokeGeneratorModal"
 import EditProfileModal from "../components/EditProfileModal"
+import { Avatar } from "../ui/Avatar"
+import { GroupedSection } from "../ui/GroupedSection"
+import { ListRow } from "../ui/ListRow"
+import { Screen } from "../ui/Screen"
+import { Button } from "../ui/Button"
+import { MyStats } from "./stats/MyStats"
+import { clearAll } from "../lib/cache/clear"
+
+const icon = (I: typeof Settings) => <I aria-hidden className="size-5 text-label-2" />
 
 const ProfilePage = () => {
-    const { profile } = useUserData()
-    const [openManageOscarModal, setOpenManageOscarModal] = useState(false)
-    const [openUserManagement, setOpenUserManagement] = useState(false)
-    const [openJokeGenerator, setOpenJokeGenerator] = useState(false)
-    const [openEditProfile, setOpenEditProfile] = useState(false)
+    const { profile, member } = useUserData()
+    const isCommittee = Boolean(profile?.is_committee)
+    const navigate = useNavigate()
+    const [manageOpen, setManageOpen] = useState(false)
+    const [jokeOpen, setJokeOpen] = useState(false)
+    const [editOpen, setEditOpen] = useState(false)
 
-    const handleLogout = async () => {
-        await supabase.auth.signOut()
-    }
-
+    const name = displayName(member, profile)
     return (
-        <div>
-            <div className="bg-zinc-900 min-h-screen text-[#fffadd] pb-24">
-                <NavigationBar />
-
-                <main className="px-6 py-6 space-y-6">
-                    <div className="text-center">
-                        <img
-                            className="w-24 h-24 rounded-full mx-auto mb-4"
-                            src={profile?.image_url || "/blank-pfp.png"}
-                        />
-                        <h2 className="text-2xl font-black text-amber-100">
-                            {profile?.username || "username"}
-                        </h2>
-                        <p className="text-amber-100/60">
-                            {profile?.email || "username@example.com"}
-                        </p>
+        <Screen title="You" width="wide">
+            <div className="flex items-center gap-4 pb-6">
+                <Avatar id={member?.id ?? profile?.user_id ?? name} name={name || "You"} src={profile?.image_url} size={96} ring="pebble" />
+                <div className="min-w-0 flex-1">
+                    <h2 className="truncate text-title-1">{name}</h2>
+                    {profile?.email && <p className="truncate text-subhead text-label-2">{profile.email}</p>}
+                    <div className="mt-2">
+                        <Button variant="secondary" size="sm" icon={<Pencil aria-hidden className="size-4" />} onClick={() => setEditOpen(true)}>Edit profile</Button>
                     </div>
-
-                    {/* Stats Summary */}
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="bg-amber-100/5 border border-amber-100/10 rounded-2xl p-4 text-center">
-                            <Award className="w-6 h-6 text-amber-100 mx-auto mb-2" />
-                            <div className="text-2xl font-black text-amber-100">
-                                18
-                            </div>
-                            <div className="text-xs text-amber-100/60">
-                                Wins
-                            </div>
-                        </div>
-                        <div className="bg-amber-100/5 border border-amber-100/10 rounded-2xl p-4 text-center">
-                            <Target className="w-6 h-6 text-amber-100 mx-auto mb-2" />
-                            <div className="text-2xl font-black text-amber-100">
-                                24
-                            </div>
-                            <div className="text-xs text-amber-100/60">
-                                Votes
-                            </div>
-                        </div>
-                        <div className="bg-amber-100/5 border border-amber-100/10 rounded-2xl p-4 text-center">
-                            <TrendingUp className="w-6 h-6 text-amber-100 mx-auto mb-2" />
-                            <div className="text-2xl font-black text-amber-100">
-                                75%
-                            </div>
-                            <div className="text-xs text-amber-100/60">
-                                Rate
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Account Settings */}
-                    <div>
-                        <div className="space-y-3 mb-6">
-                            <ProfilePageButton
-                                label="Edit Profile"
-                                icon={<User className="w-5 h-5" />}
-                                onClick={() => setOpenEditProfile(true)}
-                            />
-                            <ProfilePageButton
-                                label="Settings"
-                                icon={<Settings className="w-5 h-5" />}
-                            />
-                        </div>
-
-                        <div className="pt-4 border-t border-amber-100/10 space-y-3 mb-6">
-                            <div className="flex items-center gap-2 mb-6">
-                                <FlaskConical className="w-5 h-5 text-amber-100" />
-                                <span className="text-sm font-bold text-amber-100">
-                                    Experimental
-                                </span>
-                            </div>
-                            <ProfilePageButton
-                                label="Joke Generator"
-                                icon={<Laugh className="w-5 h-5" />}
-                                variant="gradient"
-                                textColor="text-zinc-900"
-                                iconColor="text-zinc-900"
-                                rightIconColor="text-zinc-900"
-                                className="from-green-500 to-cyan-600 hover:from-green-600 hover:to-cyan-700"
-                                onClick={() => setOpenJokeGenerator(true)}
-                            />
-                        </div>
-
-                        {/* Committee Only */}
-                        {profile?.is_committee && (
-                            <div className="pt-4 border-t border-amber-100/10 space-y-3">
-                                <div className="flex items-center gap-2 mb-6">
-                                    <Shield className="w-5 h-5 text-amber-100" />
-                                    <span className="text-sm font-bold text-amber-100">
-                                        Admin Controls
-                                    </span>
-                                </div>
-                                <ProfilePageButton
-                                    label="Create New Ballot"
-                                    icon={<Plus className="w-5 h-5" />}
-                                    variant="gradient"
-                                    textColor="text-zinc-900"
-                                    iconColor="text-zinc-900"
-                                />
-                                <ProfilePageButton
-                                    label="Manage Ballots"
-                                    icon={<Settings className="w-5 h-5" />}
-                                />
-                                <ProfilePageButton
-                                    label="View Results"
-                                    icon={
-                                        <SquareCheckBig className="w-5 h-5" />
-                                    }
-                                />
-                                <ProfilePageButton
-                                    label="User Management"
-                                    icon={<Users className="w-5 h-5" />}
-                                    onClick={() => setOpenUserManagement(true)}
-                                />
-                                <ProfilePageButton
-                                    label="Manage Events"
-                                    icon={<Calendar className="w-5 h-5" />}
-                                    onClick={() =>
-                                        setOpenManageOscarModal(true)
-                                    }
-                                />
-                            </div>
-                        )}
-                    </div>
-
-                    <button
-                        onClick={handleLogout}
-                        className="w-full bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl p-4 font-bold hover:bg-red-500/20 transition mt-6"
-                    >
-                        Sign Out
-                    </button>
-                </main>
-
-                <NavigationTabs activeTab={"profile"} />
-
-                {/* Modals */}
-                <ManageOscarsModal
-                    isOpen={openManageOscarModal}
-                    onClose={() => setOpenManageOscarModal(false)}
-                />
-
-                <UserManagementModal
-                    isOpen={openUserManagement}
-                    onClose={() => setOpenUserManagement(false)}
-                />
-
-                <JokeGeneratorModal
-                    isOpen={openJokeGenerator}
-                    onClose={() => setOpenJokeGenerator(false)}
-                />
-
-                <EditProfileModal
-                    isOpen={openEditProfile}
-                    onClose={() => setOpenEditProfile(false)}
-                />
+                </div>
             </div>
-        </div>
+            <MyStats />
+            <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
+                <div className="space-y-6">
+                    <GroupedSection header="Account">
+                        <ListRow title="Settings" leading={icon(Settings)} chevron to="/app/profile/settings" />
+                    </GroupedSection>
+                    {isCommittee && (
+                        <GroupedSection header="Committee">
+                            <ListRow title="New ballot" leading={icon(Plus)} chevron to="/app/profile/ballots/create" />
+                            <ListRow title="Manage ballots" leading={icon(SquareCheckBig)} chevron to="/app/profile/ballots" />
+                            <ListRow title="Members" leading={icon(Users)} chevron to="/app/profile/members" />
+                            <ListRow title="The envelope" leading={icon(KeyRound)} chevron to="/app/profile/release" />
+                            <ListRow title="Season and ceremony date" leading={icon(Calendar)} chevron onClick={() => setManageOpen(true)} />
+                        </GroupedSection>
+                    )}
+                </div>
+                <div className="space-y-6">
+                    <GroupedSection header="Labs">
+                        <ListRow title="Joke generator" leading={icon(Laugh)} chevron onClick={() => setJokeOpen(true)} />
+                    </GroupedSection>
+                    <GroupedSection>
+                        <ListRow
+                            title="Log out"
+                            destructive
+                            leading={<LogOut aria-hidden className="size-5 text-danger" />}
+                            onClick={async () => {
+                                clearAll()
+                                await supabase.auth.signOut()
+                                navigate("/", { replace: true })
+                            }}
+                        />
+                    </GroupedSection>
+                </div>
+            </div>
+            <SeasonSheet open={manageOpen} onClose={() => setManageOpen(false)} />
+            <JokeGeneratorModal isOpen={jokeOpen} onClose={() => setJokeOpen(false)} />
+            <EditProfileModal isOpen={editOpen} onClose={() => setEditOpen(false)} />
+        </Screen>
     )
 }
 

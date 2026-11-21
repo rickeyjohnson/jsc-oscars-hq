@@ -5,60 +5,59 @@ import {
     Render,
     Runner,
     Bodies,
+    Body,
     Composite,
     Mouse,
     MouseConstraint,
     Events,
 } from "matter-js"
+import { settledLayout } from "../ui/logic/settle"
+import { BALL_RADIUS_MAX, ballRadius, ballRingColor } from "../ui/logic/landingBalls"
 
 const BALL_COUNT = 13
-const BALL_RADIUS = 40
 const WALL_THICKNESS = 200
+const RING_WIDTH = 3
+const RING_GAP = 2
+
+// The fixed layer is sized by the browser (inset-0 tracks the dynamic viewport), so measure it instead of window.inner*.
+const measure = (el: HTMLElement) => {
+    const vv = window.visualViewport
+    return {
+        w: el.clientWidth || vv?.width || window.innerWidth,
+        h: el.clientHeight || vv?.height || window.innerHeight,
+    }
+}
 
 const FallingProfileBallsPhysics: React.FC = () => {
     const sceneRef = useRef<HTMLDivElement | null>(null)
 
     useEffect(() => {
-        if (!sceneRef.current) return
+        const host = sceneRef.current
+        if (!host) return
+        const reduced = !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+        let { w, h } = measure(host)
 
         const engine: any = Engine.create()
         engine.gravity.y = 1
 
         const render: any = Render.create({
-            element: sceneRef.current,
+            element: host,
             engine,
             options: {
-                width: window.innerWidth,
-                height: window.innerHeight,
+                width: w,
+                height: h,
                 wireframes: false,
                 background: "transparent",
                 pixelRatio: window.devicePixelRatio,
             } as any,
         })
+        render.canvas.setAttribute("aria-hidden", "true")
 
         /* ---------- Walls ---------- */
         const createWalls = () => [
-            Bodies.rectangle(
-                window.innerWidth / 2,
-                window.innerHeight + WALL_THICKNESS / 2,
-                window.innerWidth + WALL_THICKNESS * 2,
-                WALL_THICKNESS,
-                { isStatic: true }
-            ),
-            Bodies.rectangle(
-                -WALL_THICKNESS / 2,
-                window.innerHeight / 2,
-                WALL_THICKNESS,
-                window.innerHeight + WALL_THICKNESS * 2,
-                { isStatic: true }
-            ),
-            Bodies.rectangle(
-                window.innerWidth + WALL_THICKNESS / 2,
-                window.innerHeight / 2,
-                WALL_THICKNESS,
-                window.innerHeight + WALL_THICKNESS * 2,
-                { isStatic: true }
-            ),
+            Bodies.rectangle(w / 2, h + WALL_THICKNESS / 2, w + WALL_THICKNESS * 2, WALL_THICKNESS, { isStatic: true }),
+            Bodies.rectangle(-WALL_THICKNESS / 2, h / 2, WALL_THICKNESS, h + WALL_THICKNESS * 2, { isStatic: true }),
+            Bodies.rectangle(w + WALL_THICKNESS / 2, h / 2, WALL_THICKNESS, h + WALL_THICKNESS * 2, { isStatic: true }),
         ]
 
         let walls: any = createWalls()
@@ -67,10 +66,9 @@ const FallingProfileBallsPhysics: React.FC = () => {
         /* ---------- Balls ---------- */
         const balls: any = Array.from({ length: BALL_COUNT }).map((_, index) => {
             const body = Bodies.circle(
-                Math.random() * (window.innerWidth - BALL_RADIUS * 2) +
-                    BALL_RADIUS,
+                Math.random() * (w - ballRadius(index) * 2) + ballRadius(index),
                 Math.random() * -300,
-                BALL_RADIUS,
+                ballRadius(index),
                 {
                     restitution: 0.85,
                     friction: 0.1,
@@ -82,24 +80,37 @@ const FallingProfileBallsPhysics: React.FC = () => {
             const img = new Image()
             img.src = "/sidechatters/" + (index + 1) + ".jpg"
             body.avatar = img
+            body.radius = ballRadius(index)
+            body.failed = false
+            // A 404 would draw as a blank ring (and drawImage throws on a broken image): fill the ring with its pebble instead.
+            img.onerror = () => {
+                body.failed = true
+            }
+            body.ringColor = ballRingColor(index)
 
             return body
         })
 
         Composite.add(engine.world, balls)
 
-        /* ---------- Mouse ---------- */
-        const mouse = Mouse.create(render.canvas)
-        const mouseConstraint: any = MouseConstraint.create(engine, {
-            mouse,
-            constraint: {
-                stiffness: 0.25,
-                render: { visible: false },
-            } as any,
-        })
+        /* ---------- Reduced motion: settled arrangement, drawn once ---------- */
+        const arrange = () => {
+            settledLayout(BALL_COUNT, w, h, BALL_RADIUS_MAX).forEach((p, i) => Body.setPosition(balls[i], p))
+        }
 
-        render.mouse = mouse
-        Composite.add(engine.world, mouseConstraint)
+        /* ---------- Mouse ---------- */
+        if (!reduced) {
+            const mouse = Mouse.create(render.canvas)
+            const mouseConstraint: any = MouseConstraint.create(engine, {
+                mouse,
+                constraint: {
+                    stiffness: 0.25,
+                    render: { visible: false },
+                } as any,
+            })
+            render.mouse = mouse
+            Composite.add(engine.world, mouseConstraint)
+        }
 
         /* ---------- Custom Draw (Circle Mask) ---------- */
         Events.on(render, "afterRender", () => {
@@ -108,6 +119,9 @@ const FallingProfileBallsPhysics: React.FC = () => {
             balls.forEach(
                 (ball: {
                     avatar: any
+                    radius: number
+                    failed: boolean
+                    ringColor: string
                     position: { x: any; y: any }
                     angle: any
                 }) => {
@@ -120,50 +134,83 @@ const FallingProfileBallsPhysics: React.FC = () => {
                     ctx.rotate(ball.angle)
 
                     ctx.beginPath()
-                    ctx.arc(0, 0, BALL_RADIUS, 0, Math.PI * 2)
+                    // Photo sits inside a pebble-colored ring with a small transparent gap.
+                    const photoR = ball.radius - RING_WIDTH - RING_GAP
+                    ctx.arc(0, 0, photoR, 0, Math.PI * 2)
                     ctx.clip()
 
-                    ctx.drawImage(
-                        ball.avatar,
-                        -BALL_RADIUS,
-                        -BALL_RADIUS,
-                        BALL_RADIUS * 2,
-                        BALL_RADIUS * 2
-                    )
+                    if (ball.failed) {
+                        ctx.fillStyle = ball.ringColor
+                        ctx.fill()
+                    } else {
+                        ctx.drawImage(ball.avatar, -photoR, -photoR, photoR * 2, photoR * 2)
+                    }
+                    ctx.restore()
+
+                    ctx.save()
+                    ctx.translate(x, y)
+                    ctx.beginPath()
+                    ctx.arc(0, 0, ball.radius - RING_WIDTH / 2, 0, Math.PI * 2)
+                    ctx.lineWidth = RING_WIDTH
+                    ctx.strokeStyle = ball.ringColor
+                    ctx.stroke()
 
                     ctx.restore()
                 }
             )
         })
 
-        Render.run(render)
-        const runner = Runner.create()
-        Runner.run(runner, engine)
+        let runner: any = null
+        if (reduced) {
+            arrange()
+            const draw = () => Render.world(render)
+            balls.forEach((b: any) => {
+                b.avatar.addEventListener("load", draw)
+                b.avatar.addEventListener("error", draw)
+            })
+            draw()
+        } else {
+            Render.run(render)
+            runner = Runner.create()
+            Runner.run(runner, engine)
+        }
 
         /* ---------- Resize ---------- */
         const handleResize = () => {
-            render.canvas.width = window.innerWidth
-            render.canvas.height = window.innerHeight
+            ;({ w, h } = measure(host))
+            const ratio = window.devicePixelRatio || 1
+            render.options.width = w
+            render.options.height = h
+            render.bounds.max.x = w
+            render.bounds.max.y = h
+            render.canvas.width = w * ratio
+            render.canvas.height = h * ratio
+            render.canvas.style.width = `${w}px`
+            render.canvas.style.height = `${h}px`
 
             Composite.remove(engine.world, walls)
             walls = createWalls()
             Composite.add(engine.world, walls)
+            if (reduced) {
+                arrange()
+                Render.world(render)
+            }
         }
 
         window.addEventListener("resize", handleResize)
+        window.visualViewport?.addEventListener("resize", handleResize)
 
         return () => {
             window.removeEventListener("resize", handleResize)
+            window.visualViewport?.removeEventListener("resize", handleResize)
             Render.stop(render)
-            Runner.stop(runner)
+            if (runner) Runner.stop(runner)
             Engine.clear(engine)
             render.canvas.remove()
         }
     }, [])
 
-    return (
-        <div ref={sceneRef} className="pointer-events-auto fixed inset-0 z-0" />
-    )
+    return <div ref={sceneRef} className="pointer-events-auto fixed inset-0 z-0" />
 }
 
 export default FallingProfileBallsPhysics

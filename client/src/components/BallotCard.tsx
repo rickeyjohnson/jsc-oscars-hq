@@ -1,104 +1,33 @@
-import { Calendar, CheckCircle, XCircle } from "lucide-react"
+import { Link } from "react-router-dom"
+import type { BallotSummary } from "../lib/voting"
+import { ballotPresentation, ballotSubtitle, pillPhase, roundLabel } from "../ui/logic/ballotsView"
+import { Chip } from "../ui/Chip"
+import { StatusPill } from "../ui/StatusPill"
 
-export type BallotStatus = "open" | "voted" | "closed"
-
-export interface Ballot {
-    id: string
-    title: string
-    description?: string
-    status: BallotStatus
-    nomineesCount: number
-    endsAt?: string
-    votedFor?: string
-}
-
-const STATUS_CONFIG = {
-    open: {
-        label: "OPEN",
-        badge: "bg-green-500/20 text-green-400",
-        icon: Calendar,
-        actionText: "Vote Now",
-        actionStyle: "bg-amber-100 text-zinc-900 font-bold hover:bg-amber-200",
-        dimmed: false,
-    },
-    voted: {
-        label: "VOTED",
-        badge: "bg-blue-500/20 text-blue-400",
-        icon: CheckCircle,
-        actionText: "View Results",
-        actionStyle:
-            "bg-amber-100/10 text-amber-100 border border-amber-100/20",
-        dimmed: false,
-    },
-    closed: {
-        label: "CLOSED",
-        badge: "bg-red-500/20 text-red-400",
-        icon: XCircle,
-        actionText: "View Results",
-        actionStyle:
-            "bg-amber-100/10 text-amber-100 border border-amber-100/20",
-        dimmed: true,
-    },
-}
-
-const BallotCard = ({ ballot }: { ballot: Ballot }) => {
-    const config = STATUS_CONFIG[ballot.status]
-    const Icon = config.icon
-
+/** Dark surface card. Status pill + title + (open ballots) a voted strip; the whole card is the link. */
+const BallotCard = ({ ballot, now }: { ballot: BallotSummary; now: Date }) => {
+    const p = ballotPresentation(ballot, now)
+    const round = roundLabel(ballot.round)
     return (
-        <div
-            className={`bg-amber-100/5 border border-amber-100/10 rounded-2xl p-5 transition hover:border-amber-100/30 ${
-                config.dimmed ? "opacity-60" : ""
-            }`}
+        <Link
+            to={p.to}
+            className="block min-h-11 rounded-card bg-surface p-4 transition-transform duration-150 hover:-translate-y-0.5 active:scale-97 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
         >
-            <div className="flex items-start justify-between mb-3">
-                <div>
-                    <div className="flex items-center gap-2 mb-1">
-                        <span
-                            className={`px-2 py-1 text-xs font-bold rounded-full ${config.badge}`}
-                        >
-                            {config.label}
-                        </span>
-
-                        {ballot.status === "open" && (
-                            <span className="text-xs text-amber-100/40">
-                                Ends in 3 days
-                            </span>
-                        )}
-
-                        {ballot.status !== "open" && (
-                            <Icon className="w-4 h-4" />
-                        )}
-                    </div>
-
-                    <h3 className="text-xl font-bold text-amber-100">
-                        {ballot.title}
-                    </h3>
-
-                    <p className="text-sm text-amber-100/60 mt-1">
-                        {ballot.status === "voted"
-                            ? `Your vote: ${ballot.votedFor}`
-                            : ballot.description}
-                    </p>
-                </div>
-
-                {ballot.status === "open" && (
-                    <Icon className="w-5 h-5 text-amber-100/40" />
-                )}
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+                <StatusPill phase={pillPhase(ballot, now)} />
+                {round && <Chip tone="neutral">{round}</Chip>}
             </div>
-
-            <div className="flex items-center justify-between pt-3 border-t border-amber-100/10">
-                <div className="text-sm text-amber-100/60">
-                    {ballot.nomineesCount} categorie(s)
+            <h3 className="text-title-3">{ballot.name}</h3>
+            <p className="mt-1 text-footnote text-label-2">{ballotSubtitle(ballot, now)}</p>
+            {p.status === "open" || p.status === "voted" ? (
+                <div aria-hidden className="mt-3 flex gap-0.5">
+                    {Array.from({ length: ballot.category_count }, (_, i) => (
+                        <span key={i} className={`h-1 flex-1 rounded-full ${p.status === "voted" ? "bg-pebble-sky" : i < ballot.my_vote_count ? "bg-pebble-lime" : "bg-strip-off"}`} />
+                    ))}
                 </div>
-
-                <button
-                    className={`px-4 py-2 rounded-full text-sm transition ${config.actionStyle}`}
-                >
-                    {config.actionText}
-                </button>
-            </div>
-        </div>
+            ) : null}
+            <p className="mt-3 text-subhead font-bold">{p.cta}</p>
+        </Link>
     )
 }
 

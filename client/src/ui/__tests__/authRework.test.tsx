@@ -1,0 +1,334 @@
+// @vitest-environment jsdom
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { readFileSync } from "node:fs"
+import { join } from "node:path"
+import { MemoryRouter } from "react-router-dom"
+import { ConfirmProvider } from "../ConfirmProvider"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+
+const signInOAuth = vi.fn()
+const rpc = vi.fn()
+const signOut = vi.fn()
+const navigate = vi.fn()
+const refetch = vi.fn()
+const status = vi.fn()
+const available = vi.fn()
+let authUser: { id: string; email: string } | null = { id: "u1", email: "a@b.co" }
+let member: { id: string; name: string; user_id: string } | null = null
+
+vi.mock("../../supabaseClient", () => ({
+    supabase: {
+        auth: { signOut: (...a: unknown[]) => signOut(...a), signInWithOAuth: (...a: unknown[]) => signInOAuth(...a), signInWithPassword: vi.fn(), signUp: vi.fn(), resetPasswordForEmail: vi.fn() },
+        rpc: (...a: unknown[]) => rpc(...a),
+    },
+}))
+vi.mock("../../context/AuthContext", () => ({ useAuth: () => ({ session: null, user: authUser, loading: false }) }))
+vi.mock("../../context/UserContenxt", () => ({ useUserData: () => ({ member, loading: false, profile: null, refetch }) }))
+vi.mock("../../components/FallingProfileBallPhysics", () => ({ default: () => <div data-testid="balls" /> }))
+vi.mock("../../api/members", () => ({ fetchMemberNameStatus: () => status(), fetchAvailableMemberNames: () => available() }))
+vi.mock("react-router-dom", async (orig) => ({ ...(await orig<typeof import("react-router-dom")>()), useNavigate: () => navigate }))
+
+import LandingPage from "../../pages/LandingPage"
+import LoginPage from "../../pages/LoginPage"
+import SignupPage from "../../pages/SignupPage"
+import ClaimNamePage from "../../pages/ClaimNamePage"
+import { shouldClaimName } from "../../lib/claimName"
+import { BALL_RADIUS_MAX, BALL_RADIUS_MIN, ballKey, ballRadius, ballRingColor } from "../logic/landingBalls"
+import { pebbleFor } from "../logic/pebble"
+import { PEBBLE_COLORS } from "../tokens"
+
+const wrap = (ui: React.ReactElement) => render(<MemoryRouter><ConfirmProvider>{ui}</ConfirmProvider></MemoryRouter>)
+const NAMES = [
+    { name: "Ann", taken: false },
+    { name: "Bo", taken: true },
+    { name: "Cy", taken: false },
+]
+
+beforeEach(() => {
+    window.matchMedia = ((q: string) => ({ matches: false, media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => false })) as never
+    ;[signInOAuth, signOut, rpc, navigate, refetch, status, available].forEach((m) => m.mockReset())
+    status.mockResolvedValue(NAMES)
+    signInOAuth.mockResolvedValue({ error: null })
+    rpc.mockResolvedValue({ error: null })
+    signOut.mockResolvedValue({ error: null })
+    refetch.mockResolvedValue(undefined)
+    member = null
+    authUser = { id: "u1", email: "a@b.co" }
+    sessionStorage.clear()
+    vi.stubEnv("VITE_GOOGLE_AUTH", "")
+})
+afterEach(() => {
+    cleanup()
+    vi.unstubAllEnvs()
+})
+
+describe("Landing rework", () => {
+    it("a signed-in visitor sees Open app instead of Get started / Log in", () => {
+        wrap(<LandingPage />)
+        expect(screen.getByRole("link", { name: "Open app" }).getAttribute("href")).toBe("/app")
+        expect(screen.queryByRole("link", { name: "Get started" })).toBeNull()
+        expect(screen.queryByRole("link", { name: "Log in" })).toBeNull()
+    })
+    it("has no tagline and centers the buttons under the logo", () => {
+        authUser = null
+        wrap(<LandingPage />)
+        expect(screen.queryByText(/be there or be/i)).toBeNull()
+        const main = screen.getByRole("main")
+        expect(main.className).toMatch(/justify-center/)
+        const logo = screen.getByRole("heading", { level: 1 })
+        const start = screen.getByRole("link", { name: "Get started" })
+        expect(logo.compareDocumentPosition(start) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+        expect(main.contains(start)).toBe(true)
+    })
+})
+
+describe("falling ball rings", () => {
+    it("ball radius is stable per index, varies, and stays in range", () => {
+        const r = Array.from({ length: 13 }, (_, i) => ballRadius(i))
+        expect(r).toEqual(Array.from({ length: 13 }, (_, i) => ballRadius(i)))
+        for (const x of r) {
+            expect(x).toBeGreaterThanOrEqual(BALL_RADIUS_MIN)
+            expect(x).toBeLessThanOrEqual(BALL_RADIUS_MAX)
+        }
+        expect(new Set(r).size).toBeGreaterThan(3)
+    })
+    it("a failed image fills the ring with its pebble instead of drawing a broken photo", () => {
+        const src = readFileSync(join(__dirname, "../../components/FallingProfileBallPhysics.tsx"), "utf8")
+        expect(src).toMatch(/img\.onerror/)
+        expect(src).toMatch(/ball\.failed/)
+    })
+    it("derives a stable pebble ring color per photo key", () => {
+        expect(ballRingColor(0)).toBe(ballRingColor(0))
+        expect(ballRingColor(3)).toBe(PEBBLE_COLORS[pebbleFor(ballKey(3))].bg)
+    })
+    it("draws the ring in the shared afterRender (also used by the reduced-motion layout)", () => {
+        const src = readFileSync(join(__dirname, "../../components/FallingProfileBallPhysics.tsx"), "utf8")
+        expect(src).toMatch(/ballRingColor/)
+        expect(src).toMatch(/stroke\(\)/)
+    })
+})
+
+describe("Login rework", () => {
+    it("flag off: no Google button, email form shown, no logo", () => {
+        vi.stubEnv("VITE_GOOGLE_AUTH", "")
+        wrap(<LoginPage />)
+        expect(screen.queryByRole("button", { name: /continue with google/i })).toBeNull()
+        expect(screen.getByLabelText("Email")).toBeTruthy()
+        expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual(["Welcome back."])
+        expect(screen.queryByText(/sidechatting/i)).toBeNull()
+    })
+    it("flag on: Google first, email behind a toggle, OAuth redirects to /app", async () => {
+        vi.stubEnv("VITE_GOOGLE_AUTH", "true")
+        wrap(<LoginPage />)
+        expect(screen.queryByLabelText("Email")).toBeNull()
+        fireEvent.click(screen.getByRole("button", { name: /continue with google/i }))
+        await waitFor(() => expect(signInOAuth).toHaveBeenCalled())
+        const arg = signInOAuth.mock.calls[0][0]
+        expect(arg.provider).toBe("google")
+        expect(arg.options.redirectTo).toMatch(/\/app$/)
+        fireEvent.click(screen.getByRole("button", { name: /use email instead/i }))
+        expect(screen.getByLabelText("Email")).toBeTruthy()
+        expect(document.activeElement).toBe(screen.getByLabelText("Email"))
+        expect(screen.getByRole("link", { name: "Sign up" })).toBeTruthy()
+    })
+    it("the email toggle announces it is collapsed, and Google resets after a bfcache return", async () => {
+        vi.stubEnv("VITE_GOOGLE_AUTH", "true")
+        wrap(<LoginPage />)
+        expect(screen.getByRole("button", { name: /use email instead/i }).getAttribute("aria-expanded")).toBe("false")
+        signInOAuth.mockReturnValue(new Promise(() => {}))
+        fireEvent.click(screen.getByRole("button", { name: /continue with google/i }))
+        const busy = await screen.findByRole("button", { name: /opening google/i })
+        expect(busy.getAttribute("aria-busy")).toBe("true")
+        expect((busy as HTMLButtonElement).disabled).toBe(true)
+        const ev = new Event("pageshow") as Event & { persisted: boolean }
+        ev.persisted = true
+        window.dispatchEvent(ev)
+        await waitFor(() => expect((screen.getByRole("button", { name: /continue with google/i }) as HTMLButtonElement).disabled).toBe(false))
+    })
+})
+
+describe("Auth layout", () => {
+    it("has the footer link at the bottom and no logo in the panel", () => {
+        const { container } = wrap(<LoginPage />)
+        expect(screen.getByRole("link", { name: "Sign up" })).toBeTruthy()
+        expect(screen.getByText(/new here\?/i)).toBeTruthy()
+        expect(container.querySelector("svg[aria-label*='Oscars' i], img[alt*='Oscars' i]")).toBeNull()
+        expect(container.querySelector("h1")?.textContent).toBe("Welcome back.")
+    })
+})
+
+describe("Signup rework", () => {
+    it("crosses out taken names and they cannot be selected", async () => {
+        wrap(<SignupPage />)
+        const taken = await screen.findByRole("radio", { name: /Bo/ })
+        expect(taken.getAttribute("aria-disabled")).toBe("true")
+        expect(taken.className).toMatch(/line-through/)
+        expect(taken.textContent).toMatch(/taken/i)
+        fireEvent.click(taken)
+        expect(taken.getAttribute("aria-checked")).toBe("false")
+        expect(screen.getByText(/Crossed-out names are taken/)).toBeTruthy()
+        expect(document.querySelectorAll("h1 img, header img").length).toBe(0)
+    })
+    it("falls back to available names only when the status call yields no taken info", async () => {
+        status.mockResolvedValue([{ name: "Ann", taken: false }, { name: "Cy", taken: false }])
+        wrap(<SignupPage />)
+        expect(await screen.findByRole("radio", { name: "Ann" })).toBeTruthy()
+        expect(screen.queryByRole("radio", { name: /Bo/ })).toBeNull()
+    })
+    it("flag on: Google needs a picked name, remembers it, then OAuth", async () => {
+        vi.stubEnv("VITE_GOOGLE_AUTH", "true")
+        wrap(<SignupPage />)
+        expect(screen.queryByLabelText("Email")).toBeNull()
+        await screen.findByRole("radio", { name: "Cy" })
+        const g = screen.getByRole("button", { name: /continue with google/i })
+        expect(g.getAttribute("aria-disabled")).toBe("true")
+        expect(g.getAttribute("aria-describedby")).toBe("pick-name-hint")
+        fireEvent.click(g)
+        expect(signInOAuth).not.toHaveBeenCalled()
+        expect(screen.getByText("Pick your name first.").id).toBe("pick-name-hint")
+        fireEvent.click(await screen.findByRole("radio", { name: "Cy" }))
+        expect(screen.getByRole("button", { name: /continue with google/i }).getAttribute("aria-disabled")).toBeNull()
+        fireEvent.click(screen.getByRole("button", { name: /continue with google/i }))
+        fireEvent.click(await screen.findByRole("button", { name: /^Yes, I'm / }))
+        await waitFor(() => expect(signInOAuth).toHaveBeenCalled())
+        expect(sessionStorage.getItem("jsc.pendingName")).toBe("Cy")
+        fireEvent.click(screen.getByRole("button", { name: /use email instead/i }))
+        expect(document.activeElement).toBe(screen.getByLabelText("Username"))
+    })
+    it("has no Step label, and the password has a Show/Hide toggle", async () => {
+        wrap(<SignupPage />)
+        await screen.findByRole("radio", { name: "Ann" })
+        expect(screen.queryByText(/step 1 of 2/i)).toBeNull()
+        const pw = screen.getByLabelText("Password") as HTMLInputElement
+        expect(pw.type).toBe("password")
+        const t = screen.getByRole("button", { name: "Show" })
+        expect(t.getAttribute("aria-pressed")).toBe("false")
+        fireEvent.click(t)
+        expect(pw.type).toBe("text")
+        expect(screen.getByRole("button", { name: "Hide" }).getAttribute("aria-pressed")).toBe("true")
+    })
+    it("name chips are a radiogroup: one tab stop, arrows select the next free name and skip taken ones", async () => {
+        wrap(<SignupPage />)
+        const ann = await screen.findByRole("radio", { name: "Ann" })
+        expect(screen.getByRole("radiogroup", { name: "Your name" })).toBeTruthy()
+        expect(ann.tabIndex).toBe(0)
+        expect(screen.getByRole("radio", { name: /Bo/ }).tabIndex).toBe(-1)
+        ann.focus()
+        fireEvent.keyDown(ann, { key: "ArrowRight" }) // Ann is the tab stop, nothing selected yet: first arrow moves on
+        const cy = screen.getByRole("radio", { name: "Cy" })
+        expect(cy.getAttribute("aria-checked")).toBe("true")
+        expect(document.activeElement).toBe(cy)
+        fireEvent.keyDown(cy, { key: "ArrowRight" }) // wraps past taken Bo
+        expect(screen.getByRole("radio", { name: "Ann" }).getAttribute("aria-checked")).toBe("true")
+    })
+    it("flag off: no Google button", async () => {
+        wrap(<SignupPage />)
+        await screen.findByRole("radio", { name: "Ann" })
+        expect(screen.queryByRole("button", { name: /continue with google/i })).toBeNull()
+    })
+})
+
+describe("shouldClaimName", () => {
+    const base = { user: { id: "u", email: "a@b.co" }, member: null, loading: false, path: "/app" }
+    it("redirects a signed-in user with no member away from /app", () => {
+        expect(shouldClaimName(base)).toBe(true)
+        expect(shouldClaimName({ ...base, path: "/app/ballots" })).toBe(true)
+    })
+    it("never redirects while loading, without a user, with a member, or on /claim", () => {
+        expect(shouldClaimName({ ...base, loading: true })).toBe(false)
+        expect(shouldClaimName({ ...base, user: null })).toBe(false)
+        expect(shouldClaimName({ ...base, member: { id: "m" } })).toBe(false)
+        expect(shouldClaimName({ ...base, path: "/claim" })).toBe(false)
+        expect(shouldClaimName({ ...base, path: "/login" })).toBe(false)
+    })
+    it("prompts real committee accounts too, and leaves only test accounts alone", () => {
+        expect(shouldClaimName({ ...base, isCommittee: true } as never)).toBe(true)
+        expect(shouldClaimName({ ...base, user: { id: "u", email: "x@jsc-test.local" } })).toBe(false)
+        expect(shouldClaimName({ ...base, memberFailed: true })).toBe(false)
+    })
+})
+
+describe("Claim name page", () => {
+    it("lists every name with taken ones crossed out and unselectable, and claims the picked one", async () => {
+        wrap(<ClaimNamePage />)
+        expect(await screen.findByRole("radio", { name: "Ann" })).toBeTruthy()
+        const bo = screen.getByRole("radio", { name: /Bo/ })
+        expect(bo.getAttribute("aria-disabled")).toBe("true")
+        expect(bo.className).toMatch(/line-through/)
+        fireEvent.click(bo)
+        expect((screen.getByRole("button", { name: "Continue" }) as HTMLButtonElement).disabled).toBe(true)
+        fireEvent.click(screen.getByRole("radio", { name: "Cy" }))
+        fireEvent.click(screen.getByRole("button", { name: "Continue" }))
+        fireEvent.click(await screen.findByRole("button", { name: /^Yes, I'm / }))
+        await waitFor(() => expect(navigate).toHaveBeenCalledWith("/app", { replace: true }))
+        expect(rpc).toHaveBeenCalledWith("claim_member_name", { p_name: "Cy" })
+        expect(refetch).toHaveBeenCalled()
+    })
+    it("after a name-taken error it reloads the list and clears the pick", async () => {
+        rpc.mockResolvedValueOnce({ error: { code: "P0001", message: "name taken" } })
+        wrap(<ClaimNamePage />)
+        fireEvent.click(await screen.findByRole("radio", { name: "Ann" }))
+        status.mockResolvedValue([{ name: "Ann", taken: true }, ...NAMES.slice(1)])
+        fireEvent.click(screen.getByRole("button", { name: "Continue" }))
+        fireEvent.click(await screen.findByRole("button", { name: /^Yes, I'm / }))
+        expect((await screen.findByRole("alert")).textContent).toMatch(/isn't available/)
+        await waitFor(() => expect(status).toHaveBeenCalledTimes(2))
+        await waitFor(() => expect(screen.getByRole("radio", { name: /Ann/ }).getAttribute("aria-disabled")).toBe("true"))
+        expect(screen.queryByRole("radio", { name: /Ann/ })!.getAttribute("aria-checked")).toBe("false")
+        expect((screen.getByRole("button", { name: "Continue" }) as HTMLButtonElement).disabled).toBe(true)
+    })
+    it("shows Claiming while a pending signup name is claimed, then chips and an error if it fails", async () => {
+        sessionStorage.setItem("jsc.pendingName", "Ann")
+        let fail!: (v: unknown) => void
+        rpc.mockReturnValueOnce(new Promise((r) => { fail = r }))
+        wrap(<ClaimNamePage />)
+        expect(screen.getByText(/claiming ann/i)).toBeTruthy()
+        await waitFor(() => expect(status).toHaveBeenCalled())
+        expect(screen.queryByRole("radio", { name: "Cy" })).toBeNull() // no chip flash
+        fail({ error: { code: "P0001", message: "taken" } })
+        expect(await screen.findByRole("radio", { name: "Cy" })).toBeTruthy()
+        expect((await screen.findByRole("alert")).textContent).toMatch(/isn't available/)
+        expect(screen.queryByText(/claiming ann/i)).toBeNull()
+    })
+    it("shows a clear error when the RPC is missing", async () => {
+        rpc.mockResolvedValue({ error: { code: "PGRST202", message: "not found" } })
+        wrap(<ClaimNamePage />)
+        fireEvent.click(await screen.findByRole("radio", { name: "Ann" }))
+        fireEvent.click(screen.getByRole("button", { name: "Continue" }))
+        fireEvent.click(await screen.findByRole("button", { name: /^Yes, I'm / }))
+        expect((await screen.findByRole("alert")).textContent).toMatch(/Name claiming isn't set up yet/)
+        expect(navigate).not.toHaveBeenCalled()
+    })
+    it("uses a pending signup name automatically, once", async () => {
+        sessionStorage.setItem("jsc.pendingName", "Ann")
+        wrap(<ClaimNamePage />)
+        await waitFor(() => expect(rpc).toHaveBeenCalledWith("claim_member_name", { p_name: "Ann" }))
+        expect(sessionStorage.getItem("jsc.pendingName")).toBeNull()
+        await waitFor(() => expect(navigate).toHaveBeenCalledWith("/app", { replace: true }))
+        expect(rpc).toHaveBeenCalledTimes(1)
+    })
+    it("has a Log out escape hatch that signs out and returns to the landing page", async () => {
+        wrap(<ClaimNamePage />)
+        fireEvent.click(await screen.findByRole("button", { name: "Log out" }))
+        await waitFor(() => expect(navigate).toHaveBeenCalledWith("/", { replace: true }))
+        expect(signOut).toHaveBeenCalledTimes(1)
+    })
+    it("goes straight to /app when the user already has a member", async () => {
+        member = { id: "m", name: "Ann", user_id: "u1" }
+        wrap(<ClaimNamePage />)
+        await waitFor(() => expect(navigate).toHaveBeenCalledWith("/app", { replace: true }))
+    })
+})
+
+describe("claiming a name asks first (P1-7)", () => {
+    it("the confirm names the member, and cancelling claims nothing", async () => {
+        wrap(<ClaimNamePage />)
+        fireEvent.click(await screen.findByRole("radio", { name: "Cy" }))
+        fireEvent.click(screen.getByRole("button", { name: "Continue" }))
+        const dlg = await screen.findByRole("alertdialog")
+        expect(dlg.textContent).toContain("You're claiming Cy. Only the committee can change this later.")
+        fireEvent.click(screen.getByRole("button", { name: "Pick again" }))
+        await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull())
+        expect(rpc).not.toHaveBeenCalled()
+    })
+})
