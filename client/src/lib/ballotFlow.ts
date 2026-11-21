@@ -68,7 +68,9 @@ export const isFinished = (r: MemberCompletion): boolean => r.claimed && r.total
 export function votedSummary(rows: MemberCompletion[]) {
     const claimed = rows.filter((r) => r.claimed)
     const finished = claimed.filter(isFinished).length
-    return { claimed: claimed.length, finished, left: claimed.length - finished, unclaimed: rows.length - claimed.length }
+    const none = claimed.filter((r) => r.voted === 0).length
+    // "finished" means every category voted; someone who skipped a category on purpose is "partial", not "not started"
+    return { claimed: claimed.length, finished, left: claimed.length - finished, unclaimed: rows.length - claimed.length, none, partial: claimed.length - finished - none }
 }
 
 // Not finished first (fewest votes), then finished, then not signed up.
@@ -93,6 +95,8 @@ export type NextInput = {
     finished: number
     claimed: number
     left: number
+    none?: number // signed-up members with no votes at all
+    partial?: number // members who voted some categories but not all
     recording: boolean
     recordError: boolean
     categoryCount: number
@@ -105,6 +109,12 @@ export type NextInput = {
 }
 
 const plural = (n: number, one: string, many = one + "s") => `${n} ${n === 1 ? one : many}`
+
+const missingLine = (i: Pick<NextInput, "left" | "none" | "partial">): string => {
+    if (i.none === undefined || i.partial === undefined) return `${i.left} ${i.left === 1 ? "has" : "have"} votes missing.`
+    const parts = [i.none > 0 && `${i.none} ${i.none === 1 ? "has" : "have"} not voted at all`, i.partial > 0 && `${i.partial} ${i.partial === 1 ? "has" : "have"} votes missing`].filter(Boolean)
+    return parts.join(" and ") + "."
+}
 
 export function nextCard(i: NextInput): Next {
     if (i.phase === "draft")
@@ -120,7 +130,9 @@ export function nextCard(i: NextInput): Next {
         return {
             tone: "lime",
             heading: nobody ? "Everyone has finished" : `${i.finished} of ${i.claimed} have finished`,
-            text: nobody ? `Voting closes by itself ${i.closesLabel}.` : `${i.left} ${i.left === 1 ? "has" : "have"} not finished. Voting closes by itself ${i.closesLabel}.`,
+            text: nobody
+                ? `Voting closes by itself ${i.closesLabel}.`
+                : `${missingLine(i)} Voting closes by itself ${i.closesLabel}.`,
             primary: nobody ? null : { id: "see-left", label: "See who's left" },
         }
     }

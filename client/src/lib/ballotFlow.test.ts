@@ -57,9 +57,21 @@ describe("who voted", () => {
         { name: "Lou", voted: 0, total: 4, claimed: false },
     ]
     it("summary, order and names of who is left", () => {
-        expect(votedSummary(rows)).toEqual({ claimed: 3, finished: 1, left: 2, unclaimed: 1 })
+        expect(votedSummary(rows)).toEqual({ claimed: 3, finished: 1, left: 2, unclaimed: 1, none: 1, partial: 1 })
         expect(orderVoters(rows).map((r) => r.name)).toEqual(["Dee", "Cam", "Ava", "Lou"])
         expect(leftNames(rows)).toEqual(["Cam", "Dee"])
+    })
+})
+
+describe("skipped categories (P1-14)", () => {
+    it("separates people who voted nothing from people who skipped some", () => {
+        const s = votedSummary([{ name: "A", voted: 0, total: 4, claimed: true }, { name: "B", voted: 3, total: 4, claimed: true }, { name: "C", voted: 4, total: 4, claimed: true }])
+        expect([s.none, s.partial, s.finished]).toEqual([1, 1, 1])
+    })
+    it("the open Next text says votes are missing, not that people did not finish", () => {
+        const c = nextCard({ ...({ phase: "open", round: "main", opensLabel: "", closesLabel: "Nov 29", blockers: [], finished: 1, claimed: 3, left: 2, recording: false, recordError: false, categoryCount: 4, decided: 0, toEnter: 0, tied: 0, nextRound: null, roundRunning: false, allDecided: false } as NextInput), none: 1, partial: 1 })
+        expect(c.text).toContain("1 has not voted at all")
+        expect(c.text).toContain("1 has votes missing")
     })
 })
 

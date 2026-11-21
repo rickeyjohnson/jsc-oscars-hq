@@ -151,6 +151,8 @@ const BallotAdminPage = () => {
         finished: sum.finished,
         claimed: sum.claimed,
         left: sum.left,
+        none: sum.none,
+        partial: sum.partial,
         recording: pending > 0 && !recordError,
         recordError,
         categoryCount: views.length,
@@ -360,7 +362,7 @@ const BallotAdminPage = () => {
             >
                 <p className="text-callout text-label-2">
                     {sum.finished} of {sum.claimed} have finished.
-                    {left.length > 0 ? ` ${left.slice(0, 5).join(", ")}${left.length > 5 ? ` and ${left.length - 5} more` : ""} cannot vote or change votes after this.` : " Everyone has finished."}
+                    {left.length > 0 ? ` ${left.join(", ")} ${left.length === 1 ? "has" : "have"} votes missing (some may have skipped a category on purpose) and cannot add or change votes after this.` : " Everyone has finished."}
                     {sum.unclaimed > 0 ? ` ${plural(sum.unclaimed, "member")} has not signed up.` : ""}
                 </p>
                 <p className="text-callout text-label-2">Votes already cast are kept, and the results are recorded right away. You can reopen it until the winners are revealed.</p>
