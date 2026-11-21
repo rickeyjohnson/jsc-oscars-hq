@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { CalendarPlus, CircleHelp, Lightbulb, Mail, Smartphone, SlidersHorizontal, User, Waves } from "lucide-react"
+import { CalendarPlus, CircleHelp, RotateCcw, Lightbulb, Mail, Smartphone, SlidersHorizontal, User, Waves } from "lucide-react"
 import { supabase } from "../supabaseClient"
 import { useAuth } from "../context/AuthContext"
 import { useUserData } from "../context/UserContenxt"
@@ -14,6 +14,9 @@ import { Switch } from "../ui/Switch"
 import { useToast } from "../ui/Toast"
 import { useReduceMotionSetting } from "../ui/ReduceMotion"
 import { FirstRunGuide } from "./FirstRunGuide"
+import { FeatureIntro } from "../ui/FeatureIntro"
+import { INTROS_RESET_EVENT, introsFor, resetIntros } from "../ui/logic/featureIntros"
+import { resetGuide } from "../ui/logic/firstRun"
 import { CustomizeHomeSheet } from "./home/CustomizeHomeSheet"
 import { DEFAULT_CEREMONY_MINUTES, buildIcs, downloadIcs, icsFileName } from "../ui/logic/ics"
 import { loadHomePrefs, saveHomePrefs, type HomePrefs } from "../ui/logic/homePrefs"
@@ -46,6 +49,15 @@ const SettingsPage = () => {
         const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: authRedirectUrl("/login/reset") })
         if (error) console.error("error reseting password:", error.message)
         toast.show("Check your email")
+    }
+    const [intro, setIntro] = useState<{ id: string; on: boolean } | null>(null)
+    const visibleIntros = introsFor(isCommittee)
+    const shownIntro = intro ? visibleIntros.find((i) => i.id === intro.id) : undefined
+    const showAgain = () => {
+        resetIntros(storage(), userId)
+        resetGuide(storage(), userId)
+        window.dispatchEvent(new Event(INTROS_RESET_EVENT))
+        toast.show("Tips will show again")
     }
     const openGuide = () => {
         setGuideOpen(true)
@@ -80,8 +92,14 @@ const SettingsPage = () => {
                     <ListRow title="Reduce motion" subtitle="Turns off animations and transitions" leading={icon(Waves)} trailing={<Switch label="Reduce motion" checked={reduce} onChange={setReduce} />} />
                     <ListRow title="Install on your phone" subtitle="In your browser's share menu, choose Add to Home Screen" leading={icon(Smartphone)} />
                 </GroupedSection>
+                <GroupedSection header="How it works">
+                    <ListRow title="Welcome guide" subtitle="A quick tour of voting and results" leading={icon(CircleHelp)} chevron onClick={openGuide} />
+                    {visibleIntros.map((i) => (
+                        <ListRow key={i.id} title={i.title} chevron onClick={() => setIntro({ id: i.id, on: true })} />
+                    ))}
+                </GroupedSection>
                 <GroupedSection header="Help">
-                    <ListRow title="How it works" subtitle="A quick tour of voting and results" leading={icon(CircleHelp)} chevron onClick={openGuide} />
+                    <ListRow title="Show all tips again" subtitle="Replays each tip the next time you visit its screen" leading={icon(RotateCcw)} onClick={showAgain} />
                     <ListRow title="Not getting emails?" subtitle="Ask Rickey or Kadin" />
                 </GroupedSection>
             </div>
@@ -96,6 +114,7 @@ const SettingsPage = () => {
                     toast.show("Home updated")
                 }}
             />
+            {shownIntro && <FeatureIntro intro={shownIntro} open={Boolean(intro?.on)} onClose={() => setIntro((o) => (o ? { ...o, on: false } : o))} />}
             <FirstRunGuide open={guideOpen} onClose={() => setGuideOpen(false)} season={guideSeason} />
             <EditProfileModal isOpen={editOpen} onClose={() => setEditOpen(false)} />
         </Screen>

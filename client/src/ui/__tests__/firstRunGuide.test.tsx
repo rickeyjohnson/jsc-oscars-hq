@@ -94,7 +94,7 @@ describe("guide on Home and Settings", () => {
         mem.set(firstRunKey("u1"), "1")
         render(<MemoryRouter><SettingsPage /></MemoryRouter>)
         expect(screen.queryByRole("dialog", { name: "How it works" })).toBeNull()
-        fireEvent.click(screen.getByText("How it works"))
+        fireEvent.click(screen.getByText("Welcome guide"))
         expect(await screen.findByRole("dialog", { name: "How it works" })).toBeTruthy()
     })
 })
