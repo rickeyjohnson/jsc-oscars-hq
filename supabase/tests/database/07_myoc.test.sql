@@ -54,7 +54,7 @@ insert into public.__tap(line) select throws_ok($$ insert into myoc_ideas (windo
 insert into public.__tap(line) select throws_ok($$ update myoc_ideas set name = 'Edited late' where id = public.__id('I_micah_closed') $$, 'P0001', 'suggestions are closed', 'cannot edit once the window is closed');
 insert into public.__tap(line) select throws_ok($$ delete from myoc_ideas where name = 'Micah idea 1b' $$, '42501', null, 'members cannot delete');
 insert into public.__tap(line) select throws_ok($$ insert into myoc_windows (season_id, opens_at, closes_at) values (public.__id('S'), now(), now() + interval '1 day') $$, '42501', null, 'members cannot create windows');
-insert into public.__tap(line) select is((select count(*)::int from myoc_windows), 2, 'members can read windows');
+insert into public.__tap(line) select is((select count(*)::int from myoc_windows where id in (public.__id('W'), public.__id('WC'))), 2, 'members can read windows');
 
 -- ---------------------------------------------------------------- unlinked user
 select tests.clear_authentication();
@@ -64,7 +64,7 @@ insert into public.__tap(line) select throws_ok($$ insert into myoc_ideas (windo
 -- ---------------------------------------------------------------- as Rickey (committee)
 select tests.clear_authentication();
 select tests.authenticate_as(public.__id('rickey'));
-insert into public.__tap(line) select is((select count(*)::int from myoc_ideas), 22, 'committee reads every idea');
+insert into public.__tap(line) select is((select count(*)::int from myoc_ideas where window_id in (public.__id('W'), public.__id('WC'))), 22, 'committee reads every idea');
 insert into public.__tap(line) select is((select name from myoc_ideas where id = public.__id('I_nick')), 'Nick idea', 'the other member''s idea was not changed');
 insert into public.__tap(line) select lives_ok($$ update myoc_ideas set status = 'accepted', assigned_category = 'Superlatives' where name = 'Micah idea 1b' $$, 'committee accepts and assigns a category');
 insert into public.__tap(line) select lives_ok($$ update myoc_ideas set status = 'rejected', name = 'Micah idea 2 (reworded)' where name = 'Micah idea 2' $$, 'committee rejects and edits wording');
