@@ -52,7 +52,7 @@ const ProfilePage = () => {
             for (const c of d.results.categories) for (const n of c.nominees) nominees[n.id] = n
             tally = nomineeStats(Object.values(d.results.results), nominees).members[member.id] ?? { wins: 0, noms: 0 }
         }
-        return youStats({ released: d.released, summaries: d.summaries, tally, noms: preNoms, ceremonyAt: d.season?.ceremony_at ? new Date(d.season.ceremony_at) : null, now: new Date() })
+        return youStats({ released: d.released, tally, noms: preNoms })
     }, [d, member, preNoms])
 
     const name = displayName(member, profile)
@@ -78,14 +78,6 @@ const ProfilePage = () => {
                                             <p className="font-display text-title-1 tabular-nums">{s.value}</p>
                                         )}
                                         <p className="text-caption-1 text-label-2">{s.locked ? s.value : s.label}</p>
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="grid grid-cols-3 gap-2 lg:grid-cols-1">
-                                {stats.plain.map((s) => (
-                                    <div key={s.label} className="rounded-card bg-surface p-3 text-label lg:p-4">
-                                        <p className="font-display text-title-1 tabular-nums">{s.value}</p>
-                                        <p className="text-caption-1 text-label-2">{s.label}</p>
                                     </div>
                                 ))}
                             </div>
