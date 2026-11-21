@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { useParams } from "react-router-dom"
+import { useLocation, useNavigate, useParams } from "react-router-dom"
 import CategoryVoteCard from "../components/vote/CategoryVoteCard"
 import { fetchBallotDetail } from "../api/ballots"
 import { fetchMemberAvatars, fetchMembers } from "../api/members"
@@ -32,6 +32,8 @@ const refreshFailed = (): VoteMessage => ({ tone: "error", title: "Added, but co
 
 const VotePage = () => {
     const { ballotId } = useParams<{ ballotId: string }>()
+    const navigate = useNavigate()
+    const location = useLocation()
     const { member, loading: userLoading } = useUserData()
     const myMemberId = member?.id ?? null
     const [ballot, setBallot] = useState<BallotDetail | null>(null)
@@ -136,7 +138,8 @@ const VotePage = () => {
         if (seqs.current[cid] !== seq) return // a newer tap owns the UI state
         if (kind === "closed" && b?.status === "open") void refreshDetail().catch(() => {})
         const m = saveErrorMessage(kind, b ? new Date(b.closes_at) : undefined)
-        setMessage(cid, { tone: kind === "closed" ? "warn" : "error", title: m.title, detail: m.detail, retry: m.canRetry ? retry : undefined })
+        const login = () => navigate("/login", { state: { from: location.pathname + location.search, notice: "You were signed out. Log in to keep voting." } })
+        setMessage(cid, { tone: kind === "closed" ? "warn" : "error", title: m.title, detail: m.detail, ...(kind === "expired" ? { retry: login, retryLabel: "Log in" } : { retry: m.canRetry ? retry : undefined }) })
     }
 
     // Resolves true only when this save was accepted by the server.

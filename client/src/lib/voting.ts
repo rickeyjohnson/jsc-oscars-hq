@@ -103,14 +103,15 @@ export const findGroupBySet = (nominees: Nominee[], memberIds: string[]): Nomine
     return nominees.find((n) => isGroupNominee(n) && [...n.member_ids].sort().join("|") === key)
 }
 
-export type VoteMessage = { tone: "error" | "info" | "warn"; title: string; detail: string; retry?: () => void }
-export type SaveErrorKind = "closed" | "network" | "rule" | "groupSize" | "nameTaken" | "unlinked" | "generic"
+export type VoteMessage = { tone: "error" | "info" | "warn"; title: string; detail: string; retry?: () => void; retryLabel?: string }
+export type SaveErrorKind = "closed" | "network" | "rule" | "groupSize" | "nameTaken" | "unlinked" | "expired" | "generic"
 
 /** Sort a failed save into the one message that tells the voter what to do. */
 export const classifySaveError = (e: unknown, closesAt: Date, now: Date, online = true, status: string = "open"): SaveErrorKind => {
     if (now.getTime() >= closesAt.getTime() || status !== "open") return "closed"
     const err = e as { code?: string; message?: string } | null
     const msg = String(err?.message ?? "")
+    if (err?.code === "PGRST301" || (err as { status?: number } | null)?.status === 401 || /jwt expired|not signed in|invalid jwt/i.test(msg)) return "expired"
     if (!online || e instanceof TypeError || e instanceof TimeoutError || /failed to fetch|network|load failed/i.test(msg)) return "network"
     if (/ballot is not open/i.test(msg)) return "closed"
     if (/a group needs at least two/i.test(msg)) return "groupSize"
@@ -134,6 +135,8 @@ export const saveErrorMessage = (kind: SaveErrorKind, closesAt?: Date): Omit<Vot
             return { title: "Couldn't add that option", detail: "That name is already taken. Pick it from the list.", canRetry: false }
         case "unlinked":
             return { title: "Couldn't save your vote", detail: "Your account isn't linked to a member. Ask a committee member.", canRetry: false }
+        case "expired":
+            return { title: "You were signed out", detail: "Log in to keep voting. The votes you already saved are safe.", canRetry: false }
         default:
             return { title: "Couldn't save your vote", detail: "Something went wrong. Try again.", canRetry: true }
     }

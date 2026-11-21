@@ -84,7 +84,7 @@ const CategoryVoteCard = (p: Props) => {
                 )}
             </p>
 
-            {message && <VoteBanner className="mt-2" tone={message.tone} title={message.title} detail={message.detail} retry={message.retry} />}
+            {message && <VoteBanner className="mt-2" tone={message.tone} title={message.title} detail={message.detail} retry={message.retry} retryLabel={message.retryLabel} />}
 
             <div role="radiogroup" aria-label={category.name} onKeyDown={onRadioKey} className="mt-3 grid grid-cols-1 gap-2 lg:grid-cols-2">
                 {options.map((n) => {

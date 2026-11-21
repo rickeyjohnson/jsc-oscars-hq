@@ -5,7 +5,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom"
 import VotePage from "./VotePage"
 import { fetchBallotDetail } from "../api/ballots"
 import { fetchMembers } from "../api/members"
-import { fetchMyVotes } from "../api/votes"
+import { castVote, fetchMyVotes } from "../api/votes"
 import { ballot, category, nominee } from "../test/fixtures"
 
 const userState = vi.hoisted(() => ({ value: { member: { id: "m-me", name: "Me", user_id: "u-me" } as unknown, loading: false } }))
@@ -50,6 +50,19 @@ describe("VotePage load (P1-1)", () => {
         vi.mocked(fetchMembers).mockRejectedValue(new Error("members down"))
         renderPage()
         expect(await screen.findByRole("region", { name: /best duo/i })).toBeTruthy()
+        expect(screen.queryByRole("button", { name: "Try again" })).toBeNull()
+    })
+})
+
+describe("expired session while voting (P1-5)", () => {
+    it("says you were signed out and offers Log in, not a retry that cannot work", async () => {
+        vi.mocked(fetchBallotDetail).mockResolvedValue(ballot({ categories: [category("c1", "Best Picture", [nominee("n1", "Ann"), nominee("n2", "Bo")])] }))
+        vi.mocked(fetchMyVotes).mockResolvedValue({})
+        vi.mocked(castVote).mockRejectedValue({ code: "PGRST301", message: "JWT expired" })
+        renderPage()
+        fireEvent.click(await screen.findByRole("radio", { name: /ann$/i }))
+        expect((await screen.findByRole("alert")).textContent).toContain("You were signed out")
+        expect(screen.getByRole("button", { name: "Log in" })).toBeTruthy()
         expect(screen.queryByRole("button", { name: "Try again" })).toBeNull()
     })
 })
