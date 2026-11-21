@@ -25,21 +25,27 @@ const closed = mk("closed", { status: "closed" })
 const upcoming = mk("upcoming", { opens_at: new Date(now.getTime() + DAY).toISOString() })
 
 describe("ballotsView", () => {
-    it("splits into Open (soonest closing first, scheduled last) and Closed (newest first); drafts never show", () => {
+    it("splits into Open, Voted and Closed (each ballot in exactly one); drafts never show", () => {
         const later = mk("later", { closes_at: new Date(now.getTime() + 9 * DAY).toISOString() })
         const soon = mk("soon", { closes_at: new Date(now.getTime() + DAY).toISOString() })
         const old = mk("old", { status: "closed", closes_at: new Date(now.getTime() - 5 * DAY).toISOString() })
         const draft = mk("draft", { status: "draft" })
         const s = splitBallots([later, upcoming, closed, old, soon, voted, draft], now)
-        expect(s.open.map((b) => b.id)).toEqual(["soon", "voted", "later", "upcoming"])
+        expect(s.open.map((b) => b.id)).toEqual(["soon", "later", "upcoming"])
+        expect(s.voted.map((b) => b.id)).toEqual(["voted"])
         expect(s.closed.map((b) => b.id)).toEqual(["closed", "old"])
-        expect([...s.open, ...s.closed].some((b) => b.id === "draft")).toBe(false)
+        expect([...s.open, ...s.voted, ...s.closed]).toHaveLength(6)
+        expect([...s.open, ...s.voted, ...s.closed].some((b) => b.id === "draft")).toBe(false)
     })
-    it("tabs carry counts and default to Open unless only Closed has something", () => {
-        expect(ballotTabs(2, 1).map((t) => t.label)).toEqual(["Open 2", "Closed 1"])
-        expect(defaultTab(2, 1)).toBe("open")
-        expect(defaultTab(0, 3)).toBe("closed")
-        expect(defaultTab(0, 0)).toBe("open")
+    it("tabs carry counts, empty ones are muted, and the default is Open, then Voted, then Closed", () => {
+        expect(ballotTabs(2, 0, 1).map((t) => [t.label, t.muted])).toEqual([["Open 2", false], ["Voted 0", true], ["Closed 1", false]])
+        expect(defaultTab(2, 1, 1)).toBe("open")
+        expect(defaultTab(0, 1, 1)).toBe("voted")
+        expect(defaultTab(0, 0, 3)).toBe("closed")
+        expect(defaultTab(0, 0, 0)).toBe("open")
+    })
+    it("a fully voted open ballot says All voted", () => {
+        expect(ballotSubtitle(voted, now)).toBe("All voted · Closes in 3 days")
     })
     it("pill phase: a voted ballot is still Open, upcoming is Scheduled, closed vs released", () => {
         expect(pillPhase(voted, now)).toBe("open")

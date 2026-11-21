@@ -3,28 +3,35 @@ import { closesInLabel, opensAtLabel } from "../../lib/time"
 import type { Phase } from "../../lib/ballotFlow"
 import type { PebbleName } from "../tokens"
 
-export type BallotTab = "open" | "closed"
+export type BallotTab = "open" | "voted" | "closed"
 
 export const plural = (n: number, one: string, many: string): string => `${n} ${n === 1 ? one : many}`
 
 const statusOf = (b: BallotSummary, now: Date): BallotCardStatus => ballotCardStatus(b, b.category_count, b.my_vote_count, now)
 
-// Members never see drafts. Open = running or not open yet (soonest-closing first, scheduled after); Closed = ended or released (newest first).
-export function splitBallots(list: BallotSummary[], now: Date): { open: BallotSummary[]; closed: BallotSummary[] } {
+// Members never see drafts. A ballot is in exactly one tab:
+//   Open   = running with categories still to vote (soonest-closing first), then ballots not open yet
+//   Voted  = running and voted in every category (still editable until it closes; soonest-closing first)
+//   Closed = ended or released (newest first)
+export function splitBallots(list: BallotSummary[], now: Date): { open: BallotSummary[]; voted: BallotSummary[]; closed: BallotSummary[] } {
     const visible = list.filter((b) => b.status !== "draft")
     const t = (iso: string) => new Date(iso).getTime()
-    const running = visible.filter((b) => statusOf(b, now) === "open" || statusOf(b, now) === "voted").sort((a, c) => t(a.closes_at) - t(c.closes_at))
+    const byClose = (a: BallotSummary, c: BallotSummary) => t(a.closes_at) - t(c.closes_at)
+    const running = visible.filter((b) => statusOf(b, now) === "open").sort(byClose)
     const upcoming = visible.filter((b) => statusOf(b, now) === "upcoming").sort((a, c) => t(a.opens_at) - t(c.opens_at))
+    const voted = visible.filter((b) => statusOf(b, now) === "voted").sort(byClose)
     const closed = visible.filter((b) => statusOf(b, now) === "closed").sort((a, c) => t(c.closes_at) - t(a.closes_at))
-    return { open: [...running, ...upcoming], closed }
+    return { open: [...running, ...upcoming], voted, closed }
 }
 
-// Open by default; Closed only when nothing is open and there is something closed.
-export const defaultTab = (openCount: number, closedCount: number): BallotTab => (openCount === 0 && closedCount > 0 ? "closed" : "open")
+// Open if it has anything; else Voted; else Closed; else Open (its empty state).
+export const defaultTab = (openCount: number, votedCount: number, closedCount: number): BallotTab =>
+    openCount > 0 ? "open" : votedCount > 0 ? "voted" : closedCount > 0 ? "closed" : "open"
 
-export const ballotTabs = (openCount: number, closedCount: number): { value: BallotTab; label: string }[] => [
-    { value: "open", label: `Open ${openCount}` },
-    { value: "closed", label: `Closed ${closedCount}` },
+export const ballotTabs = (openCount: number, votedCount: number, closedCount: number): { value: BallotTab; label: string; muted: boolean }[] => [
+    { value: "open", label: `Open ${openCount}`, muted: openCount === 0 },
+    { value: "voted", label: `Voted ${votedCount}`, muted: votedCount === 0 },
+    { value: "closed", label: `Closed ${closedCount}`, muted: closedCount === 0 },
 ]
 
 /** The pill phase of a member's ballot: a voted ballot is still Open, an upcoming one is Scheduled. */
@@ -40,6 +47,7 @@ export function ballotSubtitle(b: BallotSummary, now: Date): string {
     const categories = plural(b.category_count, "category", "categories")
     if (status === "upcoming") return `${opensAtLabel(new Date(b.opens_at))} · ${categories}`
     if (status === "closed") return `Voting closed · ${categories}`
+    if (status === "voted") return `All voted · ${closesInLabel(new Date(b.closes_at), now)}`
     return `${b.my_vote_count} of ${b.category_count} voted · ${closesInLabel(new Date(b.closes_at), now)}`
 }
 

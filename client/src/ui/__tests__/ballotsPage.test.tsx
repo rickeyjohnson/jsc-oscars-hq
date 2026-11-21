@@ -86,6 +86,18 @@ describe("BallotsPage", () => {
         expect(screen.getByText("Closed", { selector: "span.inline-flex" })).toBeTruthy()
     })
 
+    it("Voted tab: fully voted open ballots only, default when nothing needs voting", async () => {
+        fetchMock.mockResolvedValue([mk("v", { my_vote_count: 4 }), mk("c", { status: "closed" })])
+        renderPage()
+        expect(await screen.findByText("Ballot v")).toBeTruthy()
+        expect(screen.getByRole("tab", { name: "Voted 1" }).getAttribute("aria-selected")).toBe("true")
+        expect(screen.getByText(/All voted · Closes in/)).toBeTruthy()
+        expect(screen.getByText("Open", { selector: "span.inline-flex" })).toBeTruthy()
+        expect(screen.queryByText("Ballot c")).toBeNull()
+        fireEvent.click(screen.getByRole("tab", { name: "Open 0" }))
+        expect(screen.getByText("No open ballots right now.")).toBeTruthy()
+    })
+
     it("defaults to Closed only when nothing is open and something is closed; drafts never show", async () => {
         fetchMock.mockResolvedValue([mk("c", { status: "closed" }), mk("d", { status: "draft" })])
         renderPage()

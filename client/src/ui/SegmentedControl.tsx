@@ -11,7 +11,7 @@ export function SegmentedControl<T extends string>({
     idPrefix,
 }: {
     label: string
-    options: { value: T; label: string }[]
+    options: { value: T; label: string; /** Still tappable, just quieter (e.g. a tab with nothing in it). */ muted?: boolean }[]
     value: T
     onChange: (v: T) => void
     idPrefix: string
@@ -41,7 +41,7 @@ export function SegmentedControl<T extends string>({
                         aria-selected={selected}
                         tabIndex={selected ? 0 : -1}
                         onClick={() => onChange(o.value)}
-                        className={`relative flex-1 min-h-11 rounded-full px-4 text-subhead font-bold select-none cursor-pointer transition-colors ${selected ? "text-on-inverse" : "text-label-2"}`}
+                        className={`relative flex-1 min-h-11 rounded-full px-4 text-subhead font-bold select-none cursor-pointer transition-colors ${selected ? "text-on-inverse" : o.muted ? "text-label-3" : "text-label-2"}`}
                     >
                         {selected && <motion.span layoutId={`${idPrefix}-thumb`} transition={spring.snappy} className="absolute inset-0 rounded-full bg-inverse" />}
                         <span className="relative">{o.label}</span>

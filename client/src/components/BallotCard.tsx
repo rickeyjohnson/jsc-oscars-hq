@@ -22,7 +22,7 @@ const BallotCard = ({ ballot, now }: { ballot: BallotSummary; now: Date }) => {
             {p.status === "open" || p.status === "voted" ? (
                 <div aria-hidden className="mt-3 flex gap-0.5">
                     {Array.from({ length: ballot.category_count }, (_, i) => (
-                        <span key={i} className={`h-1 flex-1 rounded-full ${i < ballot.my_vote_count ? "bg-pebble-lime" : "bg-strip-off"}`} />
+                        <span key={i} className={`h-1 flex-1 rounded-full ${p.status === "voted" ? "bg-pebble-sky" : i < ballot.my_vote_count ? "bg-pebble-lime" : "bg-strip-off"}`} />
                     ))}
                 </div>
             ) : null}

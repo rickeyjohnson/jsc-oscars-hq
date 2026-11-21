@@ -43,16 +43,16 @@ const BallotsPage = () => {
     const refresh = useCallback(() => setReloadKey((k) => k + 1), [])
     useRefetchOnFocus(refresh)
 
-    const { open, closed } = splitBallots(ballots ?? [], now)
+    const { open, voted, closed } = splitBallots(ballots ?? [], now)
     // Open unless nothing is open and something is closed; the member's own pick wins once made.
-    const selected: BallotTab = picked ?? defaultTab(open.length, closed.length)
-    const filtered = selected === "open" ? open : closed
+    const selected: BallotTab = picked ?? defaultTab(open.length, voted.length, closed.length)
+    const filtered = selected === "open" ? open : selected === "voted" ? voted : closed
 
     return (
         <Screen title="Ballots" width="wide">
             {!error && (
                 <div className="mb-5 max-w-md">
-                    <SegmentedControl label="Ballots" idPrefix="ballots-filter" options={ballotTabs(open.length, closed.length)} value={selected} onChange={setPicked} />
+                    <SegmentedControl label="Ballots" idPrefix="ballots-filter" options={ballotTabs(open.length, voted.length, closed.length)} value={selected} onChange={setPicked} />
                 </div>
             )}
             {error && <ErrorState title={COPY.somethingWrong} body={COPY.loadFailed("ballots")} onRetry={retry} />}
@@ -75,7 +75,7 @@ const BallotsPage = () => {
             {!error && ballots !== null && filtered.length === 0 && (
                 <EmptyState
                     icon={Inbox}
-                    title={selected === "open" ? "No open ballots right now." : "No closed ballots yet."}
+                    title={selected === "open" ? "No open ballots right now." : selected === "voted" ? "You haven't finished voting on any ballot yet." : "No closed ballots yet."}
                     body={
                         selected === "open"
                             ? nextOpening(ballots, now)
