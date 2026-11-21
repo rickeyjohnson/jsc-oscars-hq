@@ -40,6 +40,7 @@ const headings = () => screen.getAllByRole("heading", { level: 2 }).map((h) => h
 
 beforeEach(() => {
     mem.clear()
+    mem.set("jsc.firstRunGuide.v1.u1", "1")
     vi.stubGlobal("localStorage", { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => void mem.set(k, v), removeItem: (k: string) => void mem.delete(k) })
     profile.is_committee = false
     hook.state = ready(data())

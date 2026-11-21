@@ -15,6 +15,8 @@ import { CustomizeHomeSheet } from "./home/CustomizeHomeSheet"
 import { firstName } from "./home/format"
 import { useHomeData } from "./home/useHomeData"
 import { HomeWidget } from "./home/widgets"
+import { FirstRunGuide } from "./FirstRunGuide"
+import { hasSeenGuide, markGuideSeen } from "../ui/logic/firstRun"
 
 const storage = (): Storage | null => {
     try {
@@ -26,11 +28,16 @@ const storage = (): Storage | null => {
 
 const GRID = "grid grid-flow-dense grid-cols-2 items-stretch gap-3 lg:grid-cols-2 min-[1400px]:grid-cols-3"
 
-const HomeBody = ({ userId, isCommittee, name, memberId, imageUrl }: { userId: string; isCommittee: boolean; name: string; memberId?: string; imageUrl?: string | null }) => {
+const HomeBody = ({ userId, isCommittee, name, memberId, imageUrl, hold }: { userId: string; isCommittee: boolean; name: string; memberId?: string; imageUrl?: string | null; hold?: boolean }) => {
     const state = useHomeData(isCommittee)
     const toast = useToast()
     const [prefs, setPrefs] = useState<HomePrefs>(() => loadHomePrefs(storage(), userId, isCommittee))
     const [customizing, setCustomizing] = useState(false)
+    const [guideSeen, setGuideSeen] = useState(() => !userId || hasSeenGuide(storage(), userId))
+    const closeGuide = () => {
+        markGuideSeen(storage(), userId)
+        setGuideSeen(true)
+    }
     const released = Boolean(state.data?.released)
     // Until the first load answers, lay out release-gated widgets as skeletons so nothing pops in (or shifts) afterwards.
     const layoutReleased = state.data ? released : true
@@ -87,6 +94,7 @@ const HomeBody = ({ userId, isCommittee, name, memberId, imageUrl }: { userId: s
                     </div>
                 )}
             </div>
+            <FirstRunGuide open={!guideSeen && !hold} onClose={closeGuide} season={state.data?.season ?? null} />
             <CustomizeHomeSheet open={customizing} onClose={() => setCustomizing(false)} prefs={prefs} isCommittee={isCommittee} released={released} onChange={change} />
         </Screen>
     )
@@ -139,7 +147,7 @@ const HomePage = () => {
                     </SkeletonScreen>
                 </Screen>
             ) : (
-                <HomeBody userId={user?.id ?? ""} isCommittee={Boolean(profile?.is_committee)} name={firstName(member?.name ?? profile?.display_name)} memberId={member?.id} imageUrl={profile?.image_url} />
+                <HomeBody userId={user?.id ?? ""} isCommittee={Boolean(profile?.is_committee)} name={firstName(member?.name ?? profile?.display_name)} memberId={member?.id} imageUrl={profile?.image_url} hold={!profileSetupComplete} />
             )}
             <ProfileSetup open={!profileSetupComplete} onComplete={handleProfileSetupComplete} onSkip={handleProfileSetupSkip} />
         </>

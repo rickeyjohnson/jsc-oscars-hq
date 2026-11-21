@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { CalendarPlus, Lightbulb, Mail, Smartphone, SlidersHorizontal, User, Waves } from "lucide-react"
+import { CalendarPlus, CircleHelp, Lightbulb, Mail, Smartphone, SlidersHorizontal, User, Waves } from "lucide-react"
 import { supabase } from "../supabaseClient"
 import { useAuth } from "../context/AuthContext"
 import { useUserData } from "../context/UserContenxt"
@@ -13,6 +13,7 @@ import { Screen } from "../ui/Screen"
 import { Switch } from "../ui/Switch"
 import { useToast } from "../ui/Toast"
 import { useReduceMotionSetting } from "../ui/ReduceMotion"
+import { FirstRunGuide } from "./FirstRunGuide"
 import { CustomizeHomeSheet } from "./home/CustomizeHomeSheet"
 import { DEFAULT_CEREMONY_MINUTES, buildIcs, downloadIcs, icsFileName } from "../ui/logic/ics"
 import { loadHomePrefs, saveHomePrefs, type HomePrefs } from "../ui/logic/homePrefs"
@@ -35,6 +36,8 @@ const SettingsPage = () => {
     const [prefs, setPrefs] = useState<HomePrefs>(() => loadHomePrefs(storage(), userId, isCommittee))
     const [customizing, setCustomizing] = useState(false)
     const [editOpen, setEditOpen] = useState(false)
+    const [guideOpen, setGuideOpen] = useState(false)
+    const [guideSeason, setGuideSeason] = useState<Season | null>(null)
     const [reduce, setReduce] = useReduceMotionSetting()
 
     const sendReset = async () => {
@@ -43,6 +46,10 @@ const SettingsPage = () => {
         const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: authRedirectUrl("/login/reset") })
         if (error) console.error("error reseting password:", error.message)
         toast.show("Check your email")
+    }
+    const openGuide = () => {
+        setGuideOpen(true)
+        fetchCurrentSeason().then(setGuideSeason, () => {})
     }
     const addToCalendar = async () => {
         let season: Season | null = null
@@ -74,6 +81,7 @@ const SettingsPage = () => {
                     <ListRow title="Install on your phone" subtitle="In your browser's share menu, choose Add to Home Screen" leading={icon(Smartphone)} />
                 </GroupedSection>
                 <GroupedSection header="Help">
+                    <ListRow title="How it works" subtitle="A quick tour of voting and results" leading={icon(CircleHelp)} chevron onClick={openGuide} />
                     <ListRow title="Not getting emails?" subtitle="Ask Rickey or Kadin" />
                 </GroupedSection>
             </div>
@@ -88,6 +96,7 @@ const SettingsPage = () => {
                     toast.show("Home updated")
                 }}
             />
+            <FirstRunGuide open={guideOpen} onClose={() => setGuideOpen(false)} season={guideSeason} />
             <EditProfileModal isOpen={editOpen} onClose={() => setEditOpen(false)} />
         </Screen>
     )

@@ -21,6 +21,7 @@ const MIGRATED = ["components/OscarLogo.tsx", "components/ProfileSetup.tsx", "pa
     "pages/home/useHomeData.ts",
     "pages/home/format.ts",
     "pages/ResultsPage.tsx",
+    "pages/FirstRunGuide.tsx",
     "pages/results/WinnersView.tsx",
     "pages/results/LeaderboardView.tsx",
     "pages/results/YouCard.tsx",
