@@ -18,7 +18,7 @@ Dashboard -> SQL Editor -> paste each file from `supabase/migrations/`, one at a
 - [ ] `20261124000100_reopen_ballot.sql` (reopen a closed ballot)
   `select proname from pg_proc where proname = 'reopen_ballot';` -> 1 row
 - [ ] `20261124000200_myoc.sql` (Make Your Own Category)
-  `select to_regclass('public.myoc_ideas');` (use the table name the file creates; it must not be null)
+  `select to_regclass('public.myoc_ideas'), to_regclass('public.myoc_windows');` -> both non-null
 - [ ] `20261124000400_reset_claim_frees_login.sql` (reset a name also frees the login)
   `select pg_get_functiondef('public.reset_member_claim(text,uuid)'::regprocedure) like '%auth.users%';` -> `true`
 - [ ] `20261124000500_unique_round.sql` (no duplicate tiebreak/committee round). If it errors on duplicates, run the `select ... having count(*) > 1` in the file's header comment and delete the extra round.
