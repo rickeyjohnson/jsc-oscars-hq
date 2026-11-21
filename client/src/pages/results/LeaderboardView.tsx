@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Medal } from "lucide-react"
 import { Podium } from "../../ui/Podium"
 import { Avatar } from "../../ui/Avatar"
-import { Card } from "../../ui/Card"
+import { PEBBLE_EDGE } from "../../ui/logic/pebble"
 import { Chip } from "../../ui/Chip"
 import { EmptyState } from "../../ui/EmptyState"
 import { ordinal } from "../../lib/resultsView"
@@ -24,7 +24,7 @@ export function LeaderboardView({ seasonName, rows, avatars, you }: { seasonName
 
     return (
         <div className="grid grid-cols-1 gap-4 min-[1024px]:grid-cols-2 min-[1024px]:items-start">
-            <Card as="section">
+            <section className={`rounded-card border-l-4 bg-surface p-4 ${PEBBLE_EDGE.lime}`}>
                 <div className="flex items-center justify-between gap-2">
                     <h2 className="text-title-3">Season leaders</h2>
                     <Chip>{seasonName}</Chip>
@@ -35,6 +35,7 @@ export function LeaderboardView({ seasonName, rows, avatars, you }: { seasonName
                         <Podium
                             variant="hero"
                             animate
+                            faceRing="pebble"
                             items={top.map((r, i) => ({
                                 key: r.member_id,
                                 slot: (i + 1) as 1 | 2 | 3,
@@ -58,7 +59,7 @@ export function LeaderboardView({ seasonName, rows, avatars, you }: { seasonName
                                         <span aria-hidden="true">{rankLabel(r)}</span>
                                         <span className="sr-only">{r.tied ? `tied ${ordinal(r.rank)}` : ordinal(r.rank)}: </span>
                                     </span>
-                                    <Avatar id={r.member_id} name={r.name} src={avatars[r.member_id] ?? null} size={32} decorative />
+                                    <Avatar id={r.member_id} name={r.name} src={avatars[r.member_id] ?? null} size={32} ring="pebble" decorative />
                                     <span className="min-w-0 flex-1 break-words">{r.name}</span>
                                     <span aria-hidden="true" className="whitespace-nowrap text-footnote text-label-2">{`${r.wins} · ${r.noms} · ${r.rate}%`}</span>
                                     <span className="sr-only">{`${r.wins} ${r.wins === 1 ? "win" : "wins"}, ${r.noms} ${r.noms === 1 ? "nomination" : "nominations"}, ${r.rate} percent`}</span>
@@ -72,7 +73,7 @@ export function LeaderboardView({ seasonName, rows, avatars, you }: { seasonName
                         )}
                     </>
                 )}
-            </Card>
+            </section>
             {you && <YouCard you={you} />}
         </div>
     )

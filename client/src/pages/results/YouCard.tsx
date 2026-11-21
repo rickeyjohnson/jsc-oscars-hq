@@ -1,8 +1,7 @@
 import { useState } from "react"
 import { ChevronDown } from "lucide-react"
-import { Card } from "../../ui/Card"
 import { Chip } from "../../ui/Chip"
-import { PEBBLE_CLASS, RESULTS_EXCLUDE, pebbleAt } from "../../ui/logic/pebble"
+import { PEBBLE_CLASS, PEBBLE_EDGE, RESULTS_EXCLUDE, pebbleAt } from "../../ui/logic/pebble"
 import type { LeaderRow, MyCategory } from "../../lib/leaderboard"
 
 export type You = { name: string; row: LeaderRow; won: MyCategory[]; nominatedOnly: MyCategory[] }
@@ -15,7 +14,7 @@ export function YouCard({ you }: { you: You }) {
         { label: "Win rate", value: `${you.row.rate}%` },
     ]
     return (
-        <Card as="section">
+        <section className={`rounded-card border-l-4 bg-surface p-4 ${PEBBLE_EDGE.sky}`}>
             <h2 className="text-title-3">{`You (${you.name})`}</h2>
             <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                 {stats.map((t, i) => {
@@ -63,6 +62,6 @@ export function YouCard({ you }: { you: You }) {
                     )}
                 </div>
             )}
-        </Card>
+        </section>
     )
 }

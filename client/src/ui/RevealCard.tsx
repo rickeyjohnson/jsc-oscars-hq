@@ -1,24 +1,24 @@
 import { Podium } from "./Podium"
-import { Card } from "./Card"
 import { Chip } from "./Chip"
-import { PEBBLE_CLASS, RESULTS_EXCLUDE, pebbleAt } from "./logic/pebble"
+import { PEBBLE_EDGE, RESULTS_EXCLUDE, pebbleAt } from "./logic/pebble"
 import type { ResultCard } from "../lib/resultsView"
 
-/** One category's result: pebble header strip, podium, "Also placed" rows. Never shows vote counts. */
+/** One category's result: dark card with a pebble edge, podium, "Also placed" rows. Never shows vote counts. */
 export function RevealCard({ card, index, avatars }: { card: ResultCard; index: number; avatars: Record<string, string | null> }) {
-    const peb = PEBBLE_CLASS[pebbleAt(index, { exclude: RESULTS_EXCLUDE })]
+    const edge = PEBBLE_EDGE[pebbleAt(index, { exclude: RESULTS_EXCLUDE })]
     return (
-        <Card as="section" className="!p-0 overflow-hidden">
-            <h2 className={`px-4 py-3 font-display text-title-2 ${peb.bg} ${peb.text}`}>{`${card.number} · ${card.name}`}</h2>
-            <div className="p-4">
+        <section className={`rounded-card border-l-4 bg-surface p-4 ${edge}`}>
+            <h2 className="font-display text-title-2">{`${card.number} · ${card.name}`}</h2>
+            <div className="mt-3">
                 {card.pending ? (
                     <p className="text-callout text-label-2">No winner recorded</p>
                 ) : (
                     <>
                         <Podium
                             animate
+                            faceRing="pebble"
                             items={card.podium.map((e) => ({
-                                key: e.nominee_id,
+                                key: e.memberIds.length === 1 ? e.memberIds[0] : e.nominee_id,
                                 slot: e.slot,
                                 name: e.name,
                                 sub: e.tieLabel,
@@ -42,6 +42,6 @@ export function RevealCard({ card, index, avatars }: { card: ResultCard; index: 
                     </>
                 )}
             </div>
-        </Card>
+        </section>
     )
 }

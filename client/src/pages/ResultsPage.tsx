@@ -111,8 +111,8 @@ const ResultsPage = () => {
         const at = load.state === "sealed" && load.season.ceremony_at ? new Date(load.season.ceremony_at) : null
         return (
             <Screen title="Results">
-                <section className="rounded-card bg-pebble-lemon p-6 text-on-pebble-lemon">
-                    <Clapperboard aria-hidden className="size-12" />
+                <section className="rounded-card border-l-4 border-pebble-lemon bg-surface p-5">
+                    <Clapperboard aria-hidden className="size-10 text-pebble-lemon" />
                     <h2 className="mt-3 font-display text-title-1">Results are sealed.</h2>
                     <p className="mt-1 text-callout">
                         {at
