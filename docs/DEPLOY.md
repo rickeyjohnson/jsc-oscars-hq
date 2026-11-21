@@ -144,6 +144,7 @@ select count(*) from seasons where results_released_at is not null;  -- 0 before
 
 ## 8. Limitations and troubleshooting
 
+- **Keep-alive:** `.github/workflows/keepalive.yml` pings Supabase twice a day (auth health + one read-only RPC) and fails loudly on any non-2xx. You MUST add two GitHub repo secrets (Settings -> Secrets and variables -> Actions -> New repository secret): `SUPABASE_URL` (`https://fsuczxowirmsxtmzzsys.supabase.co`) and `SUPABASE_PUBLISHABLE_KEY` (the `sb_publishable_...` key; never the secret key). Then Actions -> keepalive -> Run workflow once to confirm it is green. GitHub disables scheduled workflows after 60 days without repo activity, and a paused project must still be restored by hand from the dashboard. A failed run emails the repo owner.
 - Supabase free projects pause after about a week of inactivity. Check the project is Active in the dashboard the day before voting week, and open the app yourself first. Restore from the dashboard if paused.
 - With confirmation OFF, signup needs no email. Reset emails only work with custom SMTP (section 2); otherwise use the recovery procedure in section 7.
 - Known limitations / fix before the ceremony (acceptable for 14 friends):
