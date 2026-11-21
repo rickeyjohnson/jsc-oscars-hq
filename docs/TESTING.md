@@ -57,3 +57,52 @@ Open two windows (private window or second browser profile): committee = `test.r
 
 ### Undo (mandatory before real voting)
 - [ ] Run `supabase/manual/wipe_test_data.sql`; confirm `released_seasons = 0` and `test_results = 0`, then DEPLOY.md section 4 counts.
+
+## Manual QA checklist for Nov 25-26 (real ballot)
+
+Run on BOTH a phone (iPhone Safari, installed to the Home Screen, plus Android Chrome if available) and a desktop browser at 1280 and 1440 wide. Tick each item per device where it matters. Use real accounts (not the test seed). Do this after `docs/PRE-PUBLISH.md` is complete.
+
+### Sign up, claim, log in
+- [ ] Create account with email + password; the name list shows only unclaimed names; claiming works and lands on `/app` (phone + desktop).
+- [ ] A claimed name no longer appears for the next person. "No names left" shows the committee hint.
+- [ ] Log out, Log in again; wrong password shows a plain error.
+- [ ] Google login (only if `VITE_GOOGLE_AUTH=true`): new Google user lands on `/claim`; returning user lands on `/app`; Back from Google leaves the button usable.
+- [ ] Reset password: expected to NOT email friends without custom SMTP; committee reset (DEPLOY.md section 7) works.
+- [ ] Profile photo setup sheet: skip, and upload (image under 5 MB).
+
+### Vote (as a member)
+- [ ] Ballots tab lists the open ballot with the right closing time in LOCAL time.
+- [ ] Tap a nominee: vote saves instantly, dash strip fills, reload keeps it.
+- [ ] Group category: pick a group, add a group (2+ names), your own name is not selectable.
+- [ ] Write-in on a category that allows it; none where it does not.
+- [ ] Change a vote; clear a vote.
+- [ ] Review step lists picks and flags skipped categories; "Finish voting" goes to Submit.
+- [ ] Submit ballot: short press does nothing, hold completes, "Not yet, back to voting" returns; votes remain editable until close.
+- [ ] Offline/slow: turn on airplane mode mid-vote: an error toast appears and no vote is silently lost; back online, vote again works.
+- [ ] Installed app mid-vote is not reloaded by an update (deploy a trivial change while a vote page is open; it must stay).
+
+### Committee
+- [ ] Create a ballot (builder: categories, presets, group type, bulk import), publish, set the closing time deliberately.
+- [ ] Completion panel shows who has voted; "who hasn't voted" widget on Home is committee-only.
+- [ ] Close the ballot now (members can no longer vote), and let one close by time.
+- [ ] Export CSV; run it through oscars.py (DEPLOY.md section 6, step 5).
+- [ ] Record results per category; podium places fill (`Fill in podium places` if shown).
+- [ ] Tiebreak: create the round, members vote, close it, record results. Committee round if still tied, or manual pick.
+- [ ] No-votes category: manual pick.
+- [ ] Release page is full page; blocked state lists reasons; hold 3 s releases; letting go early cancels.
+- [ ] Member names page: reset a member (and delete their Auth user) frees the name.
+
+### Results (as a member, after release)
+- [ ] Before release: only the sealed placeholder; no vote counts anywhere (Results, Leaderboard, You, Home widgets).
+- [ ] After release: envelope cards open ("Open all"), podiums with `tied` tags, no counts, same order after reload; Leaderboard segment and the You card are right.
+- [ ] Home widgets switch from the envelope teaser to latest winners and leaderboard peek.
+
+### Cross-cutting
+- [ ] Phone: safe areas, tab bar hides under the keyboard, no horizontal scroll, text readable at 200%.
+- [ ] Desktop: sidebar nav, centered columns, sheets as dialogs, Tab order, Esc closes sheets.
+- [ ] Settings -> Reduce motion works; OS Reduce Motion also removes the tab transition.
+- [ ] Document title changes per screen.
+- [ ] Add to Home Screen: dark launch, standalone, opens `/app`.
+
+## Design review (dev only)
+`npm --prefix client run dev` then `/dev/design` (never shipped: `grep -rl "Design gallery" client/dist` must print nothing). Use `?section=` to jump to a section and the reduce-motion toggle to check cross-fades. Check at 375x812, 1280x800 and 1440x900. Check fonts in DevTools -> Network -> Font: Century Gothic 300/400/700 load, no faux bold.

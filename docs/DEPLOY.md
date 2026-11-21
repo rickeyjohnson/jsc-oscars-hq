@@ -7,11 +7,13 @@ Supabase project: `fsuczxowirmsxtmzzsys` (see section 4 for which migrations are
 1. vercel.com -> Add New -> Project -> import the GitHub repo.
 2. Root Directory = `client`. Framework Preset = Vite. Build command `npm run build`. Output directory `dist`.
    - `npm run build` is `tsc -b && vite build`, so type errors fail the deploy. `client/tsconfig.app.json` excludes your unfinished `src/components/IndividualDetailsModal.tsx` so it cannot break the build.
-   - `client/vercel.json` adds an SPA fallback rewrite so deep links like `/app/ballots` work. Vercel serves real files (`/assets/*`, `/favicon`) before applying rewrites, so static assets are not affected.
+   - `client/vercel.json` adds an SPA fallback rewrite so deep links like `/app/ballots` work (the rewrite skips `/assets`, `/fonts`, `/icons`, `/sidechatters`, `sw.js`, the manifest). It also sets cache headers: `/assets/*` (hashed) is `immutable` for a year, `/fonts/*` 30 days, `/icons/*` 7 days, and `index.html`, `/`, `sw.js` and the manifest are `no-cache` so a deploy is picked up right away.
 3. Environment variables (Production + Preview):
    - `VITE_SUPABASE_URL` = `https://fsuczxowirmsxtmzzsys.supabase.co`
    - `VITE_SUPABASE_API_KEY` = the **publishable** key (`sb_publishable_...`). Not the secret key.
    - `VITE_SITE_URL` = leave blank for the first deploy.
+   - `VITE_GOOGLE_AUTH` = leave EMPTY until the Google provider is configured (section 2b); then `true`. It only shows or hides "Continue with Google".
+   - All `VITE_*` values are baked in at build time: change one, then Redeploy.
 4. Deploy. Note the URL, e.g. `https://<app>.vercel.app`.
 5. Set `VITE_SITE_URL=https://<app>.vercel.app` in Vercel -> Settings -> Environment Variables, then Deployments -> Redeploy (Vite bakes env vars in at build time).
 6. Check: `curl -s -o /dev/null -w "%{http_code}\n" https://<app>.vercel.app/app/ballots` returns `200`.
@@ -27,6 +29,24 @@ Dashboard -> Authentication -> Providers -> Email: turn OFF "Confirm email". Dec
 - Supabase's built-in mailer only sends to project team members and is rate limited. So **password reset emails will NOT reach friends** unless you set up custom SMTP. Default plan: use the committee recovery procedure in section 7.
 - Optional upgrade: custom SMTP (e.g. Resend free tier; Authentication -> SMTP Settings). Then reset emails work, and confirmation could be turned back on. The client handles both modes.
 
+## 2b. Google sign-in (optional)
+
+1. Google Cloud Console -> APIs and Services -> Credentials -> Create OAuth client ID (Web application). Authorized redirect URI = `https://fsuczxowirmsxtmzzsys.supabase.co/auth/v1/callback`. Copy the client ID and secret.
+2. Supabase -> Authentication -> Providers -> Google: enable, paste the client ID and secret, save.
+3. Supabase -> Authentication -> URL Configuration: Redirect URLs must include `https://<app>.vercel.app/**` (the app sends users back to `/app`) and `http://localhost:5173/**` for dev. A missing entry sends people to the Site URL root instead.
+4. Vercel: set `VITE_GOOGLE_AUTH=true`, Redeploy. Check: Log in shows "Continue with Google"; a first-time Google user lands on `/claim` to pick their name.
+5. If Google users are not being created, check the provider's "Allow new users" and that "Confirm email" does not block OAuth emails.
+Never paste the Google client secret into chat or the repo.
+
+## 2c. PWA (installable app)
+
+- Files: `client/public/manifest.webmanifest`, `client/public/icons/*`, `client/public/sw.js`. Icons are generated from the wordmark: `cd client && node scripts/render-icons.mjs` (needs the devDependency `@resvg/resvg-js`), then commit the PNGs.
+- Service worker: hand-rolled and minimal. It caches only same-origin GET static files (the app shell, `/assets`, `/fonts`, `/icons`) and is registered **only in production builds**. It never handles Supabase, API, auth or any POST, so votes are always live requests. Each build stamps a new version into `dist/sw.js`; old caches are deleted on activate.
+- Updates: a new version installs in the background and takes over only when the user is NOT on a vote screen (`/app/ballots/:id...`), then the page reloads once. Someone mid-vote keeps the old version until they leave the vote page or reopen the app.
+- Verify after deploy: DevTools -> Application -> Manifest (no warnings, 3 icons), Service Workers (activated), `curl -sI https://<app>.vercel.app/sw.js | grep -i cache-control` shows `no-cache`.
+- Install: iPhone Safari -> Share -> Add to Home Screen (title "Oscars"); Android Chrome -> Install app. Launch should be dark with no white flash, standalone, opening at `/app`.
+- Kill switch if it misbehaves: deploy a `sw.js` that unregisters (`self.registration.unregister()` then `caches.keys().then(k => k.forEach(caches.delete.bind(caches)))`) or tell people to remove and re-add the app.
+
 Dashboard -> Storage -> `profile-pics` bucket: set max file size to 5 MB and allowed MIME types to `image/*`.
 
 ## 3. Create the committee
@@ -38,6 +58,8 @@ Dashboard -> Storage -> `profile-pics` bucket: set max file size to 5 MB and all
    select m.name, p.is_committee from members m join profiles p on p.user_id = m.user_id order by m.name;
    ```
    Only Rickey and Kadin should be `true`. Sign out and in again so the app picks it up.
+
+> Before any public (beyond-friends) hosting also complete `docs/PRE-PUBLISH.md` (font licensing, secrets, test data).
 
 ## 4. Database migrations, tests and cleanup (MUST happen before voting opens)
 
@@ -134,6 +156,7 @@ select count(*) from seasons where results_released_at is not null;  -- 0 before
   - Missing partial unique index on `(parent_ballot_id, round)` to stop duplicate rounds.
 - Blank page / "Invalid API key": env vars wrong or not redeployed. Check Vercel env vars and redeploy.
 - Confirmation/reset link goes to localhost or errors: Site URL / Redirect URLs (section 2) or `VITE_SITE_URL` are wrong.
+- Stale UI after a deploy on an installed app: the old service worker is waiting. Close and reopen the app (or leave the vote page). DevTools -> Application -> Service Workers -> Unregister clears it.
 - 404 on refresh of a deep link: `client/vercel.json` missing from the deployed Root Directory.
 - Fallback if the app is down: collect votes another way and hand-write a CSV in the format oscars.py expects (the exported CSV is the reference).
 - Vercel logs: Project -> Deployments -> build logs. Supabase: Logs & Analytics.
