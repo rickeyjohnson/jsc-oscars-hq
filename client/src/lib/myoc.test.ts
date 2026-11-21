@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
     acceptedIdeas, canChange, filterCounts, filterIdeas, hintToMode, mergeTargets, memberStatusLabel, myocErrorKind, myocMessage, MYOC_UNAVAILABLE,
-    pickWindow, readBuilderState, reviewActions, slotsLeft, toDraftCategories, validateIdea, windowPhase, windowProblem, withAuthors,
+    pickWindow, readBuilderState, sortForBuilder, reviewActions, slotsLeft, toDraftCategories, validateIdea, windowPhase, windowProblem, withAuthors,
     type MyocIdea, type MyocWindow,
 } from "./myoc"
 
@@ -118,6 +118,10 @@ describe("hand-off", () => {
         expect(categories.every((c) => c.source === "myoc" && c.nominees.length === 0)).toBe(true)
         expect(categories.map((c) => c.order)).toEqual([1, 2])
         expect(categories[1]).toMatchObject({ nominee_mode: "preset", allow_member_add: true })
+    })
+    it("orders by assigned category, unassigned last, then oldest first", () => {
+        const a = idea("a", { assigned_category: "Zed", created_at: "1" }), b = idea("b", { created_at: "0" }), c = idea("c", { assigned_category: "alpha", created_at: "9" }), d = idea("d", { assigned_category: "alpha", created_at: "2" })
+        expect(sortForBuilder([a, b, c, d]).map((i) => i.id)).toEqual(["d", "c", "a", "b"])
     })
     it("ignores malformed router state", () => {
         expect(readBuilderState(null)).toEqual([])

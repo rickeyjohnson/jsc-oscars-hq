@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { CalendarPlus, Mail, Smartphone, SlidersHorizontal, User, Waves } from "lucide-react"
+import { CalendarPlus, Lightbulb, Mail, Smartphone, SlidersHorizontal, User, Waves } from "lucide-react"
 import { supabase } from "../supabaseClient"
 import { useAuth } from "../context/AuthContext"
 import { useUserData } from "../context/UserContenxt"
@@ -69,6 +69,7 @@ const SettingsPage = () => {
                 <GroupedSection header="App">
                     <ListRow title="Customize Home" leading={icon(SlidersHorizontal)} chevron onClick={() => setCustomizing(true)} />
                     <ListRow title="Add Oscar night to your calendar" leading={icon(CalendarPlus)} onClick={addToCalendar} />
+                    <ListRow title="MYOC" subtitle="Suggest a category for the next ballot" leading={icon(Lightbulb)} chevron to="/app/profile/settings/myoc" />
                     <ListRow title="Reduce motion" subtitle="Turns off animations and transitions" leading={icon(Waves)} trailing={<Switch label="Reduce motion" checked={reduce} onChange={setReduce} />} />
                     <ListRow title="Install on your phone" subtitle="In your browser's share menu, choose Add to Home Screen" leading={icon(Smartphone)} />
                 </GroupedSection>

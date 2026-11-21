@@ -171,6 +171,12 @@ export function hintToMode(h: MyocHint | null): { nominee_mode: NomineeMode; all
 
 export const acceptedIdeas = <T extends Pick<MyocIdea, "status">>(ideas: T[]): T[] => ideas.filter((i) => i.status === "accepted")
 
+/** Accepted ideas in builder order: grouped by assigned category (unassigned last), oldest first inside a group. */
+export function sortForBuilder<T extends Pick<MyocIdea, "assigned_category" | "created_at">>(ideas: T[]): T[] {
+    const key = (i: T) => (i.assigned_category?.trim() ? i.assigned_category.trim().toLowerCase() : "\uffff")
+    return [...ideas].sort((a, b) => key(a).localeCompare(key(b)) || a.created_at.localeCompare(b.created_at))
+}
+
 export type BuilderIdea = { name: string; description: string; hint: MyocHint | null }
 export const toBuilderIdeas = (ideas: Pick<MyocIdea, "name" | "description" | "hint">[]): BuilderIdea[] => ideas.map((i) => ({ name: i.name.trim(), description: i.description.trim(), hint: i.hint }))
 
