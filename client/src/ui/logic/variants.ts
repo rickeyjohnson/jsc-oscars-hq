@@ -29,6 +29,7 @@ export function buttonClasses(o: { variant?: ButtonVariant; pebble?: PebbleName;
     return [
         "inline-flex items-center justify-center gap-2 rounded-full select-none cursor-pointer whitespace-nowrap",
         "transition-[filter,background-color,color] duration-150 hover:brightness-110 data-hover:brightness-110 data-pressed:scale-97",
+        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
         "disabled:bg-fill disabled:text-label-3 disabled:pointer-events-none disabled:brightness-100",
         BUTTON_SIZE[o.size ?? "lg"],
         color,

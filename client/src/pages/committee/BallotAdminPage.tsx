@@ -104,8 +104,7 @@ const BallotAdminPage = ({ resultsAction, resultsBody }: Props) => {
 
                         {ballot.status === "open" && (
                             <Button
-                                variant="pebble"
-                                pebble="cherry"
+                                variant="destructive"
                                 size="md"
                                 fullWidth
                                 disabled={busy}
