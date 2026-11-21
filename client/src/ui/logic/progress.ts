@@ -5,11 +5,11 @@ export const progressLabel = (voted: number, total: number): string => `${voted}
 // Per-dash buttons only when each dash keeps at least 20px of visual width after a 2px gap.
 export const segmentsTappable = (widthPx: number, count: number): boolean => count > 0 && widthPx / count - 2 >= 20
 
-// Cream strip: voted = label, unvoted = faint cream, current = taller (8px vs 4px; vertical: wider).
+// Strip: current = sky and taller (7px vs 5px; vertical: wider), voted = label, unvoted = faint cream.
 export function dashClass(s: DashState, orientation: "horizontal" | "vertical"): string {
-    const color = s.voted ? "bg-label" : "bg-strip-off"
-    const size = orientation === "horizontal" ? (s.current ? "h-2 w-full" : "h-1 w-full") : s.current ? "w-2 h-full" : "w-1 h-full"
-    return `block rounded-full ${color} ${size} ${s.current ? "outline outline-1 outline-offset-2 outline-label" : ""}`.trim()
+    const color = s.current ? "bg-pebble-sky" : s.voted ? "bg-label" : "bg-strip-off"
+    const size = orientation === "horizontal" ? (s.current ? "h-[7px] w-full" : "h-[5px] w-full") : s.current ? "w-[7px] h-full" : "w-[5px] h-full"
+    return `block rounded-full ${color} ${size}`
 }
 
 export const dashAriaLabel = (i: number, label: string, s: DashState): string =>
