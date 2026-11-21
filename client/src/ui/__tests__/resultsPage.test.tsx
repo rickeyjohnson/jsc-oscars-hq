@@ -65,12 +65,13 @@ describe("ResultsPage", () => {
         expect(fetchSeasonResults).not.toHaveBeenCalled()
     })
 
-    it("shows the committee a preview banner and the cards", async () => {
+    it("shows the committee the cards without a banner", async () => {
         profile = { is_committee: true }
         vi.mocked(fetchCurrentSeason).mockResolvedValue(season())
         localStorage.setItem("jsc.envelope.S", "1")
         renderAt("/app/results")
-        expect(await screen.findByText(/Preview · only the committee sees this/)).toBeTruthy()
+        expect(await screen.findByRole("tab", { name: "Winners" })).toBeTruthy()
+        expect(screen.queryByText(/Preview/)).toBeNull()
         expect(await screen.findByText(/1 · Best Hair/)).toBeTruthy()
         expect(fetchSeasonResults).toHaveBeenCalled()
     })

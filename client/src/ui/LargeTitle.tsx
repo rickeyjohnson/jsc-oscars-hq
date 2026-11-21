@@ -8,7 +8,9 @@ export function LargeTitle({ title, subtitle, brandHeader, tone }: { title: stri
             {brandHeader ? (
                 <>
                     <h1 className="sr-only">{title}</h1>
-                    <OscarLogo size="small" decorative tone={tone} />
+                    <div className="lg:hidden">
+                        <OscarLogo size="small" decorative tone={tone} />
+                    </div>
                 </>
             ) : (
                 <h1 className="text-large-title">{title}</h1>

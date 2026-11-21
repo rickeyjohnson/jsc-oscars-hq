@@ -22,7 +22,7 @@ const storage = (): Storage | null => {
     }
 }
 
-const GRID = "grid grid-flow-dense grid-cols-1 items-start gap-3 lg:grid-cols-2 min-[1400px]:grid-cols-3"
+const GRID = "grid grid-flow-dense grid-cols-1 items-stretch gap-3 lg:grid-cols-2 min-[1400px]:grid-cols-3"
 
 const HomeBody = ({ userId, isCommittee, name, memberId }: { userId: string; isCommittee: boolean; name: string; memberId?: string }) => {
     const state = useHomeData(isCommittee)
@@ -63,7 +63,7 @@ const HomeBody = ({ userId, isCommittee, name, memberId }: { userId: string; isC
                 <p className="mb-4 text-large-title">{name ? `Hey ${name}.` : "Hey."}</p>
                 <div className={GRID}>
                     {memberWidgets.map((w) => (
-                        <div key={w.id} className={w.span === 2 ? "lg:col-span-2" : ""}>
+                        <div key={w.id} className={`h-full [&>section]:h-full ${w.span === 2 ? "lg:col-span-2" : ""}`}>
                             <HomeWidget id={w.id} state={state} now={now} memberId={memberId} />
                         </div>
                     ))}
@@ -73,7 +73,7 @@ const HomeBody = ({ userId, isCommittee, name, memberId }: { userId: string; isC
                         <p className="mb-3 text-title-3 uppercase tracking-wider">Committee</p>
                         <div className={GRID}>
                             {committeeWidgets.map((w) => (
-                                <div key={w.id} className={w.span === 2 ? "lg:col-span-2" : ""}>
+                                <div key={w.id} className={`h-full [&>section]:h-full ${w.span === 2 ? "lg:col-span-2" : ""}`}>
                                     <HomeWidget id={w.id} state={state} now={now} memberId={memberId} />
                                 </div>
                             ))}

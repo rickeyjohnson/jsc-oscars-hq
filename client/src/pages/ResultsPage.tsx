@@ -13,7 +13,6 @@ import { Screen } from "../ui/Screen"
 import { SegmentedControl } from "../ui/SegmentedControl"
 import { Skeleton, SkeletonScreen } from "../ui/Skeleton"
 import { ErrorState } from "../ui/ErrorState"
-import { Chip } from "../ui/Chip"
 import { Countdown } from "../ui/Countdown"
 import { Envelope } from "../ui/Envelope"
 import { COPY } from "../ui/copy"
@@ -137,7 +136,6 @@ const ResultsPage = () => {
         <Screen title="Results" width="wide">
             {showEnvelope && <Envelope onDone={closeEnvelope} />}
             <div className="space-y-4">
-                {!released && <Chip tone="warn">Preview · only the committee sees this</Chip>}
                 <SegmentedControl label="Results view" idPrefix="results" options={TABS} value={tab} onChange={setTab} />
                 <div role="tabpanel" aria-labelledby={`results-tab-${tab}`}>
                     {tab === "winners" ? (
