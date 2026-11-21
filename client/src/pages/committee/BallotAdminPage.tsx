@@ -10,7 +10,7 @@ import { Stepper } from "../../components/committee/Stepper"
 import WhoVoted from "../../components/committee/WhoVoted"
 import { attachPlaces } from "../../lib/places"
 import { publishBlockers } from "../../lib/ballotForm"
-import { leftNames, nextCard, PHASE_LABEL, PHASE_PEBBLE, phaseOf, stepperSteps, votedSummary, type Phase, type PrimaryId } from "../../lib/ballotFlow"
+import { leftNames, nextCard, phaseOf, stepperSteps, votedSummary, type Phase, type PrimaryId } from "../../lib/ballotFlow"
 import { canReopen, closeTimeProblem, localDateTimeInput } from "../../lib/reopen"
 import { manualResult, roundEntries } from "../../lib/rounds"
 import { manualBase, type CategoryView } from "../../lib/tallyView"
@@ -19,7 +19,7 @@ import { completionByMember, type BallotSummary } from "../../lib/voting"
 import { useConfirm } from "../../ui/ConfirmProvider"
 import { Screen } from "../../ui/Screen"
 import { Button } from "../../ui/Button"
-import { Chip } from "../../ui/Chip"
+import { StatusPill } from "../../ui/StatusPill"
 import { SegmentedControl } from "../../ui/SegmentedControl"
 import { GroupedSection } from "../../ui/GroupedSection"
 import { ErrorState } from "../../ui/ErrorState"
@@ -278,7 +278,6 @@ const BallotAdminPage = () => {
     const showReopen = phase === "closed" && !committeeRound && canReopen(sel, childRounds.length > 0, seasonReleased, now)
     const showClose = phase === "open" && sel.status === "open"
     const left = leftNames(rows)
-    const phasePebble = PHASE_PEBBLE[phase]
 
     return (
         <Screen title={sel.name} back={{ to: "/app/profile/ballots", label: "Ballots" }} width="wide">
@@ -291,7 +290,7 @@ const BallotAdminPage = () => {
                 )}
                 <div className="space-y-3 lg:col-start-1">
                     <div className="flex flex-wrap items-center gap-2">
-                        <Chip tone={phasePebble === "grape" ? "neutral" : phasePebble}>{PHASE_LABEL[phase]}</Chip>
+                        <StatusPill phase={phase} />
                         <span className="text-subhead text-label-2">
                             {phase === "draft" ? "Not published" : phase === "scheduled" ? `Opens ${when(sel.opens_at)}` : phase === "open" ? `Closes ${when(sel.closes_at)}` : `Closed ${when(sel.closes_at)}`}
                         </span>

@@ -55,7 +55,7 @@ describe("BallotsPage", () => {
     it("shows an empty state when there are no ballots", async () => {
         fetchMock.mockResolvedValue([])
         renderPage()
-        expect(await screen.findByText(/no ballots yet/i)).toBeTruthy()
+        expect(await screen.findByText(/no open ballots right now/i)).toBeTruthy()
     })
 
     it("renders cards with links, subtitle and plural copy", async () => {
@@ -65,20 +65,39 @@ describe("BallotsPage", () => {
         expect(link.getAttribute("href")).toBe("/app/ballots/a")
         expect(screen.getByText(/1 of 4 voted · Closes in 3 days/)).toBeTruthy()
         expect(screen.getByText("Continue voting")).toBeTruthy()
-        expect(screen.getByText("Tiebreak")).toBeTruthy()
+        expect(screen.getByText("Open", { selector: "span.inline-flex" })).toBeTruthy()
+        // the closed tiebreak is only under Closed
+        expect(screen.queryByText("Tiebreak")).toBeNull()
+        fireEvent.click(screen.getByRole("tab", { name: "Closed 1" }))
+        expect(await screen.findByText("Tiebreak")).toBeTruthy()
         expect(screen.getByText(/Voting closed · 1 category$/)).toBeTruthy()
         expect(document.body.textContent).not.toMatch(/categorie\(s\)/)
     })
 
-    it("filters and shows a filtered empty state only when the filtered list is empty", async () => {
-        fetchMock.mockResolvedValue([mk("a")])
+    it("Open | Closed with counts; Open by default; closed ballots only under Closed", async () => {
+        fetchMock.mockResolvedValue([mk("a"), mk("c", { status: "closed" })])
         renderPage()
         await screen.findByText("Ballot a")
-        fireEvent.click(screen.getByRole("tab", { name: "Closed" }))
+        expect(screen.getByRole("tab", { name: "Open 1" }).getAttribute("aria-selected")).toBe("true")
+        expect(screen.queryByText("Ballot c")).toBeNull()
+        fireEvent.click(screen.getByRole("tab", { name: "Closed 1" }))
         expect(screen.queryByText("Ballot a")).toBeNull()
-        expect(screen.getByText("No closed ballots yet.")).toBeTruthy()
-        fireEvent.click(screen.getByRole("tab", { name: "Open" }))
-        await waitFor(() => expect(screen.getByText("Ballot a")).toBeTruthy())
-        expect(screen.queryByText(/no open ballots/i)).toBeNull()
+        expect(screen.getByText("Ballot c")).toBeTruthy()
+        expect(screen.getByText("Closed", { selector: "span.inline-flex" })).toBeTruthy()
+    })
+
+    it("defaults to Closed only when nothing is open and something is closed; drafts never show", async () => {
+        fetchMock.mockResolvedValue([mk("c", { status: "closed" }), mk("d", { status: "draft" })])
+        renderPage()
+        expect(await screen.findByText("Ballot c")).toBeTruthy()
+        expect(screen.queryByText("Ballot d")).toBeNull()
+        expect(screen.getByRole("tab", { name: "Closed 1" }).getAttribute("aria-selected")).toBe("true")
+    })
+
+    it("nothing at all shows the Open empty state with when voting opens", async () => {
+        fetchMock.mockResolvedValue([mk("d", { status: "draft" })])
+        renderPage()
+        expect(await screen.findByText("No open ballots right now.")).toBeTruthy()
+        expect(screen.getByText(/Voting opens when the committee publishes a ballot/)).toBeTruthy()
     })
 })

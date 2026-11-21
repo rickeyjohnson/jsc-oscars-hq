@@ -11,10 +11,10 @@ import { ErrorState } from "../ui/ErrorState"
 import { COPY } from "../ui/copy"
 import { opensAtLabel } from "../lib/time"
 import { useRefetchOnFocus } from "../ui/useRefetchOnFocus"
-import { BALLOT_FILTERS, emptyFilterText, nextOpening, filterBallots, type BallotFilter } from "../ui/logic/ballotsView"
+import { ballotTabs, defaultTab, nextOpening, splitBallots, type BallotTab } from "../ui/logic/ballotsView"
 
 const BallotsPage = () => {
-    const [selected, setSelected] = useState<BallotFilter>("all")
+    const [picked, setPicked] = useState<BallotTab | null>(null)
     const [ballots, setBallots] = useState<BallotSummary[] | null>(null)
     const [error, setError] = useState<string | null>(null)
     const [reloadKey, setReloadKey] = useState(0)
@@ -43,13 +43,16 @@ const BallotsPage = () => {
     const refresh = useCallback(() => setReloadKey((k) => k + 1), [])
     useRefetchOnFocus(refresh)
 
-    const filtered = filterBallots(ballots ?? [], selected, now)
+    const { open, closed } = splitBallots(ballots ?? [], now)
+    // Open unless nothing is open and something is closed; the member's own pick wins once made.
+    const selected: BallotTab = picked ?? defaultTab(open.length, closed.length)
+    const filtered = selected === "open" ? open : closed
 
     return (
         <Screen title="Ballots" width="wide">
             {!error && (
                 <div className="mb-5 max-w-md">
-                    <SegmentedControl label="Filter ballots" idPrefix="ballots-filter" options={BALLOT_FILTERS} value={selected} onChange={setSelected} />
+                    <SegmentedControl label="Ballots" idPrefix="ballots-filter" options={ballotTabs(open.length, closed.length)} value={selected} onChange={setPicked} />
                 </div>
             )}
             {error && <ErrorState title={COPY.somethingWrong} body={COPY.loadFailed("ballots")} onRetry={retry} />}
@@ -64,16 +67,24 @@ const BallotsPage = () => {
             )}
             {!error && ballots !== null && filtered.length > 0 && (
                 <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-                    {filtered.map((b, i) => (
-                        <BallotCard key={b.id} ballot={b} now={now} index={i} />
+                    {filtered.map((b) => (
+                        <BallotCard key={b.id} ballot={b} now={now} />
                     ))}
                 </div>
             )}
-            {!error && ballots !== null && filtered.length === 0 && <EmptyState
+            {!error && ballots !== null && filtered.length === 0 && (
+                <EmptyState
                     icon={Inbox}
-                    title={emptyFilterText(selected)}
-                    body={selected === "all" || selected === "open" ? (nextOpening(ballots, now) ? `${opensAtLabel(new Date(nextOpening(ballots, now)!.opens_at))}.` : "Voting opens when the committee publishes a ballot. You'll see it here.") : undefined}
-                />}
+                    title={selected === "open" ? "No open ballots right now." : "No closed ballots yet."}
+                    body={
+                        selected === "open"
+                            ? nextOpening(ballots, now)
+                                ? `${opensAtLabel(new Date(nextOpening(ballots, now)!.opens_at))}.`
+                                : "Voting opens when the committee publishes a ballot. You'll see it here."
+                            : undefined
+                    }
+                />
+            )}
         </Screen>
     )
 }

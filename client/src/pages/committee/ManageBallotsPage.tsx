@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import { Inbox, Plus } from "lucide-react"
+import { ChevronDown, Inbox, Plus } from "lucide-react"
 import { fetchBallotSummaries, fetchCurrentSeason } from "../../api/ballots"
 import { fetchReleaseStatus } from "../../api/results"
 import { releaseChecks } from "../../lib/release"
-import { groupBallots, PHASE_LABEL, PHASE_PEBBLE, phaseOf, type ManageItem } from "../../lib/ballotFlow"
+import { groupBallots, phaseOf, type ManageItem } from "../../lib/ballotFlow"
 import type { BallotSummary } from "../../lib/voting"
 import { Screen } from "../../ui/Screen"
 import { Button } from "../../ui/Button"
-import { Chip } from "../../ui/Chip"
+import { StatusPill } from "../../ui/StatusPill"
 import { Skeleton, SkeletonScreen } from "../../ui/Skeleton"
 import { EmptyState } from "../../ui/EmptyState"
 import { ErrorState } from "../../ui/ErrorState"
@@ -29,7 +29,6 @@ const subtitle = (b: BallotSummary, now: Date): string => {
 
 const Row = ({ b, hint, child, now }: { b: BallotSummary; hint?: string | null; child?: boolean; now: Date }) => {
     const p = phaseOf(b, now)
-    const pebble = PHASE_PEBBLE[p]
     return (
         <li>
             <Link to={`/app/profile/ballots/${b.id}`} className={`flex min-h-16 w-full items-center gap-3 py-3 pr-4 hover:bg-fill active:bg-fill ${child ? "bg-fill pl-8" : "pl-4"}`}>
@@ -38,10 +37,19 @@ const Row = ({ b, hint, child, now }: { b: BallotSummary; hint?: string | null; 
                     <span className="block truncate text-footnote text-label-2">{subtitle(b, now)}</span>
                     {hint && <span className="block text-footnote font-bold text-pebble-lemon">Next: {hint}</span>}
                 </span>
-                <Chip tone={pebble === "grape" ? "neutral" : pebble}>{PHASE_LABEL[p]}</Chip>
+                <StatusPill phase={p} />
             </Link>
         </li>
     )
+}
+
+const FINISHED_KEY = "jsc.manage.closedOpen"
+const readOpen = (): boolean => {
+    try {
+        return sessionStorage.getItem(FINISHED_KEY) === "1"
+    } catch {
+        return false
+    }
 }
 
 type Reveal = { released: boolean; passed: number; total: number } | null
@@ -51,6 +59,17 @@ const ManageBallotsPage = () => {
     const [error, setError] = useState(false)
     const [reload, setReload] = useState(0)
     const [reveal, setReveal] = useState<Reveal>(null)
+    // closed/released ballots sit in a collapsed section; the choice is remembered for this session
+    const [closedOpen, setClosedOpen] = useState(readOpen)
+    const toggleClosed = () =>
+        setClosedOpen((o) => {
+            try {
+                sessionStorage.setItem(FINISHED_KEY, o ? "0" : "1")
+            } catch {
+                /* not remembered */
+            }
+            return !o
+        })
 
     useEffect(() => {
         let cancelled = false
@@ -123,12 +142,22 @@ const ManageBallotsPage = () => {
             {!error && ballots && ballots.length > 0 && (
                 <div className="grid gap-x-8 gap-y-5 lg:grid-cols-2 lg:items-start">
                     <div className="space-y-5">
-                        {groups.map((g) => (
+                        {groups.map((g) =>
+                            g.key === "finished" ? (
+                                <section key={g.key} aria-label="Closed ballots">
+                                    <button type="button" aria-expanded={closedOpen} onClick={toggleClosed} className="flex min-h-11 w-full items-center justify-between rounded-card bg-surface px-4 text-callout font-bold">
+                                        <span>Closed ballots ({g.items.length})</span>
+                                        <ChevronDown aria-hidden className={`size-5 transition-transform motion-reduce:transition-none ${closedOpen ? "rotate-180" : ""}`} />
+                                    </button>
+                                    {closedOpen && <ul className="mt-2 list-none divide-y divide-sep overflow-hidden rounded-card bg-surface p-0">{g.items.map(item)}</ul>}
+                                </section>
+                            ) : (
                             <section key={g.key} aria-label={g.title}>
                                 <h2 className="mb-1.5 px-1 text-caption-2 font-bold uppercase tracking-wider text-label-2">{g.title}</h2>
                                 <ul className="list-none divide-y divide-sep overflow-hidden rounded-card bg-surface p-0">{g.items.map(item)}</ul>
                             </section>
-                        ))}
+                            ),
+                        )}
                     </div>
                     {reveal && (
                         <section aria-label="Reveal winners" className={`rounded-card border-l-4 bg-surface p-4 ${PEBBLE_EDGE.lemon}`}>

@@ -102,11 +102,21 @@ describe("ManageBallotsPage", () => {
             ballot({ id: "b2", name: "Tie", round: "tiebreak", parent_ballot_id: "b1" }),
             ballot({ id: "b3", name: "Hot Takes" }),
             ballot({ id: "b4", name: "Fall Bonus", status: "draft" }),
+            ballot({ id: "b5", name: "Old Ballot", status: "released" }),
         ])
         wrap(<ManageBallotsPage />)
         const link = (await screen.findByText("Main Ballot")).closest("a")!
         expect(link.getAttribute("href")).toBe("/app/profile/ballots/b1")
-        expect(screen.getAllByRole("region").map((r) => r.getAttribute("aria-label"))).toEqual(["Needs you", "Open", "Drafts"])
+        expect(screen.getAllByRole("region").map((r) => r.getAttribute("aria-label"))).toEqual(["Needs you", "Open", "Drafts", "Closed ballots"])
+        // closed/released sit in a collapsed disclosure, remembered per session
+        const toggle = screen.getByRole("button", { name: /Closed ballots \(1\)/ })
+        expect(toggle.getAttribute("aria-expanded")).toBe("false")
+        expect(screen.queryByText("Old Ballot")).toBeNull()
+        fireEvent.click(toggle)
+        expect(screen.getByText("Old Ballot")).toBeTruthy()
+        expect(sessionStorage.getItem("jsc.manage.closedOpen")).toBe("1")
+        fireEvent.click(toggle)
+        expect(sessionStorage.getItem("jsc.manage.closedOpen")).toBe("0")
         const needs = screen.getByRole("region", { name: "Needs you" })
         expect(within(needs).getByText("Tie")).toBeTruthy()
         expect(screen.getByText("Next: check the rounds")).toBeTruthy()
