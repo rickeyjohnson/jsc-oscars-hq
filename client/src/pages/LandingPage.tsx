@@ -1,8 +1,10 @@
 import FallingProfileBallsPhysics from "../components/FallingProfileBallPhysics"
 import OscarLogo from "../components/OscarLogo"
+import { useAuth } from "../context/AuthContext"
 import { Button } from "../ui/Button"
 
 const LandingPage = () => {
+    const { user } = useAuth()
     return (
         <div className="bg-bg text-label relative min-h-dvh overflow-hidden">
             <FallingProfileBallsPhysics />
@@ -11,12 +13,20 @@ const LandingPage = () => {
                     <OscarLogo size="medium" as="h1" />
                 </div>
                 <div className="pointer-events-auto flex flex-col gap-3">
-                    <Button to="/signup" variant="primary" size="lg" fullWidth>
-                        Get started
-                    </Button>
-                    <Button to="/login" variant="secondary" size="lg" fullWidth>
-                        Log in
-                    </Button>
+                    {user ? (
+                        <Button to="/app" variant="primary" size="lg" fullWidth>
+                            Open app
+                        </Button>
+                    ) : (
+                        <>
+                            <Button to="/signup" variant="primary" size="lg" fullWidth>
+                                Get started
+                            </Button>
+                            <Button to="/login" variant="secondary" size="lg" fullWidth>
+                                Log in
+                            </Button>
+                        </>
+                    )}
                 </div>
             </main>
         </div>

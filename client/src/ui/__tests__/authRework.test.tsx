@@ -12,6 +12,7 @@ const navigate = vi.fn()
 const refetch = vi.fn()
 const status = vi.fn()
 const available = vi.fn()
+let authUser: { id: string; email: string } | null = { id: "u1", email: "a@b.co" }
 let member: { id: string; name: string; user_id: string } | null = null
 
 vi.mock("../../supabaseClient", () => ({
@@ -20,7 +21,7 @@ vi.mock("../../supabaseClient", () => ({
         rpc: (...a: unknown[]) => rpc(...a),
     },
 }))
-vi.mock("../../context/AuthContext", () => ({ useAuth: () => ({ session: null, user: { id: "u1", email: "a@b.co" }, loading: false }) }))
+vi.mock("../../context/AuthContext", () => ({ useAuth: () => ({ session: null, user: authUser, loading: false }) }))
 vi.mock("../../context/UserContenxt", () => ({ useUserData: () => ({ member, loading: false, profile: null, refetch }) }))
 vi.mock("../../components/FallingProfileBallPhysics", () => ({ default: () => <div data-testid="balls" /> }))
 vi.mock("../../api/members", () => ({ fetchMemberNameStatus: () => status(), fetchAvailableMemberNames: () => available() }))
@@ -31,7 +32,7 @@ import LoginPage from "../../pages/LoginPage"
 import SignupPage from "../../pages/SignupPage"
 import ClaimNamePage from "../../pages/ClaimNamePage"
 import { shouldClaimName } from "../../lib/claimName"
-import { ballKey, ballRingColor } from "../logic/landingBalls"
+import { BALL_RADIUS_MAX, BALL_RADIUS_MIN, ballKey, ballRadius, ballRingColor } from "../logic/landingBalls"
 import { pebbleFor } from "../logic/pebble"
 import { PEBBLE_COLORS } from "../tokens"
 
@@ -51,6 +52,7 @@ beforeEach(() => {
     signOut.mockResolvedValue({ error: null })
     refetch.mockResolvedValue(undefined)
     member = null
+    authUser = { id: "u1", email: "a@b.co" }
     sessionStorage.clear()
     vi.stubEnv("VITE_GOOGLE_AUTH", "")
 })
@@ -60,7 +62,14 @@ afterEach(() => {
 })
 
 describe("Landing rework", () => {
+    it("a signed-in visitor sees Open app instead of Get started / Log in", () => {
+        wrap(<LandingPage />)
+        expect(screen.getByRole("link", { name: "Open app" }).getAttribute("href")).toBe("/app")
+        expect(screen.queryByRole("link", { name: "Get started" })).toBeNull()
+        expect(screen.queryByRole("link", { name: "Log in" })).toBeNull()
+    })
     it("has no tagline and centers the buttons under the logo", () => {
+        authUser = null
         wrap(<LandingPage />)
         expect(screen.queryByText(/be there or be/i)).toBeNull()
         const main = screen.getByRole("main")
@@ -73,6 +82,20 @@ describe("Landing rework", () => {
 })
 
 describe("falling ball rings", () => {
+    it("ball radius is stable per index, varies, and stays in range", () => {
+        const r = Array.from({ length: 13 }, (_, i) => ballRadius(i))
+        expect(r).toEqual(Array.from({ length: 13 }, (_, i) => ballRadius(i)))
+        for (const x of r) {
+            expect(x).toBeGreaterThanOrEqual(BALL_RADIUS_MIN)
+            expect(x).toBeLessThanOrEqual(BALL_RADIUS_MAX)
+        }
+        expect(new Set(r).size).toBeGreaterThan(3)
+    })
+    it("a failed image fills the ring with its pebble instead of drawing a broken photo", () => {
+        const src = readFileSync(join(__dirname, "../../components/FallingProfileBallPhysics.tsx"), "utf8")
+        expect(src).toMatch(/img\.onerror/)
+        expect(src).toMatch(/ball\.failed/)
+    })
     it("derives a stable pebble ring color per photo key", () => {
         expect(ballRingColor(0)).toBe(ballRingColor(0))
         expect(ballRingColor(3)).toBe(PEBBLE_COLORS[pebbleFor(ballKey(3))].bg)

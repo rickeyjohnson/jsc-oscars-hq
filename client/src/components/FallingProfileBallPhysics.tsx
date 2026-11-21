@@ -12,10 +12,9 @@ import {
     Events,
 } from "matter-js"
 import { settledLayout } from "../ui/logic/settle"
-import { ballRingColor } from "../ui/logic/landingBalls"
+import { BALL_RADIUS_MAX, ballRadius, ballRingColor } from "../ui/logic/landingBalls"
 
 const BALL_COUNT = 13
-const BALL_RADIUS = 40
 const WALL_THICKNESS = 200
 const RING_WIDTH = 3
 const RING_GAP = 2
@@ -67,9 +66,9 @@ const FallingProfileBallsPhysics: React.FC = () => {
         /* ---------- Balls ---------- */
         const balls: any = Array.from({ length: BALL_COUNT }).map((_, index) => {
             const body = Bodies.circle(
-                Math.random() * (w - BALL_RADIUS * 2) + BALL_RADIUS,
+                Math.random() * (w - ballRadius(index) * 2) + ballRadius(index),
                 Math.random() * -300,
-                BALL_RADIUS,
+                ballRadius(index),
                 {
                     restitution: 0.85,
                     friction: 0.1,
@@ -81,6 +80,12 @@ const FallingProfileBallsPhysics: React.FC = () => {
             const img = new Image()
             img.src = "/sidechatters/" + (index + 1) + ".jpg"
             body.avatar = img
+            body.radius = ballRadius(index)
+            body.failed = false
+            // A 404 would draw as a blank ring (and drawImage throws on a broken image): fill the ring with its pebble instead.
+            img.onerror = () => {
+                body.failed = true
+            }
             body.ringColor = ballRingColor(index)
 
             return body
@@ -90,7 +95,7 @@ const FallingProfileBallsPhysics: React.FC = () => {
 
         /* ---------- Reduced motion: settled arrangement, drawn once ---------- */
         const arrange = () => {
-            settledLayout(BALL_COUNT, w, h, BALL_RADIUS).forEach((p, i) => Body.setPosition(balls[i], p))
+            settledLayout(BALL_COUNT, w, h, BALL_RADIUS_MAX).forEach((p, i) => Body.setPosition(balls[i], p))
         }
 
         /* ---------- Mouse ---------- */
@@ -114,6 +119,8 @@ const FallingProfileBallsPhysics: React.FC = () => {
             balls.forEach(
                 (ball: {
                     avatar: any
+                    radius: number
+                    failed: boolean
                     ringColor: string
                     position: { x: any; y: any }
                     angle: any
@@ -128,17 +135,22 @@ const FallingProfileBallsPhysics: React.FC = () => {
 
                     ctx.beginPath()
                     // Photo sits inside a pebble-colored ring with a small transparent gap.
-                    const photoR = BALL_RADIUS - RING_WIDTH - RING_GAP
+                    const photoR = ball.radius - RING_WIDTH - RING_GAP
                     ctx.arc(0, 0, photoR, 0, Math.PI * 2)
                     ctx.clip()
 
-                    ctx.drawImage(ball.avatar, -photoR, -photoR, photoR * 2, photoR * 2)
+                    if (ball.failed) {
+                        ctx.fillStyle = ball.ringColor
+                        ctx.fill()
+                    } else {
+                        ctx.drawImage(ball.avatar, -photoR, -photoR, photoR * 2, photoR * 2)
+                    }
                     ctx.restore()
 
                     ctx.save()
                     ctx.translate(x, y)
                     ctx.beginPath()
-                    ctx.arc(0, 0, BALL_RADIUS - RING_WIDTH / 2, 0, Math.PI * 2)
+                    ctx.arc(0, 0, ball.radius - RING_WIDTH / 2, 0, Math.PI * 2)
                     ctx.lineWidth = RING_WIDTH
                     ctx.strokeStyle = ball.ringColor
                     ctx.stroke()
@@ -152,7 +164,10 @@ const FallingProfileBallsPhysics: React.FC = () => {
         if (reduced) {
             arrange()
             const draw = () => Render.world(render)
-            balls.forEach((b: any) => b.avatar.addEventListener("load", draw))
+            balls.forEach((b: any) => {
+                b.avatar.addEventListener("load", draw)
+                b.avatar.addEventListener("error", draw)
+            })
             draw()
         } else {
             Render.run(render)
