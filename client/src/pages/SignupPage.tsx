@@ -12,7 +12,8 @@ import { TextField } from "../ui/TextField"
 import { Skeleton, SkeletonScreen } from "../ui/Skeleton"
 import { NameChips } from "../ui/NameChips"
 import { GoogleButton } from "../ui/GoogleButton"
-import { googleAuthEnabled, signInWithGoogle } from "../lib/googleAuth"
+import { googleAuthEnabled, signInWithGoogle, useResetOnPageShow } from "../lib/googleAuth"
+import { EmailToggle } from "../ui/EmailToggle"
 import { setPendingName } from "../lib/claimName"
 
 type SignupDate = {
@@ -60,6 +61,7 @@ const SignupPage = () => {
         image: null,
     })
     const navigate = useNavigate()
+    useResetOnPageShow(() => setGoogleLoading(false))
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -109,10 +111,7 @@ const SignupPage = () => {
     }
 
     const handleGoogle = async () => {
-        if (!signupData.name) {
-            setSignupError("Pick your name first.")
-            return
-        }
+        if (!signupData.name) return // the "Pick your name first." hint beside the chips already says why
         setSignupError("")
         setGoogleLoading(true)
         setPendingName(signupData.name)
@@ -185,14 +184,17 @@ const SignupPage = () => {
                     {!namesLoading && !namesError && memberNames.length > 0 && (
                         <NameChips names={memberNames} selected={signupData.name} onSelect={(n) => setSignupData({ ...signupData, name: n })} />
                     )}
+                    {google && !signupData.name && !namesLoading && !namesError && (
+                        <p id="pick-name-hint" className="text-footnote text-label-2 mt-2">
+                            Pick your name first.
+                        </p>
+                    )}
                 </div>
                 {google && (
                     <div className="flex flex-col items-center gap-3">
-                        <GoogleButton onClick={handleGoogle} loading={googleLoading} />
+                        <GoogleButton onClick={handleGoogle} loading={googleLoading} notReady={!signupData.name} describedBy={signupData.name ? undefined : "pick-name-hint"} />
                         {!useEmail && (
-                            <button type="button" onClick={() => setUseEmail(true)} className="text-callout text-label-2 hover:text-label min-h-11 px-3">
-                                or <span className="text-label font-bold">use email instead</span>
-                            </button>
+                            <EmailToggle onOpen={() => setUseEmail(true)} />
                         )}
                     </div>
                 )}
@@ -201,6 +203,7 @@ const SignupPage = () => {
                 <TextField
                     label="Username"
                     name="username"
+                    autoFocus={useEmail}
                     autoComplete="username"
                     enterKeyHint="next"
                     autoCapitalize="none"

@@ -10,7 +10,8 @@ import { Button } from "../ui/Button"
 import { AuthLayout } from "../ui/AuthLayout"
 import { TextField } from "../ui/TextField"
 import { GoogleButton } from "../ui/GoogleButton"
-import { googleAuthEnabled, signInWithGoogle } from "../lib/googleAuth"
+import { googleAuthEnabled, signInWithGoogle, useResetOnPageShow } from "../lib/googleAuth"
+import { EmailToggle } from "../ui/EmailToggle"
 
 interface LoginData {
     email: string
@@ -99,6 +100,7 @@ const LoginPage = () => {
     const [useEmail, setUseEmail] = useState(false)
     const [googleLoading, setGoogleLoading] = useState(false)
     const navigate = useNavigate()
+    useResetOnPageShow(() => setGoogleLoading(false))
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -174,9 +176,7 @@ const LoginPage = () => {
                 <div className="mt-6 flex flex-col items-center gap-3">
                     <GoogleButton onClick={handleGoogle} loading={googleLoading} />
                     {!useEmail && (
-                        <button type="button" onClick={() => setUseEmail(true)} className="text-callout text-label-2 hover:text-label min-h-11 px-3">
-                            or <span className="text-label font-bold">use email instead</span>
-                        </button>
+                        <EmailToggle onOpen={() => setUseEmail(true)} />
                     )}
                     {!useEmail && loginError && (
                         <p role="alert" className="text-subhead text-danger">
@@ -196,6 +196,7 @@ const LoginPage = () => {
                     inputMode="email"
                     enterKeyHint="next"
                     autoCapitalize="none"
+                    autoFocus={useEmail}
                     value={loginData.email}
                     onChange={handleChange}
                     placeholder="you@example.com"

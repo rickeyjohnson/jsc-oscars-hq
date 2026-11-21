@@ -13,18 +13,21 @@ function GoogleG() {
     )
 }
 
-/** Light pill, 44px+ target. The caller decides whether to render it (VITE_GOOGLE_AUTH). */
-export function GoogleButton({ onClick, loading }: { onClick: () => void; loading?: boolean }) {
+/** Light pill, 44px+ target. `notReady` is aria-disabled (still focusable, so its hint can be read). The caller decides whether to render it (VITE_GOOGLE_AUTH). */
+export function GoogleButton({ onClick, loading, notReady, describedBy }: { onClick: () => void; loading?: boolean; notReady?: boolean; describedBy?: string }) {
     return (
         <motion.button
             type="button"
-            onClick={onClick}
+            onClick={loading ? undefined : onClick}
             disabled={loading}
+            aria-busy={loading || undefined}
+            aria-disabled={notReady || undefined}
+            aria-describedby={describedBy}
             whileTap={loading ? undefined : { scale: PRESS_SCALE }}
-            className="bg-inverse text-on-inverse text-headline focus-visible:ring-accent inline-flex min-h-14 w-full cursor-pointer items-center justify-center gap-3 rounded-full px-6 font-bold outline-none focus-visible:ring-2 disabled:opacity-60"
+            className="bg-inverse text-on-inverse text-headline focus-visible:ring-accent inline-flex min-h-14 w-full cursor-pointer items-center justify-center gap-3 rounded-full px-6 font-bold outline-none focus-visible:ring-2 disabled:opacity-60 aria-disabled:opacity-60"
         >
             <GoogleG />
-            Continue with Google
+            {loading ? "Opening Google…" : "Continue with Google"}
         </motion.button>
     )
 }
