@@ -7,12 +7,11 @@ type Props = {
     rows: ReviewRow[]
     readOnly: boolean
     finishTo: string
-    backTo: string
     onEdit: (index: number) => void
 }
 
 /** Every category with my pick (and its pebble). Skipped ones are flagged. Votes are already saved, so Finish voting just moves on. */
-const ReviewStep = ({ rows, readOnly, finishTo, backTo, onEdit }: Props) => {
+const ReviewStep = ({ rows, readOnly, finishTo, onEdit }: Props) => {
     const skipped = rows.filter((r) => !r.pick).length
     return (
         <section aria-label="Review your votes" className="tab-enter">
@@ -44,17 +43,13 @@ const ReviewStep = ({ rows, readOnly, finishTo, backTo, onEdit }: Props) => {
                     </li>
                 ))}
             </ul>
-            <div className="mt-6">
-                {readOnly ? (
-                    <Button fullWidth to={backTo}>
-                        Back to ballots
-                    </Button>
-                ) : (
+            {!readOnly && (
+                <div className="mt-6">
                     <Button fullWidth to={finishTo}>
                         Finish voting
                     </Button>
-                )}
-            </div>
+                </div>
+            )}
         </section>
     )
 }

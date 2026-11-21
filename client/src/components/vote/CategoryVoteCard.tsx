@@ -51,7 +51,7 @@ const CategoryVoteCard = (p: Props) => {
             className={`tab-enter outline-none ${p.current ? "" : "hidden"}`}
         >
             <h2 className="font-display text-title-1">{category.name}</h2>
-            <p className="mt-1 text-subhead text-label-2">{selectedId && !pending && !message && !readOnly ? "Your vote is saved. Tap another to change it." : hint}</p>
+            {!readOnly && <p className="mt-1 text-subhead text-label-2">{selectedId && !pending && !message ? "Your vote is saved. Tap another to change it." : hint}</p>}
             <p className="mt-1 flex min-h-5 items-center gap-2 text-footnote text-label-2" aria-live="polite">
                 {pending && (
                     <>

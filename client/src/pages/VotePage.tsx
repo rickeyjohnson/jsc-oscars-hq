@@ -5,7 +5,7 @@ import { fetchBallotDetail } from "../api/ballots"
 import { fetchMemberAvatars, fetchMembers } from "../api/members"
 import { addNominee, castVote, clearVote, fetchMyVotes } from "../api/votes"
 import { useUserData } from "../context/UserContenxt"
-import { closesInLabel, opensAtLabel } from "../lib/time"
+import { closedAtLabel, closesInLabel, opensAtLabel } from "../lib/time"
 import { classifySaveError, dashStates, findGroupBySet, findMatchingNominee, firstUnvotedIndex, reviewRows, saveErrorMessage, selectableNominees, votedCount, type VoteMessage } from "../lib/voting"
 import type { BallotDetail, Member } from "../types"
 import { Screen } from "../ui/Screen"
@@ -17,6 +17,9 @@ import ReviewStep from "../components/vote/ReviewStep"
 import { GroupedSection } from "../ui/GroupedSection"
 import { BottomAccessory } from "../ui/BottomAccessory"
 import { ProgressStrip } from "../ui/ProgressStrip"
+import { VoteBanner } from "../components/vote/VoteBanner"
+import { useRefetchOnFocus } from "../ui/useRefetchOnFocus"
+import { chipClasses } from "../ui/logic/variants"
 
 const refreshFailed = (): VoteMessage => ({ tone: "error", title: "Added, but couldn't refresh the list", detail: "Reload the page to see it." })
 
@@ -70,6 +73,19 @@ const VotePage = () => {
         return () => { cancelled = true }
     }, [ballotId, userLoading, myMemberId])
 
+    // Re-render when the window opens or closes while the page is open; also re-check the ballot on focus.
+    const [, setTick] = useState(0)
+    useEffect(() => {
+        if (!ballot) return
+        const t = Date.now()
+        const edges = [new Date(ballot.opens_at).getTime(), new Date(ballot.closes_at).getTime()].filter((x) => x > t)
+        if (edges.length === 0) return
+        const wait = Math.min(Math.min(...edges) - t + 50, 2_000_000_000)
+        const h = setTimeout(() => setTick((n) => n + 1), wait)
+        return () => clearTimeout(h)
+    }, [ballot])
+    useRefetchOnFocus(() => { void refreshDetail().catch(() => {}) })
+
     const ids = useMemo(() => ballot?.categories.map((c) => c.id) ?? [], [ballot])
 
     // After a Prev/Next/jump, bring the new category into view and move focus to it.
@@ -101,6 +117,7 @@ const VotePage = () => {
             }
         }
         if (seqs.current[cid] !== seq) return // a newer tap owns the UI state
+        if (kind === "closed" && b?.status === "open") void refreshDetail().catch(() => {})
         const m = saveErrorMessage(kind, b ? new Date(b.closes_at) : undefined)
         setMessage(cid, { tone: kind === "closed" ? "warn" : "error", title: m.title, detail: m.detail, retry: m.canRetry ? retry : undefined })
     }
@@ -151,7 +168,8 @@ const VotePage = () => {
     if (ballot.categories.length === 0) return <Shell><p className="text-callout">This ballot has no categories.</p></Shell>
 
     const now = Date.now()
-    const readOnly = ballot.status !== "open" || now < new Date(ballot.opens_at).getTime() || now >= new Date(ballot.closes_at).getTime()
+    const upcoming = ballot.status === "open" && now < new Date(ballot.opens_at).getTime()
+    const readOnly = ballot.status !== "open" || upcoming || now >= new Date(ballot.closes_at).getTime()
     const total = ballot.categories.length
     const voted = votedCount(myVotes, ids)
     const left = total - voted
@@ -219,16 +237,22 @@ const VotePage = () => {
                 <span>
                     {voted} of {total} voted
                 </span>
-                <span>{closesInLabel(new Date(ballot.closes_at), new Date())}</span>
+                <span className={chipClasses("neutral")}>{closesInLabel(new Date(ballot.closes_at), new Date(now))}</span>
             </div>
             <Button variant="plain" size="md" className="-ml-5" onClick={() => setJumpOpen(true)}>
                 Jump to category
             </Button>
-            {readOnly && (
-                <div role="status" className="mt-3 rounded-card bg-surface-2 p-3 text-center text-subhead">
-                    {ballot.status === "open" && now < new Date(ballot.opens_at).getTime() ? opensAtLabel(new Date(ballot.opens_at)) : "Voting is closed"}
-                </div>
-            )}
+            {readOnly &&
+                (upcoming ? (
+                    <VoteBanner className="mt-3" tone="warn" title={opensAtLabel(new Date(ballot.opens_at))} />
+                ) : (
+                    <VoteBanner
+                        className="mt-3"
+                        tone="warn"
+                        title={ballot.status === "open" || new Date(ballot.closes_at).getTime() <= now ? closedAtLabel(new Date(ballot.closes_at)) : "Voting is closed"}
+                        detail="Your last saved vote stands. Cards are read-only."
+                    />
+                ))}
 
             <div className="mt-5">
                 {ballot.categories.map((c, i) => (
@@ -260,14 +284,17 @@ const VotePage = () => {
                     rows={reviewRows(ballot.categories, myVotes, myMemberId)}
                     readOnly={readOnly}
                     finishTo={SUBMIT_ENABLED ? `/app/ballots/${ballotId}/submit` : "/app/ballots"}
-                    backTo="/app/ballots"
                     onEdit={jump}
                 />
             )}
 
             <BottomAccessory>
                 <div className="mx-auto flex w-full max-w-[1040px] items-center gap-3 bg-bg px-gutter py-3">
-                    {reviewing ? (
+                    {readOnly ? (
+                        <Button size="md" fullWidth to="/app/ballots">
+                            Back to ballots
+                        </Button>
+                    ) : reviewing ? (
                         <Button size="md" variant="secondary" className="flex-1" onClick={() => jump(total - 1)}>
                             Back
                         </Button>

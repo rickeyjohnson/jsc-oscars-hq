@@ -175,9 +175,32 @@ describe("VotePage behavior", () => {
     it("closed ballot is read-only", async () => {
         await loaded(ballot({ status: "closed", categories: twoCategories() }))
         for (const r of screen.getAllByRole("radio")) expect((r as HTMLButtonElement).disabled).toBe(true)
-        expect(screen.getByRole("status").textContent).toMatch(/voting is closed/i)
+        expect(screen.getByRole("status").textContent).toMatch(/voting closed at|voting is closed/i)
+        expect(screen.getAllByRole("link", { name: /back to ballots/i }).length).toBeGreaterThan(0)
+        expect(screen.queryByRole("button", { name: /^(back|skip|next)$/i })).toBeNull()
         fireEvent.click(radio(ANN))
         expect(castVote).not.toHaveBeenCalled()
+    })
+
+    it("a window that closes mid-session turns read-only without a tap", async () => {
+        await loaded(ballot({ closes_at: new Date(Date.now() + 400).toISOString(), categories: twoCategories() }))
+        expect((radio(ANN) as HTMLButtonElement).getAttribute("aria-disabled")).not.toBe("true")
+        await waitFor(() => expect(screen.getByRole("status").textContent).toMatch(/voting closed at/i), { timeout: 1500 })
+        expect(screen.getAllByRole("link", { name: /back to ballots/i }).length).toBeGreaterThan(0)
+        fireEvent.click(radio(ANN))
+        expect(castVote).not.toHaveBeenCalled()
+    })
+
+    it("refetches the ballot on focus and goes read-only when it was closed by hand", async () => {
+        await loaded()
+        vi.mocked(fetchBallotDetail).mockResolvedValue(ballot({ status: "closed", categories: twoCategories() }))
+        vi.useFakeTimers({ toFake: ["Date"], now: Date.now() + 60_000 })
+        try {
+            fireEvent(window, new Event("focus"))
+        } finally {
+            vi.useRealTimers()
+        }
+        await waitFor(() => expect(screen.getByRole("status").textContent).toMatch(/voting is closed/i))
     })
 
     it("upcoming ballot says when it opens", async () => {
