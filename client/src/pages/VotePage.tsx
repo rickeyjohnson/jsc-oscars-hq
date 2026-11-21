@@ -20,6 +20,10 @@ import { ProgressStrip } from "../ui/ProgressStrip"
 import { VoteBanner } from "../components/vote/VoteBanner"
 import { useRefetchOnFocus } from "../ui/useRefetchOnFocus"
 import { chipClasses } from "../ui/logic/variants"
+import { ErrorState } from "../ui/ErrorState"
+import { Skeleton, SkeletonScreen } from "../ui/Skeleton"
+import { COPY } from "../ui/copy"
+import { withTimeout } from "../lib/timeout"
 
 // Module-level so the clock read is not seen as render-time work.
 const closesDate = (iso?: string): Date => new Date(iso ?? Date.now() + 1)
@@ -37,6 +41,7 @@ const VotePage = () => {
     const [messages, setMessages] = useState<Record<string, VoteMessage | null>>({})
     const [reviewing, setReviewing] = useState(false)
     const [loadError, setLoadError] = useState<string | null>(null)
+    const [attempt, setAttempt] = useState(0)
     const [idx, setIdx] = useState(0)
     const [jumpOpen, setJumpOpen] = useState(false)
     const [groupOpenFor, setGroupOpenFor] = useState<string | null>(null)
@@ -59,7 +64,7 @@ const VotePage = () => {
         let cancelled = false
         ;(async () => {
             try {
-                const [detail, votes] = await Promise.all([fetchBallotDetail(ballotId), fetchMyVotes(ballotId)])
+                const [detail, votes] = await Promise.all([withTimeout(fetchBallotDetail(ballotId)), fetchMyVotes(ballotId)])
                 if (cancelled) return
                 confirmed.current = { ...votes }
                 setBallot(detail)
@@ -69,13 +74,21 @@ const VotePage = () => {
                 } catch {
                     /* faces fall back to initials */
                 }
-                if (detail.categories.some((c) => c.nominee_mode === "group")) setMembers(await fetchMembers())
+                // Only group categories need members; if that fetch fails the ballot still opens (the group sheet has no names).
+                if (detail.categories.some((c) => c.nominee_mode === "group")) {
+                    try {
+                        const m = await fetchMembers()
+                        if (!cancelled) setMembers(m)
+                    } catch (e) {
+                        console.error("Couldn't load members for group picks", e)
+                    }
+                }
             } catch {
                 if (!cancelled) setLoadError("Couldn't load this ballot.")
             }
         })()
         return () => { cancelled = true }
-    }, [ballotId, userLoading, myMemberId])
+    }, [ballotId, userLoading, myMemberId, attempt])
 
     // Re-render when the window opens or closes while the page is open; also re-check the ballot on focus.
     const [, setTick] = useState(0)
@@ -167,10 +180,15 @@ const VotePage = () => {
         return task
     }
 
-    if (userLoading || (!loadError && myMemberId && !ballot)) return <Shell><p className="text-callout text-label-2">Loading...</p></Shell>
+    if (userLoading || (!loadError && myMemberId && !ballot)) return <Shell><VoteSkeleton /></Shell>
     if (!myMemberId) return <Shell><p className="text-callout">Your account isn't linked to a member name yet. Ask a committee member.</p></Shell>
-    if (loadError) return <Shell><p className="text-callout">{loadError}</p></Shell>
-    if (!ballot || !ballotId) return <Shell><p className="text-callout text-label-2">Loading...</p></Shell>
+    if (loadError)
+        return (
+            <Shell>
+                <ErrorState title={COPY.somethingWrong} body={COPY.loadFailed("this ballot")} onRetry={() => { setLoadError(null); setBallot(null); setAttempt((n) => n + 1) }} />
+            </Shell>
+        )
+    if (!ballot || !ballotId) return <Shell><VoteSkeleton /></Shell>
     if (ballot.categories.length === 0) return <Shell><p className="text-callout">This ballot has no categories.</p></Shell>
 
     const now = Date.now()
@@ -194,7 +212,6 @@ const VotePage = () => {
         const i = firstUnvotedIndex(ids, myVotes)
         if (i >= 0) jump(i)
     }
-    const busy = Boolean(pending[ids[idx]])
     const onLast = idx >= total - 1
     const nextLabel = onLast ? "Review" : myVotes[ids[idx]] ? "Next" : "Skip"
     const goNext = () => {
@@ -347,10 +364,10 @@ const VotePage = () => {
                         </Button>
                     ) : (
                         <>
-                            <Button size="md" variant="secondary" className="flex-[0.45] lg:min-w-32 lg:flex-none" disabled={idx === 0 || busy} onClick={() => jump(idx - 1)}>
+                            <Button size="md" variant="secondary" className="flex-[0.45] lg:min-w-32 lg:flex-none" disabled={idx === 0} onClick={() => jump(idx - 1)}>
                                 Back
                             </Button>
-                            <Button size="md" variant={onLast || myVotes[ids[idx]] ? "primary" : "tinted"} className="flex-1 lg:min-w-32 lg:flex-none" disabled={busy} onClick={goNext}>
+                            <Button size="md" variant={onLast || myVotes[ids[idx]] ? "primary" : "tinted"} className="flex-1 lg:min-w-32 lg:flex-none" onClick={goNext}>
                                 {nextLabel}
                             </Button>
                         </>
@@ -393,6 +410,15 @@ const VotePage = () => {
         </Shell>
     )
 }
+
+const VoteSkeleton = () => (
+    <SkeletonScreen label="Loading ballot">
+        <div className="space-y-4">
+            <Skeleton shape="row" />
+            <Skeleton shape="card" />
+        </div>
+    </SkeletonScreen>
+)
 
 const Shell = ({ title = "Ballot", children }: { title?: string; children: React.ReactNode }) => (
     <Screen title={title} back={{ to: "/app/ballots", label: "Ballots" }} width="wide">

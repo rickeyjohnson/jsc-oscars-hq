@@ -127,9 +127,9 @@ export const fetchBallotSummaries = async (includeDrafts = false): Promise<Ballo
     const ids = list.map((b) => b.id)
     const sourceIds = list.filter((b) => !(b.round !== "main" && b.parent_ballot_id)).map((b) => b.id)
 
-    const { data: auth, error: authError } = await supabase.auth.getUser()
+    const { data: auth, error: authError } = await supabase.auth.getSession()
     if (authError) throw authError
-    const uid = auth.user?.id ?? ""
+    const uid = auth.session?.user.id ?? ""
 
     const [cats, rounds, votes] = await Promise.all([
         sourceIds.length > 0 ? supabase.from("categories").select("id, ballot_id").in("ballot_id", sourceIds) : Promise.resolve({ data: [] as { id: string; ballot_id: string }[], error: null }),

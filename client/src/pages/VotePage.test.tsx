@@ -83,17 +83,17 @@ describe("VotePage behavior", () => {
         expect(screen.getByText(/1 of 2 voted/i)).toBeTruthy()
     })
 
-    it("saving shows a spinner on the card and disables footer nav until it resolves", async () => {
+    it("saving shows a spinner on the card and never disables footer nav (P1-2)", async () => {
         await loaded()
         const d = deferred()
         vi.mocked(castVote).mockReturnValueOnce(d.promise)
         fireEvent.click(radio(ANN))
         await waitFor(() => expect(radio(ANN).getAttribute("aria-busy")).toBe("true"))
         expect(radio(ANN).querySelector(".animate-spin")).toBeTruthy()
-        expect((screen.getByRole("button", { name: /^next$/i }) as HTMLButtonElement).disabled).toBe(true)
-        expect((screen.getByRole("button", { name: /^back$/i }) as HTMLButtonElement).disabled).toBe(true)
+        expect((screen.getByRole("button", { name: /^next$/i }) as HTMLButtonElement).disabled).toBe(false)
         d.resolve()
-        await waitFor(() => expect((screen.getByRole("button", { name: /^next$/i }) as HTMLButtonElement).disabled).toBe(false))
+        await waitFor(() => expect(radio(ANN).getAttribute("aria-busy")).toBeNull())
+        expect((screen.getByRole("button", { name: /^next$/i }) as HTMLButtonElement).disabled).toBe(false)
         expect(radio(ANN).getAttribute("aria-busy")).toBeNull()
         expect(within(section(C1)).getByText(/your vote is saved/i)).toBeTruthy()
     })

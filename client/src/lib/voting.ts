@@ -3,6 +3,7 @@ import type { PebbleName } from "../ui/tokens"
 import { avatarFallback } from "../ui/logic/avatar"
 import { pebbleAt } from "../ui/logic/pebble"
 import { closedAtLabel } from "./time"
+import { TimeoutError } from "./timeout"
 
 // Members never see nominees linked to themselves (includes groups they are in).
 export const selectableNominees = (nominees: Nominee[], myMemberId: string | null): Nominee[] =>
@@ -110,7 +111,7 @@ export const classifySaveError = (e: unknown, closesAt: Date, now: Date, online 
     if (now.getTime() >= closesAt.getTime() || status !== "open") return "closed"
     const err = e as { code?: string; message?: string } | null
     const msg = String(err?.message ?? "")
-    if (!online || e instanceof TypeError || /failed to fetch|network|load failed/i.test(msg)) return "network"
+    if (!online || e instanceof TypeError || e instanceof TimeoutError || /failed to fetch|network|load failed/i.test(msg)) return "network"
     if (/ballot is not open/i.test(msg)) return "closed"
     if (/a group needs at least two/i.test(msg)) return "groupSize"
     if (/a different nominee with this name already exists/i.test(msg)) return "nameTaken"

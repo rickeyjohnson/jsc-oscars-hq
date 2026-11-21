@@ -1,23 +1,27 @@
 import { supabase } from "../supabaseClient"
 import type { VoteRow } from "../types"
 import { fetchAllPages } from "../lib/paging"
+import { withTimeout } from "../lib/timeout"
 
 // votes.voter_id is the auth user id (default auth.uid()); RLS enforces window, self-vote and claim.
+// The id comes from the local session (no auth-server round trip on every tap); RLS still checks the JWT on the server.
 const currentUserId = async (): Promise<string> => {
-    const { data, error } = await supabase.auth.getUser()
+    const { data, error } = await supabase.auth.getSession()
     if (error) throw error
-    if (!data.user) throw new Error("Not signed in")
-    return data.user.id
+    if (!data.session) throw new Error("Not signed in")
+    return data.session.user.id
 }
 
-export const fetchMyVotes = async (ballotId: string): Promise<Record<string, string>> => {
+export const fetchMyVotes = (ballotId: string): Promise<Record<string, string>> => withTimeout(fetchMyVotesRaw(ballotId))
+const fetchMyVotesRaw = async (ballotId: string): Promise<Record<string, string>> => {
     const uid = await currentUserId()
     const { data, error } = await supabase.from("votes").select("category_id, nominee_id").eq("ballot_id", ballotId).eq("voter_id", uid)
     if (error) throw error
     return Object.fromEntries((data ?? []).map((v) => [v.category_id, v.nominee_id]))
 }
 
-export const castVote = async (ballotId: string, categoryId: string, nomineeId: string): Promise<void> => {
+export const castVote = (ballotId: string, categoryId: string, nomineeId: string): Promise<void> => withTimeout(castVoteRaw(ballotId, categoryId, nomineeId))
+const castVoteRaw = async (ballotId: string, categoryId: string, nomineeId: string): Promise<void> => {
     const uid = await currentUserId()
     const { error } = await supabase
         .from("votes")
@@ -28,7 +32,8 @@ export const castVote = async (ballotId: string, categoryId: string, nomineeId: 
     if (error) throw error
 }
 
-export const clearVote = async (ballotId: string, categoryId: string): Promise<void> => {
+export const clearVote = (ballotId: string, categoryId: string): Promise<void> => withTimeout(clearVoteRaw(ballotId, categoryId))
+const clearVoteRaw = async (ballotId: string, categoryId: string): Promise<void> => {
     const uid = await currentUserId()
     const { error } = await supabase.from("votes").delete().eq("ballot_id", ballotId).eq("category_id", categoryId).eq("voter_id", uid)
     if (error) throw error
