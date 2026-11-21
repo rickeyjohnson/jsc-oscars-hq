@@ -193,6 +193,18 @@ describe("Signup rework", () => {
         fireEvent.click(screen.getByRole("button", { name: /use email instead/i }))
         expect(document.activeElement).toBe(screen.getByLabelText("Username"))
     })
+    it("has no Step label, and the password has a Show/Hide toggle", async () => {
+        wrap(<SignupPage />)
+        await screen.findByRole("button", { name: "Ann" })
+        expect(screen.queryByText(/step 1 of 2/i)).toBeNull()
+        const pw = screen.getByLabelText("Password") as HTMLInputElement
+        expect(pw.type).toBe("password")
+        const t = screen.getByRole("button", { name: "Show" })
+        expect(t.getAttribute("aria-pressed")).toBe("false")
+        fireEvent.click(t)
+        expect(pw.type).toBe("text")
+        expect(screen.getByRole("button", { name: "Hide" }).getAttribute("aria-pressed")).toBe("true")
+    })
     it("flag off: no Google button", async () => {
         wrap(<SignupPage />)
         await screen.findByRole("button", { name: "Ann" })

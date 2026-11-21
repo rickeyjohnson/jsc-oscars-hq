@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
+import { Link } from "react-router-dom"
 import { SlidersHorizontal } from "lucide-react"
+import { Avatar } from "../ui/Avatar"
 import { ErrorState } from "../ui/ErrorState"
 import ProfileSetup from "../components/ProfileSetup"
 import { useAuth } from "../context/AuthContext"
@@ -25,7 +27,7 @@ const storage = (): Storage | null => {
 
 const GRID = "grid grid-flow-dense grid-cols-2 items-stretch gap-3 lg:grid-cols-2 min-[1400px]:grid-cols-3"
 
-const HomeBody = ({ userId, isCommittee, name, memberId }: { userId: string; isCommittee: boolean; name: string; memberId?: string }) => {
+const HomeBody = ({ userId, isCommittee, name, memberId, imageUrl }: { userId: string; isCommittee: boolean; name: string; memberId?: string; imageUrl?: string | null }) => {
     const state = useHomeData(isCommittee)
     const toast = useToast()
     const [prefs, setPrefs] = useState<HomePrefs>(() => loadHomePrefs(storage(), userId, isCommittee))
@@ -53,14 +55,14 @@ const HomeBody = ({ userId, isCommittee, name, memberId }: { userId: string; isC
             brandHeader
             width="full"
             trailing={
-                <button
-                    type="button"
-                    aria-label="Customize Home"
-                    onClick={() => setCustomizing(true)}
-                    className="-mr-2 grid size-11 place-items-center rounded-full text-label cursor-pointer"
-                >
-                    <SlidersHorizontal aria-hidden className="size-5" />
-                </button>
+                <div className="-mr-2 flex items-center">
+                    <Link to="/app/profile" aria-label="You" className="grid size-11 place-items-center rounded-full">
+                        <Avatar id={memberId ?? userId} name={name || "You"} src={imageUrl} size={32} ring="pebble" decorative />
+                    </Link>
+                    <button type="button" aria-label="Customize Home" onClick={() => setCustomizing(true)} className="grid size-11 place-items-center rounded-full text-label cursor-pointer">
+                        <SlidersHorizontal aria-hidden className="size-5" />
+                    </button>
+                </div>
             }
         >
             <div className="mx-auto max-w-[1280px]">
@@ -148,7 +150,7 @@ const HomePage = () => {
                     </SkeletonScreen>
                 </Screen>
             ) : (
-                <HomeBody userId={user?.id ?? ""} isCommittee={Boolean(profile?.is_committee)} name={firstName(member?.name ?? profile?.display_name)} memberId={member?.id} />
+                <HomeBody userId={user?.id ?? ""} isCommittee={Boolean(profile?.is_committee)} name={firstName(member?.name ?? profile?.display_name)} memberId={member?.id} imageUrl={profile?.image_url} />
             )}
             <ProfileSetup open={!profileSetupComplete} onComplete={handleProfileSetupComplete} onSkip={handleProfileSetupSkip} />
         </>

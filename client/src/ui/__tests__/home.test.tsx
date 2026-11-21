@@ -265,6 +265,14 @@ describe("Home rework", () => {
         expect(wrap("Countdown").className).not.toMatch(/col-span-2/)
         expect(wrap("Your progress").className).not.toMatch(/col-span-2/)
     })
+    it("header has a ringed avatar linking to You, beside Customize", () => {
+        const { container } = renderHome()
+        const link = screen.getByRole("link", { name: "You" })
+        expect(link.getAttribute("href")).toBe("/app/profile")
+        expect(link.querySelector("[class*='ring-pebble-']")).toBeTruthy()
+        expect(container).toBeTruthy()
+        expect(screen.getByRole("button", { name: "Customize Home" })).toBeTruthy()
+    })
     it("customize: the Move up/down twins are never keyboard tab stops", () => {
         renderHome()
         fireEvent.click(screen.getByRole("button", { name: "Customize Home" }))

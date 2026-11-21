@@ -49,6 +49,7 @@ const SignupPage = () => {
     const [memberNames, setMemberNames] = useState<MemberNameStatus[]>([])
     const google = googleAuthEnabled()
     const [useEmail, setUseEmail] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
     const [googleLoading, setGoogleLoading] = useState(false)
     const [namesLoading, setNamesLoading] = useState(true)
     const [namesError, setNamesError] = useState(false)
@@ -147,7 +148,7 @@ const SignupPage = () => {
 
     const noNames = !namesLoading && !namesError && !memberNames.some((n) => !n.taken)
     return (
-        <AuthLayout title="Pick your name." subtitle="Crossed-out names are taken. Wrong one? Ask a committee member." step="Step 1 of 2"
+        <AuthLayout title="Pick your name." subtitle="Crossed-out names are taken. Wrong one? Ask a committee member."
             footer={
                 <p className="text-callout text-label-2">
                     Already have an account?{" "}
@@ -226,13 +227,23 @@ const SignupPage = () => {
                 />
                 <TextField
                     label="Password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     name="password"
                     autoComplete="new-password"
                     enterKeyHint="go"
                     value={signupData.password}
                     onChange={handleChange}
                     required
+                    trailing={
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword((v) => !v)}
+                            aria-pressed={showPassword}
+                            className="text-subhead text-label-2 hover:text-label min-h-11 min-w-11 px-3 font-bold"
+                        >
+                            {showPassword ? "Hide" : "Show"}
+                        </button>
+                    }
                 />
                     </>
                 )}
