@@ -66,7 +66,7 @@ Run on BOTH a phone (iPhone Safari, installed to the Home Screen, plus Android C
 - [ ] Create account with email + password; the name list shows only unclaimed names; claiming works and lands on `/app` (phone + desktop).
 - [ ] A claimed name no longer appears for the next person. "No names left" shows the committee hint.
 - [ ] Log out, Log in again; wrong password shows a plain error.
-- [ ] Google login (only if `VITE_GOOGLE_AUTH=true`): new Google user lands on `/claim`; returning user lands on `/app`; Back from Google leaves the button usable.
+- [ ] Google login (only if `VITE_GOOGLE_LOGIN=true`): new Google user lands on `/claim`; returning user lands on `/app`; Back from Google leaves the button usable.
 - [ ] Reset password: expected to NOT email friends without custom SMTP; committee reset (DEPLOY.md section 7) works.
 - [ ] Profile photo setup sheet: skip, and upload (image under 5 MB).
 
