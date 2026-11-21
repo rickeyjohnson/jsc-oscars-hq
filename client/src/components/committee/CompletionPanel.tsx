@@ -1,4 +1,4 @@
-import { Avatar } from "../../ui/Avatar"
+import { MemberAvatar } from "../../ui/MemberAvatar"
 import { PEBBLE_EDGE } from "../../ui/logic/pebble"
 import type { MemberCompletion } from "../../lib/voting"
 
@@ -26,7 +26,7 @@ const CompletionPanel = ({ rows }: { rows: MemberCompletion[] }) => {
                     const pct = r.total > 0 ? Math.round((r.voted / r.total) * 100) : 0
                     return (
                         <li key={r.name} className="flex min-h-14 items-center gap-3 py-2">
-                            <Avatar id={r.name} name={r.name} size={40} ring="pebble" decorative />
+                            <MemberAvatar name={r.name} size={40} ring="pebble" decorative />
                             <span className={`min-w-0 flex-1 truncate text-callout ${r.claimed ? "" : "text-label-2"}`}>{r.name}</span>
                             {r.claimed ? (
                                 <>

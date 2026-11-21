@@ -2,6 +2,7 @@ import { useState } from "react"
 import { supabase } from "../supabaseClient"
 import { useAuth } from "../context/AuthContext"
 import { Sheet } from "../ui/Sheet"
+import { invalidateMemberDirectory } from "../ui/useMemberDirectory"
 import { Button } from "../ui/Button"
 import { Avatar } from "../ui/Avatar"
 import { useToast } from "../ui/Toast"
@@ -68,6 +69,7 @@ const ProfileSetup = ({ open, onComplete, onSkip, title = "Add your photo" }: Pr
                 return
             }
 
+            invalidateMemberDirectory()
             toast.show("Photo updated")
             onComplete()
         } catch {

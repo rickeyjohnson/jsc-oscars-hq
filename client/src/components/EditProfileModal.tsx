@@ -7,14 +7,14 @@ import ProfileSetup from "./ProfileSetup"
 
 /** Your profile: change your photo here; names are claimed once and changed by the committee. */
 const EditProfileModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
-    const { profile, refetch } = useUserData()
+    const { profile, member, refetch } = useUserData()
     const [photoOpen, setPhotoOpen] = useState(false)
     const name = profile?.username ?? ""
     return (
         <>
             <Sheet open={isOpen} onClose={onClose} title="Edit profile" fit footer={<Button variant="primary" fullWidth onClick={onClose}>Done</Button>}>
                 <div className="flex flex-col items-center gap-2 pb-2 text-center">
-                    <Avatar id={profile?.user_id ?? name} name={name || "You"} src={profile?.image_url} size={96} ring="pebble" />
+                    <Avatar id={member?.id ?? profile?.user_id ?? name} name={name || "You"} src={profile?.image_url} size={96} ring="pebble" />
                     <Button variant="tinted" size="md" onClick={() => setPhotoOpen(true)}>
                         Change photo
                     </Button>

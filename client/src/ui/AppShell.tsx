@@ -64,7 +64,7 @@ function useTextFocus(enabled: boolean): boolean {
 
 export function AppShell() {
     const { pathname } = useLocation()
-    const { profile } = useUserData()
+    const { profile, member } = useUserData()
     const desktop = useIsDesktop()
     const badge = usePendingCount()
     const [slot, setSlot] = useState<HTMLElement | null>(null)
@@ -116,7 +116,7 @@ export function AppShell() {
                             active={active}
                             badge={badge}
                             committee={!!profile?.is_committee}
-                            user={{ id: profile?.user_id ?? "me", name, imageUrl: profile?.image_url }}
+                            user={{ id: member?.id ?? profile?.user_id ?? "me", name, imageUrl: profile?.image_url }}
                             onLogout={() => void supabase.auth.signOut()}
                         />
                     )}

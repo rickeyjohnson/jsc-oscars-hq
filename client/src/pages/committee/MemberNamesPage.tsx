@@ -5,7 +5,7 @@ import { useUserData } from "../../context/UserContenxt"
 import { memberRows, memberSummary, resetWarning, type MemberRow } from "../../lib/memberNames"
 import type { Member } from "../../types"
 import { Screen } from "../../ui/Screen"
-import { Avatar } from "../../ui/Avatar"
+import { MemberAvatar } from "../../ui/MemberAvatar"
 import { Button } from "../../ui/Button"
 import { Chip } from "../../ui/Chip"
 import { ColorBlock } from "../../ui/ColorBlock"
@@ -108,7 +108,7 @@ const MemberNamesPage = () => {
                     <GroupedSection footer="You can't reset your own name; ask another committee member.">
                         {rows.map((r) => (
                             <li key={r.id} className="flex min-h-14 items-center gap-3 px-4 py-2">
-                                <Avatar id={r.name} name={r.name} size={32} ring="pebble" decorative />
+                                <MemberAvatar memberId={r.id} name={r.name} size={32} ring="pebble" decorative />
                                 <span className={`min-w-0 flex-1 truncate text-body ${r.userId ? "" : "text-label-2"}`}>{r.name}</span>
                                 <Chip tone={r.userId ? "lime" : "neutral"}>{r.status}</Chip>
                                 {r.userId && r.isYou && <Chip tone="lemon">You</Chip>}

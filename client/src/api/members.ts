@@ -35,13 +35,21 @@ export const fetchCommitteeMemberIds = async (): Promise<string[]> => {
     return members.filter((m) => m.user_id && committee.has(m.user_id)).map((m) => m.id)
 }
 
-// Member id -> profile photo url (null when the member has no claimed account or no photo).
-export const fetchMemberAvatars = async (): Promise<Record<string, string | null>> => {
+export type MemberDirectoryEntry = { id: string; name: string; photo: string | null }
+
+// One source of truth for a member's face: members.user_id -> profiles.image_url (the photo that user uploaded).
+// Null when the member has no claimed account or no photo (callers fall back to initials + pebble ring).
+export const fetchMemberDirectory = async (): Promise<MemberDirectoryEntry[]> => {
     const [members, profiles] = await Promise.all([fetchMembers(), supabase.from("profiles").select("user_id, image_url")])
     if (profiles.error) throw profiles.error
-    const byUser = new Map((profiles.data ?? []).map((p) => [p.user_id as string, (p.image_url as string | null) ?? null]))
+    const byUser = new Map((profiles.data ?? []).map((p) => [p.user_id as string, (p.image_url as string | null) || null]))
+    return members.map((m) => ({ id: m.id, name: m.name, photo: m.user_id ? (byUser.get(m.user_id) ?? null) : null }))
+}
+
+// Member id -> profile photo url.
+export const fetchMemberAvatars = async (): Promise<Record<string, string | null>> => {
     const out: Record<string, string | null> = {}
-    for (const m of members) out[m.id] = m.user_id ? byUser.get(m.user_id) ?? null : null
+    for (const m of await fetchMemberDirectory()) out[m.id] = m.photo
     return out
 }
 

@@ -2,6 +2,7 @@ import { useEffect, useId, useState, type ReactNode } from "react"
 import { Link } from "react-router-dom"
 import { Mail } from "lucide-react"
 import { Avatar } from "../../ui/Avatar"
+import { MemberAvatar } from "../../ui/MemberAvatar"
 import { Countdown } from "../../ui/Countdown"
 import { SUBMIT_ENABLED } from "../../ui/copy"
 import { ErrorState } from "../../ui/ErrorState"
@@ -281,7 +282,7 @@ function Faces({ names, label }: { names: string[]; label: string }) {
                 <ul aria-label={label} className="flex list-none flex-wrap gap-3 p-1">
                     {shown.map((n) => (
                         <li key={n}>
-                            <Avatar id={n} name={n} size={32} ring="pebble" />
+                            <MemberAvatar name={n} size={32} ring="pebble" />
                         </li>
                     ))}
                     {extra > 0 && <li className="self-center text-footnote font-bold text-label-2">+{extra}</li>}

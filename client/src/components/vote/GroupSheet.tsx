@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Check } from "lucide-react"
 import type { Member } from "../../types"
 import { GROUP_MAX_SIZE, GROUP_MIN_SIZE, joinNames } from "../../lib/voting"
-import { Avatar } from "../../ui/Avatar"
+import { MemberAvatar } from "../../ui/MemberAvatar"
 import { Button } from "../../ui/Button"
 import { Sheet } from "../../ui/Sheet"
 import { avatarFallback } from "../../ui/logic/avatar"
@@ -55,7 +55,7 @@ const GroupSheet = ({ open, candidates, myName, onClose, onSubmit }: Props) => {
                             .filter((m) => picked.includes(m.id))
                             .map((m, i) => (
                                 <span key={m.id} className={i > 0 ? "-ml-2" : ""}>
-                                    <Avatar id={m.id} name={m.name} size={32} ring="bg" decorative />
+                                    <MemberAvatar memberId={m.id} name={m.name} size={32} ring="bg" decorative />
                                 </span>
                             ))}
                     </span>

@@ -46,7 +46,7 @@ const ProfilePage = () => {
             <div className="lg:grid lg:grid-cols-[320px_1fr] lg:items-start lg:gap-8">
                 <div>
                     <div className="flex items-center gap-4 pb-5">
-                        <Avatar id={profile?.user_id ?? name} name={name || "You"} src={profile?.image_url} size={96} ring="pebble" />
+                        <Avatar id={member?.id ?? profile?.user_id ?? name} name={name || "You"} src={profile?.image_url} size={96} ring="pebble" />
                         <div className="min-w-0">
                             <h2 className="truncate text-title-1">{name}</h2>
                             {profile?.email && <p className="truncate text-subhead text-label-2">{profile.email}</p>}
