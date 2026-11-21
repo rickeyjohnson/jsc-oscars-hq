@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const signInOAuth = vi.fn()
 const rpc = vi.fn()
+const signOut = vi.fn()
 const navigate = vi.fn()
 const refetch = vi.fn()
 const status = vi.fn()
@@ -15,7 +16,7 @@ let member: { id: string; name: string; user_id: string } | null = null
 
 vi.mock("../../supabaseClient", () => ({
     supabase: {
-        auth: { signInWithOAuth: (...a: unknown[]) => signInOAuth(...a), signInWithPassword: vi.fn(), signUp: vi.fn(), resetPasswordForEmail: vi.fn() },
+        auth: { signOut: (...a: unknown[]) => signOut(...a), signInWithOAuth: (...a: unknown[]) => signInOAuth(...a), signInWithPassword: vi.fn(), signUp: vi.fn(), resetPasswordForEmail: vi.fn() },
         rpc: (...a: unknown[]) => rpc(...a),
     },
 }))
@@ -43,10 +44,11 @@ const NAMES = [
 
 beforeEach(() => {
     window.matchMedia = ((q: string) => ({ matches: false, media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => false })) as never
-    ;[signInOAuth, rpc, navigate, refetch, status, available].forEach((m) => m.mockReset())
+    ;[signInOAuth, signOut, rpc, navigate, refetch, status, available].forEach((m) => m.mockReset())
     status.mockResolvedValue(NAMES)
     signInOAuth.mockResolvedValue({ error: null })
     rpc.mockResolvedValue({ error: null })
+    signOut.mockResolvedValue({ error: null })
     refetch.mockResolvedValue(undefined)
     member = null
     sessionStorage.clear()
@@ -198,6 +200,12 @@ describe("Claim name page", () => {
         expect(sessionStorage.getItem("jsc.pendingName")).toBeNull()
         await waitFor(() => expect(navigate).toHaveBeenCalledWith("/app", { replace: true }))
         expect(rpc).toHaveBeenCalledTimes(1)
+    })
+    it("has a Log out escape hatch that signs out and returns to the landing page", async () => {
+        wrap(<ClaimNamePage />)
+        fireEvent.click(await screen.findByRole("button", { name: "Log out" }))
+        await waitFor(() => expect(navigate).toHaveBeenCalledWith("/", { replace: true }))
+        expect(signOut).toHaveBeenCalledTimes(1)
     })
     it("goes straight to /app when the user already has a member", async () => {
         member = { id: "m", name: "Ann", user_id: "u1" }

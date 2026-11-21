@@ -65,9 +65,18 @@ const ClaimNamePage = () => {
         void claim(pending)
     }, [member, claim])
 
+    const logOut = async () => {
+        try {
+            await supabase.auth.signOut()
+        } catch {
+            /* leave anyway: the landing page works signed out or in */
+        }
+        navigate("/", { replace: true })
+    }
+
     const available = names.filter((n) => !n.taken)
     return (
-        <AuthLayout title="Pick your name." subtitle="Which one is you? Taken names are hidden. Wrong one? Ask a committee member." back={null}>
+        <AuthLayout title="Pick your name." subtitle="Which one is you? Taken names are hidden. Wrong one? Ask a committee member." back={null} action={<Button variant="plain" size="md" className="-mr-3" onClick={() => void logOut()}>Log out</Button>}>
             {loading && (
                 <SkeletonScreen label="Loading names">
                     <div className="flex flex-wrap gap-2">

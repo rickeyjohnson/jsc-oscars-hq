@@ -2,7 +2,7 @@ import type { ReactNode } from "react"
 import { Link } from "react-router-dom"
 
 /** Standalone auth screen (no shell): back link, title, then a column that becomes a centered card from 1024px. */
-export function AuthLayout({ title, subtitle, step, back = "/", footer, children }: { title: string; subtitle?: string; step?: string; back?: string | null; footer?: ReactNode; children: ReactNode }) {
+export function AuthLayout({ title, subtitle, step, back = "/", action, footer, children }: { title: string; subtitle?: string; step?: string; back?: string | null; action?: ReactNode; footer?: ReactNode; children: ReactNode }) {
     // No logo here: on wide screens the brand already lives on the landing side, never in the auth panel.
     return (
         <div className="bg-bg text-label min-h-dvh lg:flex lg:items-center lg:justify-center">
@@ -15,6 +15,7 @@ export function AuthLayout({ title, subtitle, step, back = "/", footer, children
                     ) : (
                         <span />
                     )}
+                    {action}
                     {step && <span className="text-footnote text-label-2">{step}</span>}
                 </div>
                 <div className="my-auto py-6">
