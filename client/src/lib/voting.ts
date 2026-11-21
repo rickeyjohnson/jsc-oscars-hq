@@ -100,7 +100,7 @@ export const findGroupBySet = (nominees: Nominee[], memberIds: string[]): Nomine
     return nominees.find((n) => isGroupNominee(n) && [...n.member_ids].sort().join("|") === key)
 }
 
-export type VoteMessage = { tone: "error" | "info"; title: string; detail: string; retry?: () => void }
+export type VoteMessage = { tone: "error" | "info" | "warn"; title: string; detail: string; retry?: () => void }
 export type SaveErrorKind = "closed" | "network" | "rule" | "generic"
 
 /** Sort a failed save into the one message that tells the voter what to do. */

@@ -6,6 +6,7 @@ import { Avatar } from "../../ui/Avatar"
 import { Button } from "../../ui/Button"
 import { Sheet } from "../../ui/Sheet"
 import { PEBBLE_CLASS } from "../../ui/logic/pebble"
+import { VoteBanner } from "./VoteBanner"
 import GroupSheet from "./GroupSheet"
 
 type Props = {
@@ -55,22 +56,7 @@ const CategoryVoteCard = (p: Props) => {
                 {pending ? "Saving..." : selectedId && !message ? "Saved. Tap another to change it." : ""}
             </p>
 
-            {message && (
-                <div
-                    role={message.tone === "error" ? "alert" : "status"}
-                    className={`mt-2 flex flex-wrap items-center gap-3 rounded-card border bg-surface p-3 ${message.tone === "error" ? "border-danger" : "border-accent"}`}
-                >
-                    <div className="min-w-0 flex-1">
-                        <p className="text-subhead font-bold">{message.title}</p>
-                        <p className="text-footnote text-label-2">{message.detail}</p>
-                    </div>
-                    {message.retry && (
-                        <Button size="md" variant="secondary" onClick={message.retry}>
-                            Try again
-                        </Button>
-                    )}
-                </div>
-            )}
+            {message && <VoteBanner className="mt-2" tone={message.tone} title={message.title} detail={message.detail} retry={message.retry} />}
 
             <div role="radiogroup" aria-label={category.name} className="mt-3 grid grid-cols-1 gap-2 lg:grid-cols-2">
                 {options.map((n) => {

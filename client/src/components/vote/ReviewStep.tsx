@@ -1,5 +1,6 @@
 import { Button } from "../../ui/Button"
 import { PEBBLE_CLASS } from "../../ui/logic/pebble"
+import { VoteBanner } from "./VoteBanner"
 import type { ReviewRow } from "../../lib/voting"
 
 type Props = {
@@ -20,10 +21,12 @@ const ReviewStep = ({ rows, readOnly, finishTo, backTo, onEdit }: Props) => {
                 {rows.length - skipped} of {rows.length} voted. Everything is already saved.
             </p>
             {skipped > 0 && (
-                <div role="status" className="mt-3 rounded-card border border-warn bg-surface p-3">
-                    <p className="text-subhead font-bold">{skipped === 1 ? "1 not voted yet" : `${skipped} not voted yet`}</p>
-                    <p className="text-footnote text-label-2">You can skip {skipped === 1 ? "it" : "them"}, or vote now.</p>
-                </div>
+                <VoteBanner
+                    className="mt-3"
+                    tone="warn"
+                    title={skipped === 1 ? "1 not voted yet" : `${skipped} not voted yet`}
+                    detail={`You can skip ${skipped === 1 ? "it" : "them"}, or vote now.`}
+                />
             )}
             <ul className="mt-3 grid grid-cols-1 gap-x-4 lg:grid-cols-2">
                 {rows.map((r) => (

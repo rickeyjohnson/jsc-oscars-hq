@@ -334,7 +334,8 @@ describe("VotePage group category", () => {
         fireEvent.click(screen.getByRole("button", { name: "Vote for Ann & Bo" }))
         await waitFor(() => expect(castVote).toHaveBeenCalledWith("B1", "c1", "g1"))
         expect(addNominee).not.toHaveBeenCalled()
-        expect(await within(section(C1)).findByText(/already exists/i)).toBeTruthy()
+        const info = await within(section(C1)).findByText(/already exists/i)
+        expect(info.closest("[role=status]")!.className).toMatch(/border-pebble-sky/)
     })
 
     it("caps a group at three people", async () => {
@@ -352,6 +353,8 @@ describe("VotePage save failures", () => {
         fireEvent.click(radio(ANN))
         const alert = await within(section(C1)).findByRole("alert")
         expect(alert.textContent).toMatch(/no connection/i)
+        expect(alert.className).toMatch(/border-pebble-cherry/)
+        expect(within(alert).getByRole("button", { name: /try again/i }).className).toMatch(/bg-inverse/)
         fireEvent.click(within(alert).getByRole("button", { name: /try again/i }))
         await waitFor(() => expect(castVote).toHaveBeenCalledTimes(2))
         await waitFor(() => expect(within(section(C1)).queryByRole("alert")).toBeNull())
