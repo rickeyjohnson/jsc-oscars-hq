@@ -98,3 +98,14 @@ export const PEBBLE_STROKE: Record<PebbleName, string> = {
     sky: "stroke-pebble-sky",
     grape: "stroke-pebble-grape",
 }
+
+// Pebble-colored text on a dark surface. Literal strings for Tailwind's scanner.
+export const PEBBLE_TEXT: Record<PebbleName, string> = {
+    strawberry: "text-pebble-strawberry",
+    cherry: "text-pebble-cherry",
+    tangerine: "text-pebble-tangerine",
+    lemon: "text-pebble-lemon",
+    lime: "text-pebble-lime",
+    sky: "text-pebble-sky",
+    grape: "text-pebble-grape",
+}

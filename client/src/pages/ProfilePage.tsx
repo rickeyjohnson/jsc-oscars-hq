@@ -1,113 +1,47 @@
-import { useEffect, useMemo, useState } from "react"
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Calendar, KeyRound, Laugh, Lock, LogOut, Plus, Settings, SquareCheckBig, Trophy, User, Users } from "lucide-react"
+import { Calendar, KeyRound, Laugh, LogOut, Pencil, Plus, Settings, SquareCheckBig, Users } from "lucide-react"
 import { supabase } from "../supabaseClient"
 import { useUserData } from "../context/UserContenxt"
 import { displayName } from "../lib/displayName"
 import { SeasonSheet } from "../components/committee/SeasonSheet"
 import JokeGeneratorModal from "../components/JokeGeneratorModal"
 import EditProfileModal from "../components/EditProfileModal"
-import { nomineeStats } from "../lib/stats"
-import { fetchBallotDetail } from "../api/ballots"
-import { fetchPastStats } from "../api/pastStats"
-import { lifetimeFor, type PastStatRow } from "../lib/pastStats"
-import type { Nominee } from "../types"
 import { Avatar } from "../ui/Avatar"
 import { GroupedSection } from "../ui/GroupedSection"
 import { ListRow } from "../ui/ListRow"
 import { Screen } from "../ui/Screen"
-import { Skeleton } from "../ui/Skeleton"
-import { useHomeData } from "../ui/useHomeData"
-import { youStats } from "../ui/logic/youStats"
+import { Button } from "../ui/Button"
+import { MyStats } from "./stats/MyStats"
 import { clearAll } from "../lib/cache/clear"
 
-const icon = (I: typeof User) => <I aria-hidden className="size-5 text-label-2" />
+const icon = (I: typeof Settings) => <I aria-hidden className="size-5 text-label-2" />
 
 const ProfilePage = () => {
     const { profile, member } = useUserData()
     const isCommittee = Boolean(profile?.is_committee)
     const navigate = useNavigate()
-    const state = useHomeData(isCommittee)
     const [manageOpen, setManageOpen] = useState(false)
     const [jokeOpen, setJokeOpen] = useState(false)
     const [editOpen, setEditOpen] = useState(false)
 
-    const d = state.data
-    // Nominations are known before the reveal (nominee lists are public to members); wins are not.
-    const [preNoms, setPreNoms] = useState<number | null>(null)
-    const mainIds = d && !d.released && member ? d.summaries.filter((b) => b.round === "main").map((b) => b.id).join(",") : ""
-    useEffect(() => {
-        if (!mainIds || !member) return
-        let live = true
-        Promise.all(mainIds.split(",").map((id) => fetchBallotDetail(id)))
-            .then((ds) => live && setPreNoms(ds.reduce((n, bd) => n + bd.categories.reduce((m, c) => m + c.nominees.filter((x) => x.member_ids.includes(member.id)).length, 0), 0)))
-            .catch(() => live && setPreNoms(null))
-        return () => {
-            live = false
-        }
-    }, [mainIds, member])
-    // Previous-semester rows are public to members. Null while loading or when the table is not deployed (tiles then stay season-only).
-    const [pastRows, setPastRows] = useState<PastStatRow[] | null>(null)
-    useEffect(() => {
-        let live = true
-        fetchPastStats()
-            .then((r) => live && setPastRows(r.available ? r.rows : null))
-            .catch(() => live && setPastRows(null))
-        return () => {
-            live = false
-        }
-    }, [])
-    const stats = useMemo(() => {
-        if (!d) return null
-        let tally: { wins: number; noms: number } | null = null
-        if (d.released && d.results && member) {
-            const nominees: Record<string, Nominee> = {}
-            for (const c of d.results.categories) for (const n of c.nominees) nominees[n.id] = n
-            tally = nomineeStats(Object.values(d.results.results), nominees).members[member.id] ?? { wins: 0, noms: 0 }
-        }
-        return youStats({ released: d.released, tally, noms: preNoms, past: pastRows && member ? lifetimeFor(member.id, pastRows) : null })
-    }, [d, member, preNoms, pastRows])
-
     const name = displayName(member, profile)
     return (
         <Screen title="You" width="wide">
-            <div className="lg:grid lg:grid-cols-[320px_1fr] lg:items-start lg:gap-8">
-                <div>
-                    <div className="flex items-center gap-4 pb-5">
-                        <Avatar id={member?.id ?? profile?.user_id ?? name} name={name || "You"} src={profile?.image_url} size={96} ring="pebble" />
-                        <div className="min-w-0">
-                            <h2 className="truncate text-title-1">{name}</h2>
-                            {profile?.email && <p className="truncate text-subhead text-label-2">{profile.email}</p>}
-                        </div>
+            <div className="flex items-center gap-4 pb-6">
+                <Avatar id={member?.id ?? profile?.user_id ?? name} name={name || "You"} src={profile?.image_url} size={96} ring="pebble" />
+                <div className="min-w-0 flex-1">
+                    <h2 className="truncate text-title-1">{name}</h2>
+                    {profile?.email && <p className="truncate text-subhead text-label-2">{profile.email}</p>}
+                    <div className="mt-2">
+                        <Button variant="secondary" size="sm" icon={<Pencil aria-hidden className="size-4" />} onClick={() => setEditOpen(true)}>Edit profile</Button>
                     </div>
-                    {stats ? (
-                        <div className="mb-6 space-y-2">
-                            <div className="grid grid-cols-3 gap-2 lg:grid-cols-1">
-                                {stats.tiles.map((s) => (
-                                    <div key={s.label} className="rounded-card bg-surface p-3 text-label lg:p-4">
-                                        {s.locked ? (
-                                            <p className="flex items-center gap-1 text-headline"><Lock aria-hidden className="size-4 shrink-0" />{s.label}</p>
-                                        ) : (
-                                            <p className="font-display text-title-1 tabular-nums" aria-label={s.aria}>{s.value}</p>
-                                        )}
-                                        <p className="break-words text-caption-1 text-label-2">{s.locked ? s.value : s.label}</p>
-                                        {s.caption && <p className="text-caption-2 text-label-3">{s.caption}</p>}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="mb-6 grid grid-cols-3 gap-2 lg:grid-cols-1">
-                            <Skeleton shape="block" />
-                            <Skeleton shape="block" />
-                            <Skeleton shape="block" />
-                        </div>
-                    )}
                 </div>
+            </div>
+            <MyStats />
+            <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
                 <div className="space-y-6">
                     <GroupedSection header="Account">
-                        <ListRow title="Edit profile" leading={icon(User)} chevron onClick={() => setEditOpen(true)} />
-                        <ListRow title="Previous Oscars" leading={icon(Trophy)} chevron to="/app/results/previous" />
                         <ListRow title="Settings" leading={icon(Settings)} chevron to="/app/profile/settings" />
                     </GroupedSection>
                     {isCommittee && (
@@ -119,6 +53,8 @@ const ProfilePage = () => {
                             <ListRow title="Season and ceremony date" leading={icon(Calendar)} chevron onClick={() => setManageOpen(true)} />
                         </GroupedSection>
                     )}
+                </div>
+                <div className="space-y-6">
                     <GroupedSection header="Labs">
                         <ListRow title="Joke generator" leading={icon(Laugh)} chevron onClick={() => setJokeOpen(true)} />
                     </GroupedSection>
