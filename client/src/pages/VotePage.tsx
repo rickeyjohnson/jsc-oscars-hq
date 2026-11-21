@@ -273,7 +273,7 @@ const VotePage = () => {
     return (
         <Shell title={ballot.name}>
             {!reviewing && (
-                <div className="sticky top-0 z-30 -mx-gutter bg-bg px-gutter">
+                <div className="sticky top-[calc(env(safe-area-inset-top)+4rem)] z-20 -mx-gutter bg-bg px-gutter">
                     <ProgressStrip states={states} labels={ballot.categories.map((c) => c.name)} onJump={jump} onOpenJump={() => setJumpOpen(true)} />
                 </div>
             )}

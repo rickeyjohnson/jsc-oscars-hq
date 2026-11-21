@@ -75,3 +75,16 @@ describe("a signed-in account with no member (P1-8)", () => {
         userState.value = { member: { id: "m-me", name: "Me", user_id: "u-me" }, loading: false }
     })
 })
+
+describe("progress strip sits under the nav bar (P1-3)", () => {
+    it("is offset by the nav height plus the safe area and stays below the nav's z-index", async () => {
+        vi.mocked(fetchBallotDetail).mockResolvedValue(ballot({ categories: [category("c1", "Best Picture", [nominee("n1", "Ann")])] }))
+        vi.mocked(fetchMyVotes).mockResolvedValue({})
+        const { container } = renderPage()
+        await screen.findByRole("region", { name: /best picture/i })
+        const strip = container.querySelector("div.sticky:not(header)")!
+        expect(strip.className).toContain("top-[calc(env(safe-area-inset-top)+4rem)]")
+        expect(strip.className).toContain("z-20")
+        expect(strip.className).not.toContain("z-30")
+    })
+})
