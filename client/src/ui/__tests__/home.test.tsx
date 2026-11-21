@@ -130,7 +130,7 @@ describe("Home widgets", () => {
         fireEvent.click(within(nv).getByRole("button", { name: /try again/i }))
         expect(reload).toHaveBeenCalled()
         expect(screen.getByRole("region", { name: "Your ballots" }).textContent).toMatch(/3 left/)
-        expect(within(screen.getByRole("region", { name: "Oscar night" })).getByRole("button", { name: "Add to calendar" })).toBeTruthy()
+        expect(within(screen.getByRole("region", { name: "Oscar night" })).getByRole("button", { name: /^Add to calendar, / })).toBeTruthy()
     })
 
     it("shows loading skeletons per widget", () => {
@@ -167,7 +167,7 @@ describe("Home widgets", () => {
         const btn = screen.getByRole("button", { name: "Add to calendar" }) as HTMLButtonElement
         expect(btn.disabled).toBe(true)
         expect(screen.getByText(/date isn't set yet/i)).toBeTruthy()
-        expect(screen.queryByRole("link", { name: "Directions" })).toBeNull()
+        expect(screen.queryByRole("link", { name: /directions/i })).toBeNull()
         expect(screen.queryByText(/📍/)).toBeNull()
     })
 
@@ -176,9 +176,9 @@ describe("Home widgets", () => {
         URL.createObjectURL = create
         URL.revokeObjectURL = vi.fn()
         renderHome()
-        const link = screen.getByRole("link", { name: "Directions" }) as HTMLAnchorElement
+        const link = screen.getByRole("link", { name: /Langston/ }) as HTMLAnchorElement
         expect(new URL(link.href).searchParams.get("query")).toBe("Langston's place")
-        fireEvent.click(screen.getByRole("button", { name: "Add to calendar" }))
+        fireEvent.click(screen.getByRole("button", { name: /^Add to calendar, / }))
         const blob = (create.mock.calls[0] as unknown as [Blob])[0]
         expect(blob.type).toMatch(/^text\/calendar/)
     })

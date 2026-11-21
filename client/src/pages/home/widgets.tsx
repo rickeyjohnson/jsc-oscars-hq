@@ -83,8 +83,9 @@ function Ceremony({ state }: Props) {
                 <p className="mt-1 text-subhead font-bold">
                     <span aria-hidden>📍 </span>
                     <span className="sr-only">Location: </span>
-                    <a href={mapsUrl(season.location)} target="_blank" rel="noopener noreferrer" aria-label="Directions" className="relative z-10 underline">
+                    <a href={mapsUrl(season.location)} target="_blank" rel="noopener noreferrer" className="relative z-10 underline">
                         {season.location}
+                        <span className="sr-only">, get directions</span>
                     </a>
                 </p>
             )}
@@ -94,7 +95,7 @@ function Ceremony({ state }: Props) {
                 </p>
             )}
             {ready && (
-                <button type="button" aria-label="Add to calendar" disabled={!at} aria-describedby={at ? undefined : noteId} onClick={add} className={`absolute inset-0 rounded-card ${at ? "cursor-pointer" : ""}`} />
+                <button type="button" aria-label={at ? `Add to calendar, ${ceremonyDate(at)} at ${ceremonyTime(at)}` : "Add to calendar"} disabled={!at} aria-describedby={at ? undefined : noteId} onClick={add} className={`absolute inset-0 rounded-card ${at ? "cursor-pointer" : ""}`} />
             )}
         </Widget>
     )
