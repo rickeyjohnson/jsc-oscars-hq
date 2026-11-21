@@ -1,10 +1,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { supabase } from "../supabaseClient"
 import { useAuth } from "../context/AuthContext"
 import { authRedirectUrl } from "../lib/siteUrl"
 import { loginErrorText } from "../lib/authErrors"
+import { loginNotice, safeReturnPath } from "../lib/returnTo"
 import { SheetActions } from "../ui/SheetActions"
 import { Sheet } from "../ui/Sheet"
 import { Button } from "../ui/Button"
@@ -98,6 +99,7 @@ const LoginPage = () => {
     const [useEmail, setUseEmail] = useState(false)
     const [googleLoading, setGoogleLoading] = useState(false)
     const navigate = useNavigate()
+    const location = useLocation()
     useResetOnPageShow(() => setGoogleLoading(false))
 
     const handleChange = (
@@ -132,7 +134,7 @@ const LoginPage = () => {
             return
         }
 
-        navigate("/app")
+        navigate(safeReturnPath(location.state), { replace: true })
     }
 
     const handleGoogle = async () => {
@@ -152,14 +154,14 @@ const LoginPage = () => {
 
     useEffect(() => {
         if (session) {
-            navigate("/app")
+            navigate(safeReturnPath(location.state), { replace: true })
         }
     }, [])
 
     return (
         <AuthLayout
             title="Welcome back."
-            subtitle="Log in to vote."
+            subtitle={loginNotice(location.state) ?? "Log in to vote."}
             footer={
                 <p className="text-callout text-label-2">
                     New here?{" "}

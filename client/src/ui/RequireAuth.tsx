@@ -1,11 +1,12 @@
 import type { ReactNode } from "react"
-import { Navigate } from "react-router-dom"
+import { Navigate, useLocation } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { Skeleton, SkeletonScreen } from "./Skeleton"
 import { COPY } from "./copy"
 
 export function RequireAuth({ children }: { children: ReactNode }) {
     const { user, loading } = useAuth()
+    const loc = useLocation()
     if (loading) {
         return (
             <div className="min-h-dvh bg-bg px-gutter pt-safe py-8">
@@ -20,6 +21,6 @@ export function RequireAuth({ children }: { children: ReactNode }) {
             </div>
         )
     }
-    if (!user) return <Navigate to="/" replace />
+    if (!user) return <Navigate to="/login" replace state={{ from: loc.pathname + loc.search, notice: "Log in to continue. Your votes are saved." }} />
     return <>{children}</>
 }

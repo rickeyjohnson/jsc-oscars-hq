@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { fireEvent, render, screen, within } from "@testing-library/react"
-import { MemoryRouter, Route, Routes } from "react-router-dom"
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom"
 import type { ReactNode } from "react"
 import { AppShell } from "../AppShell"
 import { RequireAuth } from "../RequireAuth"
@@ -38,6 +38,11 @@ const setDesktop = (on: boolean) => {
     })) as unknown as typeof window.matchMedia
 }
 
+const LoginProbe = () => {
+    const l = useLocation()
+    const st = l.state as { from?: string; notice?: string } | null
+    return <p>login from {st?.from} / {st?.notice}</p>
+}
 const Stub = ({ name }: { name: string }) => <p>{name} page</p>
 
 const renderAt = (path: string, extra?: ReactNode) =>
@@ -45,6 +50,7 @@ const renderAt = (path: string, extra?: ReactNode) =>
         <MemoryRouter initialEntries={[path]}>
             <Routes>
                 <Route path="/" element={<p>landing</p>} />
+                <Route path="/login" element={<LoginProbe />} />
                 <Route
                     path="/app"
                     element={
@@ -125,10 +131,10 @@ describe("AppShell", () => {
         expect(screen.getByRole("link", { name: /go home/i }).getAttribute("href")).toBe("/app")
     })
 
-    it("signed out → /", () => {
+    it("signed out → /login with where they were and a note (P1-6)", () => {
         auth.value = { user: null, loading: false }
-        renderAt("/app")
-        expect(screen.getByText("landing")).toBeTruthy()
+        renderAt("/app/ballots")
+        expect(screen.getByText(/login from \/app\/ballots \/ Log in to continue/)).toBeTruthy()
     })
 
     it("legacy NavigationBar renders nothing and NavigationTabs without children renders nothing", () => {
