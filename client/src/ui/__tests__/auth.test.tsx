@@ -100,16 +100,16 @@ describe("Login", () => {
 })
 
 describe("Signup", () => {
-    it("renders name chips before the email field and toggles aria-pressed", async () => {
+    it("renders name chips before the email field and toggles aria-checked", async () => {
         wrap(<SignupPage />)
-        const chip = await screen.findByRole("button", { name: "Ann" })
+        const chip = await screen.findByRole("radio", { name: "Ann" })
         const email = screen.getByLabelText("Email")
         expect(chip.compareDocumentPosition(email) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-        expect(chip.getAttribute("aria-pressed")).toBe("false")
+        expect(chip.getAttribute("aria-checked")).toBe("false")
         fireEvent.click(chip)
-        expect(chip.getAttribute("aria-pressed")).toBe("true")
-        fireEvent.click(screen.getByRole("button", { name: "Bo" }))
-        expect(chip.getAttribute("aria-pressed")).toBe("false")
+        expect(chip.getAttribute("aria-checked")).toBe("true")
+        fireEvent.click(screen.getByRole("radio", { name: "Bo" }))
+        expect(chip.getAttribute("aria-checked")).toBe("false")
         expect(screen.getByLabelText("Password").getAttribute("autocomplete")).toBe("new-password")
         expect(screen.getByLabelText("Email").getAttribute("autocomplete")).toBe("email")
         expect(screen.getByLabelText("Username").getAttribute("autocomplete")).toBe("username")
@@ -117,7 +117,7 @@ describe("Signup", () => {
     it("signs up with member_name only and goes to /app when a session exists", async () => {
         signUp.mockResolvedValue({ data: { session: {} }, error: null })
         wrap(<SignupPage />)
-        fireEvent.click(await screen.findByRole("button", { name: "Cy" }))
+        fireEvent.click(await screen.findByRole("radio", { name: "Cy" }))
         fireEvent.change(screen.getByLabelText("Username"), { target: { value: "cy" } })
         fireEvent.change(screen.getByLabelText("Email"), { target: { value: "cy@x.co" } })
         fireEvent.change(screen.getByLabelText("Password"), { target: { value: "secret12" } })
@@ -130,7 +130,7 @@ describe("Signup", () => {
     it("opens the verify sheet only without a session", async () => {
         signUp.mockResolvedValue({ data: { session: null }, error: null })
         wrap(<SignupPage />)
-        fireEvent.click(await screen.findByRole("button", { name: "Ann" }))
+        fireEvent.click(await screen.findByRole("radio", { name: "Ann" }))
         fireEvent.change(screen.getByLabelText("Username"), { target: { value: "a" } })
         fireEvent.change(screen.getByLabelText("Email"), { target: { value: "a@x.co" } })
         fireEvent.change(screen.getByLabelText("Password"), { target: { value: "secret12" } })
@@ -147,6 +147,6 @@ describe("Signup", () => {
         wrap(<SignupPage />)
         const alert = await screen.findByRole("alert")
         fireEvent.click(within(alert).getByRole("button", { name: "Try again" }))
-        expect(await screen.findByRole("button", { name: "Ann" })).toBeTruthy()
+        expect(await screen.findByRole("radio", { name: "Ann" })).toBeTruthy()
     })
 })
