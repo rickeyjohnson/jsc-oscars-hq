@@ -1,6 +1,9 @@
 import { AnimatePresence, motion } from "motion/react"
 import { useEffect, useState } from "react"
-import { X, RotateCcw } from "lucide-react"
+import { RotateCcw } from "lucide-react"
+import { Button } from "../ui/Button"
+import { Sheet } from "../ui/Sheet"
+import { SheetActions } from "../ui/SheetActions"
 
 interface Joke {
     setup: string
@@ -70,96 +73,35 @@ const JokeGeneratorModal = ({ isOpen, onClose }: JokeGeneratorProps) => {
     }, [])
 
     return (
-        <AnimatePresence>
-            {isOpen && (
-                <motion.div
-                    key="joke-modal"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{
-                        y: "-110%",
-                        opacity: 0,
-                        scale: 0.96,
-                        filter: "blur(6px)",
-                        transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] },
-                    }}
-                    className="fixed inset-0 z-50 flex items-center justify-center p-6"
-                >
-                    <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
-                    <div className="relative flex flex-col justify-items items-center w-[80%] text-[#fffadd]">
-                        <AnimatePresence mode="wait">
-                            {!showPunchline ? (
-                                <motion.div
-                                    key="setup"
-                                    initial={{
-                                        opacity: 0,
-                                        filter: "blur(8px)",
-                                        scale: 0.98,
-                                    }}
-                                    animate={{
-                                        opacity: 1,
-                                        filter: "blur(0px)",
-                                        scale: 1,
-                                    }}
-                                    exit={{ opacity: 0, filter: "blur(8px)" }}
-                                    transition={{ duration: 0.6 }}
-                                    className="text-center"
-                                >
-                                    <h2 className="font-bold">
-                                        {currentJoke.setup}
-                                    </h2>
-                                </motion.div>
-                            ) : (
-                                <motion.div
-                                    key="punchline"
-                                    initial={{
-                                        opacity: 0,
-                                        y: 20,
-                                        filter: "blur(10px)",
-                                    }}
-                                    animate={{
-                                        opacity: 1,
-                                        y: 0,
-                                        filter: "blur(0px)",
-                                    }}
-                                    transition={{
-                                        duration: 0.8,
-                                        ease: "easeOut",
-                                    }}
-                                    className="text-center"
-                                >
-                                    <h2 className="font-bold italics">
-                                        "{currentJoke.punchline}"
-                                    </h2>
-
-                                    {/* Action Buttons - Appear when joke is finished */}
-                                    {isFinished && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            className="mt-12 flex gap-4 justify-center"
-                                        >
-                                            <button
-                                                onClick={onClose}
-                                                className="flex items-center gap-2 px-6 py-3 rounded-full bg-zinc-800 text-white hover:bg-zinc-700 transition font-semibold"
-                                            >
-                                                <X size={18} /> Quit
-                                            </button>
-                                            <button
-                                                onClick={nextJoke}
-                                                className="flex items-center gap-2 px-8 py-3 rounded-full bg-[#fffadd] text-black hover:bg-white transition font-bold"
-                                            >
-                                                <RotateCcw size={18} /> Another?
-                                            </button>
-                                        </motion.div>
-                                    )}
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
-                </motion.div>
-            )}
-        </AnimatePresence>
+        <Sheet
+            open={isOpen}
+            onClose={onClose}
+            title="Joke"
+            fit
+            footer={
+                isFinished ? (
+                    <SheetActions>
+                        <Button fullWidth icon={<RotateCcw aria-hidden size={18} />} onClick={nextJoke}>
+                            Another?
+                        </Button>
+                    </SheetActions>
+                ) : undefined
+            }
+        >
+            <div aria-live="polite" className="py-4 text-center">
+                <AnimatePresence mode="wait">
+                    {!showPunchline ? (
+                        <motion.h3 key="setup" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }} className="text-title-2">
+                            {currentJoke.setup}
+                        </motion.h3>
+                    ) : (
+                        <motion.h3 key="punchline" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="text-title-2">
+                            "{currentJoke.punchline}"
+                        </motion.h3>
+                    )}
+                </AnimatePresence>
+            </div>
+        </Sheet>
     )
 }
 

@@ -1,5 +1,6 @@
 import { Calendar, Clock, Plus } from "lucide-react"
-import Modal, { ModalBody, ModalFooter, ModalHeader } from "./Modal"
+import Modal, { ModalHeader } from "./Modal"
+import { Button } from "../ui/Button"
 import StatusBadge from "./StatusBadge"
 import { useEffect, useState } from "react"
 import EditOscarEvent from "./EditOscarEvent"
@@ -47,121 +48,74 @@ const ManageOscarsModal = ({
 
     return (
         <Modal isOpen={isOpen} onClose={onClose}>
-            <ModalHeader
-                title="Oscar Events"
-                description="Add, edit, or delete Oscar events and ceremonies"
-            />
+            <ModalHeader title="Oscar Events" description="Add, edit, or delete Oscar events and ceremonies" />
 
-            <button
+            <Button
+                fullWidth
+                icon={<Plus aria-hidden className="size-5" />}
                 onClick={() => {
                     setShowEditEventModal(true)
                     setIsEdit(false)
                 }}
-                className="w-full mb-4 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-zinc-900 rounded-xl font-bold hover:from-amber-600 hover:to-amber-700 transition flex items-center justify-center gap-2 text-sm"
             >
-                <Plus className="w-5 h-5" />
                 Add New Event
-            </button>
+            </Button>
 
-            <ModalBody>
-                <div className="space-y-3 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] mb-3">
-                    {oscarsEvents.length === 0 ? (
-                        <div className="bg-zinc-800/50 rounded-xl p-8 text-center">
-                            <Calendar className="w-12 h-12 text-amber-100/40 mx-auto mb-3" />
-                            <p className="text-amber-100/60">
-                                No events added yet
-                            </p>
-                            <p className="text-xs text-amber-100/40 mt-1">
-                                Click "Add New Event" to create your first event
-                            </p>
-                        </div>
-                    ) : (
-                        oscarsEvents.map((event) => (
-                            <div
-                                key={event.id}
-                                className="bg-amber-100/5 border border-amber-100/10 rounded-2xl p-4"
-                            >
-                                <div className="flex items-start justify-between mb-3">
-                                    <div className="flex-1">
-                                        <div className="font-bold text-amber-100 text-md mb-1">
-                                            {event.name}
-                                        </div>
-                                        <div className="flex items-center gap-x-4 gap-y-1 text-sm text-amber-100/60 flex-wrap">
-                                            <div className="flex items-center justify-center gap-3">
-                                                <Calendar className="w-4 h-4" />
-                                                {event.starts_at
-                                                    ? new Date(
-                                                          event.starts_at
-                                                      ).toLocaleDateString(
-                                                          "en-US",
-                                                          {
-                                                              weekday: "long",
-                                                              year: "numeric",
-                                                              month: "long",
-                                                              day: "numeric",
-                                                          }
-                                                      )
-                                                    : "TBD"}
-                                            </div>
-                                            <div className="flex items-center justify-center gap-2">
-                                                <Clock className="w-4 h-4" />
-                                                {event.starts_at
-                                                    ? new Date(
-                                                          event.starts_at
-                                                      ).toLocaleTimeString()
-                                                    : "TBD"}
-                                            </div>
-                                        </div>
-                                        <div className="mt-2">
-                                            <StatusBadge
-                                                status={
-                                                    event.starts_at &&
-                                                    new Date(event.starts_at) >
-                                                        new Date()
-                                                        ? "upcoming"
-                                                        : "ended"
-                                                }
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => {
-                                            setSelectedEvent(event)
-                                            setIsEdit(true)
-                                            setLoading(false)
-                                            setShowEditEventModal(true)
-                                        }}
-                                        className="flex-1 py-2 bg-amber-100/10 text-amber-100 rounded-xl text-sm font-medium hover:bg-amber-100/20 transition"
-                                    >
-                                        Edit
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setSelectedEvent(event)
-                                            setLoading(false)
-                                            setShowDeleteConfirmation(true)
-                                        }}
-                                        className="flex-1 py-2 bg-red-500/10 text-red-400 rounded-xl text-sm font-medium hover:bg-red-500/20 transition border border-red-500/20"
-                                    >
-                                        Delete
-                                    </button>
-                                </div>
+            <div className="mt-4 space-y-3">
+                {oscarsEvents.length === 0 ? (
+                    <div className="rounded-card bg-surface-2 p-8 text-center">
+                        <Calendar aria-hidden className="mx-auto mb-3 size-12 text-label-3" />
+                        <p className="text-callout text-label-2">No events added yet</p>
+                        <p className="mt-1 text-footnote text-label-3">Click "Add New Event" to create your first event</p>
+                    </div>
+                ) : (
+                    oscarsEvents.map((event) => (
+                        <div key={event.id} className="rounded-card bg-surface-2 p-4">
+                            <p className="mb-1 text-headline">{event.name}</p>
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-subhead text-label-2">
+                                <span className="inline-flex items-center gap-2">
+                                    <Calendar aria-hidden className="size-4" />
+                                    {event.starts_at ? new Date(event.starts_at).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) : "TBD"}
+                                </span>
+                                <span className="inline-flex items-center gap-2">
+                                    <Clock aria-hidden className="size-4" />
+                                    {event.starts_at ? new Date(event.starts_at).toLocaleTimeString() : "TBD"}
+                                </span>
                             </div>
-                        ))
-                    )}
-                </div>
-            </ModalBody>
-
-            <ModalFooter>
-                <button
-                    onClick={onClose}
-                    className="w-full py-3 bg-amber-100/10 text-amber-100 text-sm rounded-xl font-medium hover:bg-amber-100/20 transition"
-                >
-                    Close
-                </button>
-            </ModalFooter>
+                            <div className="mt-2">
+                                <StatusBadge status={event.starts_at && new Date(event.starts_at) > new Date() ? "upcoming" : "ended"} />
+                            </div>
+                            <div className="mt-3 flex gap-3">
+                                <Button
+                                    size="md"
+                                    variant="tinted"
+                                    fullWidth
+                                    onClick={() => {
+                                        setSelectedEvent(event)
+                                        setIsEdit(true)
+                                        setLoading(false)
+                                        setShowEditEventModal(true)
+                                    }}
+                                >
+                                    Edit
+                                </Button>
+                                <Button
+                                    size="md"
+                                    variant="destructive"
+                                    fullWidth
+                                    onClick={() => {
+                                        setSelectedEvent(event)
+                                        setLoading(false)
+                                        setShowDeleteConfirmation(true)
+                                    }}
+                                >
+                                    Delete
+                                </Button>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
 
             {showEditEventModal && (
                 <EditOscarEvent
