@@ -10,7 +10,7 @@ grant select on public.__ids to authenticated, anon;
 create function public.__id(p_k text) returns uuid language sql stable security definer set search_path = '' as
   $$ select v from public.__ids where k = p_k $$;
 
-insert into public.__tap(line) select plan(12);
+insert into public.__tap(line) select plan(11);
 
 update members set user_id = null, claimed_at = null where name in ('Rickey','Kadin'); -- real accounts may hold these names; undone by the rollback
 insert into public.__ids values ('rickey', tests.create_user('Rickey')), ('kadin', tests.create_user('Kadin'));
@@ -27,8 +27,8 @@ select tests.authenticate_as(public.__id('kadin'));
 insert into public.__tap(line) select is((select count(*)::int from public.past_stats where season_label = 'TEST A'), 2, 'a member reads every row');
 insert into public.__tap(line) select throws_ok($$ insert into public.past_stats (season_label, season_order, member_id, noms, wins)
   values ('TEST B', 91, public.__id('kadin_m'), 1, 0) $$, '42501', null, 'a member cannot insert');
-insert into public.__tap(line) select is((with u as (update public.past_stats set wins = 1 where season_label = 'TEST A' returning 1) select count(*)::int from u), 0, 'a member cannot update (no row is visible to update)');
-insert into public.__tap(line) select is((with d as (delete from public.past_stats where season_label = 'TEST A' returning 1) select count(*)::int from d), 0, 'a member cannot delete');
+with u as (update public.past_stats set wins = 1 where season_label = 'TEST A' returning 1) insert into public.__tap(line) select is((select count(*)::int from u), 0, 'a member cannot update (no row is visible to update)');
+with d as (delete from public.past_stats where season_label = 'TEST A' returning 1) insert into public.__tap(line) select is((select count(*)::int from d), 0, 'a member cannot delete');
 
 -- ---------------------------------------------------------------- committee
 select tests.authenticate_as(public.__id('rickey'));
@@ -45,6 +45,7 @@ insert into public.__tap(line) select lives_ok($$ delete from public.past_stats 
 select tests.authenticate_anon();
 insert into public.__tap(line) select throws_ok($$ select * from public.past_stats $$, '42501', null, 'anon has no access');
 
+select tests.clear_authentication();
 insert into public.__tap(line) select * from finish();
 select string_agg(line, E'\n' order by n) as tap from public.__tap;
 rollback;
