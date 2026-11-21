@@ -122,7 +122,8 @@ const VotePage = () => {
         setMessage(cid, { tone: kind === "closed" ? "warn" : "error", title: m.title, detail: m.detail, retry: m.canRetry ? retry : undefined })
     }
 
-    const save = (cid: string, nomineeId: string | null, run: () => Promise<void>) => {
+    // Resolves true only when this save was accepted by the server.
+    const save = (cid: string, nomineeId: string | null, run: () => Promise<void>): Promise<boolean> => {
         const seq = (seqs.current[cid] ?? 0) + 1
         seqs.current[cid] = seq
         setMessage(cid, null)
@@ -133,7 +134,7 @@ const VotePage = () => {
             else delete next[cid]
             return next
         })
-        const task = (chains.current[cid] ?? Promise.resolve()).then(async () => {
+        const task = (chains.current[cid] ?? Promise.resolve()).then(async (): Promise<boolean> => {
             let ok = true
             let failure: unknown
             try {
@@ -144,7 +145,7 @@ const VotePage = () => {
                 ok = false
                 failure = e
             }
-            if (seqs.current[cid] !== seq) return // a newer tap owns the UI state
+            if (seqs.current[cid] !== seq) return ok // a newer tap owns the UI state
             setPending((p) => ({ ...p, [cid]: false }))
             if (!ok) {
                 const last = confirmed.current[cid]
@@ -156,8 +157,9 @@ const VotePage = () => {
                 })
                 void fail(cid, failure, () => { save(cid, nomineeId, run) })
             }
+            return ok
         })
-        chains.current[cid] = task
+        chains.current[cid] = task.then(() => {})
         return task
     }
 
@@ -202,11 +204,17 @@ const VotePage = () => {
         const cat = ballot.categories.find((c) => c.id === cid)
         if (!cat) return
         const existing = findMatchingNominee(selectableNominees(cat.nominees, myMemberId), name)
-        if (existing) return save(cid, existing.id, () => castVote(ballotId, cid, existing.id))
+        const already = (n: { display_name: string }): VoteMessage => ({ tone: "info", title: "That option already exists", detail: `We selected "${n.display_name}" for you.` })
+        if (existing) {
+            if (await save(cid, existing.id, () => castVote(ballotId, cid, existing.id))) setMessage(cid, already(existing))
+            return
+        }
         try {
             const nomineeId = await addNominee(cid, name.trim(), [])
+            const dupe = cat.nominees.find((n) => n.id === nomineeId)
             await refreshDetail().catch(() => setMessage(cid, refreshFailed()))
-            await save(cid, nomineeId, () => castVote(ballotId, cid, nomineeId))
+            const ok = await save(cid, nomineeId, () => castVote(ballotId, cid, nomineeId))
+            if (ok && dupe) setMessage(cid, already(dupe))
         } catch (e) {
             void fail(cid, e, () => { addOption(cid, name) })
         }
@@ -216,15 +224,18 @@ const VotePage = () => {
         const cat = ballot.categories.find((c) => c.id === cid)
         // The same set of people already exists: vote for it instead of making a copy.
         const existing = cat ? findGroupBySet(cat.nominees, memberIds) : undefined
+        const already = (n: { display_name: string }): VoteMessage => ({ tone: "info", title: "That group already exists", detail: `We selected "${n.display_name}" for you instead of making a copy.` })
         if (existing) {
-            await save(cid, existing.id, () => castVote(ballotId, cid, existing.id))
-            setMessage(cid, { tone: "info", title: "That group already exists", detail: `We selected "${existing.display_name}" for you instead of making a copy.` })
+            if (await save(cid, existing.id, () => castVote(ballotId, cid, existing.id))) setMessage(cid, already(existing))
             return
         }
         try {
             const nomineeId = await addNominee(cid, "", memberIds)
+            // The server may hand back a group that was created after our last fetch (a race): same notice.
+            const dupe = cat?.nominees.find((n) => n.id === nomineeId)
             await refreshDetail().catch(() => setMessage(cid, refreshFailed()))
-            await save(cid, nomineeId, () => castVote(ballotId, cid, nomineeId))
+            const ok = await save(cid, nomineeId, () => castVote(ballotId, cid, nomineeId))
+            if (ok && dupe) setMessage(cid, already(dupe))
         } catch (e) {
             void fail(cid, e, () => { addGroup(cid, memberIds) })
         }

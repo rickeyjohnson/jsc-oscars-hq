@@ -274,6 +274,14 @@ describe("VotePage behavior", () => {
         expect(addNominee).not.toHaveBeenCalled()
     })
 
+    it("typing an existing option says it already exists", async () => {
+        await loaded(ballot({ categories: twoCategories({ allow_member_add: true }) }))
+        const box = within(section(C1)).getByLabelText(/add an option/i)
+        fireEvent.change(box, { target: { value: "ann" } })
+        fireEvent.submit(box.closest("form")!)
+        expect(await within(section(C1)).findByText(/option already exists/i)).toBeTruthy()
+    })
+
     it("typing a new option creates a nominee, refreshes, then votes for it", async () => {
         const b = ballot({ categories: twoCategories({ allow_member_add: true }) })
         await loaded(b)
@@ -391,6 +399,28 @@ describe("VotePage group category", () => {
         expect(addNominee).not.toHaveBeenCalled()
         const info = await within(section(C1)).findByText(/already exists/i)
         expect(info.closest("[role=status]")!.className).toMatch(/border-pebble-sky/)
+    })
+
+    it("a failed save for an existing group shows the error, not the duplicate notice", async () => {
+        await loaded(ballot({ categories: groupCats() }))
+        vi.mocked(castVote).mockRejectedValueOnce(new Error("nope"))
+        fireEvent.click(within(section(C1)).getByRole("button", { name: /add a group/i }))
+        fireEvent.click(await screen.findByRole("button", { name: "Ann" }))
+        fireEvent.click(screen.getByRole("button", { name: "Bo" }))
+        fireEvent.click(screen.getByRole("button", { name: "Vote for Ann & Bo" }))
+        expect(await within(section(C1)).findByRole("alert")).toBeTruthy()
+        expect(within(section(C1)).queryByText(/already exists/i)).toBeNull()
+    })
+
+    it("the server returning an existing group id shows the duplicate notice", async () => {
+        await loaded(ballot({ categories: groupCats() }))
+        vi.mocked(addNominee).mockResolvedValue("g3") // client set differs, server dedupes to Cy & Di
+        fireEvent.click(within(section(C1)).getByRole("button", { name: /add a group/i }))
+        fireEvent.click(await screen.findByRole("button", { name: "Di" }))
+        fireEvent.click(screen.getByRole("button", { name: "Bo" }))
+        fireEvent.click(screen.getByRole("button", { name: "Vote for Bo & Di" }))
+        await waitFor(() => expect(castVote).toHaveBeenCalledWith("B1", "c1", "g3"))
+        expect(await within(section(C1)).findByText(/already exists/i)).toBeTruthy()
     })
 
     it("caps a group at three people", async () => {
