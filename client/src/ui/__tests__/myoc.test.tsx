@@ -171,6 +171,20 @@ describe("committee", () => {
         fireEvent.click(screen.getByRole("button", { name: /^All/ }))
         expect(screen.getAllByRole("button", { name: /^Review / })).toHaveLength(3)
     })
+    it("renders every idea as its own equal card in a responsive grid", async () => {
+        vi.mocked(fetchReviewIdeas).mockResolvedValue([review("a", { name: "A very long title ".repeat(10) }), review("b")])
+        renderPage("/app/profile/settings/myoc?tab=review")
+        const first = await screen.findByRole("button", { name: /Review A very long/ })
+        const list = first.closest("ul")!
+        expect(list.className).toMatch(/grid-cols-1/)
+        expect(list.className).toMatch(/md:grid-cols-2/)
+        expect(list.className).toMatch(/xl:grid-cols-3/)
+        expect(list.className).not.toMatch(/divide-y|bg-surface/)
+        const cards = screen.getAllByRole("button", { name: /^Review / })
+        expect(new Set(cards.map((b) => b.className.match(/h-32/)?.[0])).size).toBe(1)
+        expect(cards.every((b) => /rounded-card/.test(b.className) && /bg-surface/.test(b.className))).toBe(true)
+        expect(first.querySelector(".line-clamp-2")).toBeTruthy()
+    })
     it("accepts an idea with edited wording and a category label", async () => {
         vi.mocked(fetchReviewIdeas).mockResolvedValue([review("a")])
         vi.mocked(reviewIdea).mockResolvedValue()

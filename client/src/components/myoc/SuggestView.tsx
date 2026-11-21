@@ -171,20 +171,20 @@ export function SuggestView({ window: w, phase, now }: { window: MyocWindow | nu
                 {ideas.length === 0 ? (
                     <p className="rounded-card bg-surface p-4 text-callout text-label-2">{open ? "Nothing yet. Your ideas stay private: only the committee reads them." : "You didn't send any ideas."}</p>
                 ) : (
-                    <ul className="list-none divide-y divide-sep overflow-hidden rounded-card bg-surface p-0">
+                    <ul className="grid list-none grid-cols-1 items-stretch gap-3 p-0">
                         {ideas.map((i) => {
                             const changeable = canChange(i, phase)
                             const status = memberStatusLabel(i.status)
                             return (
-                                <li key={i.id} className="p-4">
+                                <li key={i.id} className="flex min-h-36 flex-col rounded-card bg-surface p-4">
                                     <div className="flex items-start justify-between gap-3">
-                                        <p className={`min-w-0 break-words text-body font-bold ${i.status === "withdrawn" ? "text-label-2 line-through" : ""}`}>{i.name}</p>
+                                        <p className={`line-clamp-2 min-w-0 break-words text-body font-bold ${i.status === "withdrawn" ? "text-label-2 line-through" : ""}`}>{i.name}</p>
                                         <Chip tone={status === "Submitted" ? "strawberry" : "neutral"}>{status}</Chip>
                                     </div>
-                                    {i.description && <p className="mt-1 break-words text-callout text-label-2">{i.description}</p>}
+                                    {i.description && <p className="mt-1 line-clamp-3 break-words text-callout text-label-2">{i.description}</p>}
                                     {hintLabel(i.hint) && <p className="mt-1 text-footnote text-label-2">Nominees: {hintLabel(i.hint)}</p>}
                                     {changeable && (
-                                        <div className="mt-3 flex gap-2">
+                                        <div className="mt-auto flex gap-2 pt-3">
                                             <Button variant="tinted" size="md" aria-label={`Edit ${i.name}`} onClick={() => setEditing(i)}>
                                                 Edit
                                             </Button>

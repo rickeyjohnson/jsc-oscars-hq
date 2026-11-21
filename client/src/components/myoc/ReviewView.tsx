@@ -77,7 +77,6 @@ export function ReviewView({ window: w, phase }: { window: MyocWindow | null; ph
     const counts = filterCounts(ideas)
     const shown = filterIdeas(ideas, filter)
     const accepted = acceptedIdeas(ideas)
-    const byId = new Map(ideas.map((i) => [i.id, i]))
     const open = ideas.find((i) => i.id === openId) ?? null
 
     const build = () => {
@@ -107,20 +106,25 @@ export function ReviewView({ window: w, phase }: { window: MyocWindow | null; ph
             {shown.length === 0 ? (
                 <EmptyState icon={Inbox} title={ideas.length === 0 ? "No ideas yet" : "Nothing here"} body={ideas.length === 0 ? "Ideas members send in show up here with who sent them." : "Try another filter."} />
             ) : (
-                <ul className="list-none divide-y divide-sep overflow-hidden rounded-card bg-surface p-0 lg:grid lg:grid-cols-2 lg:divide-y-0">
+                <ul className="grid list-none grid-cols-1 items-stretch gap-3 p-0 md:grid-cols-2 xl:grid-cols-3">
                     {shown.map((i) => (
-                        <li key={i.id} className="lg:border-b lg:border-sep">
-                            <button type="button" onClick={() => setOpenId(i.id)} aria-label={`Review ${i.name}, from ${i.author.name}`} className="flex min-h-16 w-full cursor-pointer items-start gap-3 p-4 text-left hover:bg-fill active:bg-fill">
+                        <li key={i.id} className="flex">
+                            <button
+                                type="button"
+                                onClick={() => setOpenId(i.id)}
+                                aria-label={`Review ${i.name}, from ${i.author.name}`}
+                                className="relative flex h-32 w-full cursor-pointer items-start gap-3 overflow-hidden rounded-card bg-surface p-4 text-left hover:bg-fill active:bg-fill"
+                            >
                                 <MemberAvatar memberId={i.author.id ?? undefined} name={i.author.name} size={40} ring="pebble" decorative />
-                                <span className="min-w-0 flex-1">
-                                    <span className="block break-words text-body font-bold">{i.name}</span>
-                                    {i.description && <span className="mt-0.5 line-clamp-2 block break-words text-callout text-label-2">{i.description}</span>}
-                                    <span className="mt-1 block text-footnote text-label-2">
-                                        {[i.author.name, hintLabel(i.hint), i.assigned_category].filter(Boolean).join(" · ")}
-                                        {i.merged_into && byId.get(i.merged_into) ? ` · into ${byId.get(i.merged_into)!.name}` : ""}
+                                <span className="flex h-full min-w-0 flex-1 flex-col">
+                                    <span className="line-clamp-2 break-words pr-20 text-body font-bold">{i.name}</span>
+                                    <span className="mt-auto truncate text-footnote text-label-2">
+                                        {[i.author.name, hintLabel(i.hint)].filter(Boolean).join(" · ")}
                                     </span>
                                 </span>
-                                <Chip tone={STATUS_TONE[i.status]}>{STATUS_LABEL[i.status]}</Chip>
+                                <span className="absolute right-4 top-4">
+                                    <Chip tone={STATUS_TONE[i.status]}>{STATUS_LABEL[i.status]}</Chip>
+                                </span>
                             </button>
                         </li>
                     ))}
