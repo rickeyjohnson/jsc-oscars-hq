@@ -6,7 +6,6 @@ import { ErrorState } from "../ui/ErrorState"
 import ProfileSetup from "../components/ProfileSetup"
 import { useAuth } from "../context/AuthContext"
 import { useUserData } from "../context/UserContenxt"
-import { supabase } from "../supabaseClient"
 import { Screen } from "../ui/Screen"
 import { Skeleton, SkeletonScreen } from "../ui/Skeleton"
 import { useToast } from "../ui/Toast"
@@ -112,31 +111,21 @@ const HomePage = () => {
         setProfileSetupComplete(true)
     }
 
+    // The profile is already loaded by UserDataProvider: no second query for image_url.
     useEffect(() => {
-        const isProfileComplete = async () => {
-            const { data, error } = await supabase
-                .from("profiles")
-                .select("image_url")
-                .eq("user_id", user?.id ?? "")
-                .single()
-
-            if (error) {
-                console.error("Error fetching if profile is complete: ", error.message)
-                setProfileSetupComplete(true)
-                return
-            }
-
-            let skipped = false
-            try {
-                skipped = localStorage.getItem(`jsc.profileSetupSkipped.${user?.id ?? ""}`) === "1"
-            } catch {
-                // ignore
-            }
-            setProfileSetupComplete(skipped || data?.image_url !== null)
+        if (loading) return
+        if (!profile) {
+            setProfileSetupComplete(true)
+            return
         }
-
-        isProfileComplete()
-    }, [user?.id])
+        let skipped = false
+        try {
+            skipped = localStorage.getItem(`jsc.profileSetupSkipped.${user?.id ?? ""}`) === "1"
+        } catch {
+            // ignore
+        }
+        setProfileSetupComplete(skipped || profile.image_url !== null)
+    }, [user?.id, loading, profile])
 
     return (
         <>

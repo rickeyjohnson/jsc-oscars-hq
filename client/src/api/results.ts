@@ -1,7 +1,11 @@
 import { supabase } from "../supabaseClient"
 import { runRelease, type ReleaseIO, type ReleaseStatus } from "../lib/release"
 import type { Ballot, Category, Place, ResultRow, Season } from "../types"
-import { fetchBallotDetail } from "./ballots"
+import { fetchBallotDetail as fetchBallotDetailRaw } from "./ballots"
+import { dedupe } from "../lib/cache/dedup"
+
+// Home reads each ballot detail twice (results + release status): collapse concurrent identical reads. VotePage uses the raw call.
+const fetchBallotDetail = (id: string) => dedupe("ballot-detail:" + id, () => fetchBallotDetailRaw(id))
 
 // Committee reads every result; members only after the season is released (RLS).
 export const fetchResults = async (categoryIds: string[]): Promise<ResultRow[]> => {

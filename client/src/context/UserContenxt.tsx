@@ -76,7 +76,7 @@ export const UserDataProvider = ({
             const [profileRes, memberRes] = await Promise.all([
                 supabase
                     .from("profiles")
-                    .select("*")
+                    .select("user_id, username, display_name, email, image_url, created_at, is_committee")
                     .eq("user_id", user.id)
                     .single(),
                 supabase

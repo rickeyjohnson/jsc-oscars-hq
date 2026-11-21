@@ -1,5 +1,6 @@
 import { supabase } from "../supabaseClient"
 import type { Member } from "../types"
+import { dedupe, forget } from "../lib/cache/dedup"
 
 export const fetchAvailableMemberNames = async (): Promise<string[]> => {
     const { data, error } = await supabase.rpc("available_member_names")
@@ -18,11 +19,13 @@ export const fetchMemberNameStatus = async (): Promise<MemberNameStatus[]> => {
     return names.map((name) => ({ name, taken: false }))
 }
 
-export const fetchMembers = async (): Promise<Member[]> => {
-    const { data, error } = await supabase.from("members").select("id, name, user_id").order("name")
-    if (error) throw error
-    return (data ?? []) as Member[]
-}
+// Concurrent callers (Home alone used to fire this three times) share one request; nothing is kept once it settles.
+export const fetchMembers = (): Promise<Member[]> =>
+    dedupe("members", async () => {
+        const { data, error } = await supabase.from("members").select("id, name, user_id").order("name")
+        if (error) throw error
+        return (data ?? []) as Member[]
+    })
 
 // Member ids of the committee: members whose account has profiles.is_committee.
 export const fetchCommitteeMemberIds = async (): Promise<string[]> => {
@@ -56,7 +59,9 @@ export const fetchMemberAvatars = async (): Promise<Record<string, string | null
 // Committee-only RPC: unlinks the member and deletes that account's votes.
 // expectedUserId guards against a stale list: the DB refuses if the name's claim changed.
 export const resetMemberClaim = async (name: string, expectedUserId: string): Promise<void> => {
+    forget("members")
     const { error } = await supabase.rpc("reset_member_claim", { p_name: name, p_expected_user: expectedUserId })
+    forget("members")
     if (error) {
         if (error.message.includes("member claim changed")) throw new Error("This name was changed by someone else — refresh the list.")
         throw error
