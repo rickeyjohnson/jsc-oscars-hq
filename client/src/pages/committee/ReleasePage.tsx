@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react"
 import { Link } from "react-router-dom"
-import { Check, ChevronLeft } from "lucide-react"
+import { Check } from "lucide-react"
 import { vibrate } from "../../ui/haptics"
 import { fetchCurrentSeason } from "../../api/ballots"
 import { fetchReleaseStatus, releaseSeasonResults } from "../../api/results"
@@ -20,13 +20,7 @@ const RELEASE_FAILED = "Couldn't open the envelope. Check your connection and ho
 
 const Page = ({ children }: { children: React.ReactNode }) => (
     <div className="min-h-dvh bg-bg text-label">
-        <main className="mx-auto flex min-h-dvh w-full max-w-[520px] flex-col px-gutter pb-safe pt-safe">
-            <Link to="/app/profile" className="-ml-2 inline-flex min-h-11 items-center gap-0.5 self-start rounded-control pl-1 pr-3 text-subhead font-bold">
-                <ChevronLeft aria-hidden className="size-6" />
-                <span>Back</span>
-            </Link>
-            {children}
-        </main>
+        <main className="mx-auto flex min-h-dvh w-full max-w-[520px] flex-col px-gutter pb-safe pt-safe">{children}</main>
     </div>
 )
 const quietLink = "flex min-h-11 items-center justify-center rounded-control text-subhead font-bold text-pebble-sky"
@@ -174,10 +168,10 @@ const ReleasePage = () => {
 
     return (
         <Page>
-            <div className="my-auto space-y-5 py-6">
-                <h1 className="text-large-title font-display lg:text-display">Reveal the winners?</h1>
+            <div className="my-auto space-y-5 py-4 [@media(max-height:640px)]:space-y-2 [@media(max-height:640px)]:py-2">
+                <h1 className="text-large-title font-display lg:text-display [@media(max-height:640px)]:text-title-1">Reveal the winners?</h1>
                 <p className="text-body font-bold lg:text-headline">Every member sees every winner. This cannot be undone.</p>
-                <ul className="space-y-3 text-callout lg:text-body">
+                <ul className="space-y-3 text-callout lg:text-body [@media(max-height:640px)]:space-y-1">
                     {load.checks.map((c) => <Row key={c.id} tone={c.ok ? "ok" : "bad"}>{c.label}</Row>)}
                     <Row tone="info">Members never see vote counts</Row>
                 </ul>
@@ -187,7 +181,7 @@ const ReleasePage = () => {
                     </Link>
                 )}
             </div>
-            <div className="pb-4">
+            <div className="pb-4 [@media(max-height:640px)]:pb-2">
                 <HoldButton
                     ready={ready}
                     busy={busy}

@@ -43,10 +43,10 @@ describe("SubmitBallotPage", () => {
         expect(await screen.findByRole("heading", { name: "Submit your ballot?" })).toBeTruthy()
         expect(screen.getByText("1 category skipped")).toBeTruthy()
         expect(screen.getByText("1 of 2 categories voted, 1 skipped.")).toBeTruthy()
-        // like the envelope page: no logo, no ballot-name eyebrow, a plain Back at the top
+        // like the envelope page: no logo, no ballot-name eyebrow, no back header (Back to ballot is the way out)
         expect(screen.queryByText("MAIN BALLOT")).toBeNull()
         expect(document.querySelector("svg[aria-label*='Oscars' i], img[alt*='Oscars' i]")).toBeNull()
-        expect(screen.getByRole("link", { name: "Back" }).getAttribute("href")).toBe("/app/ballots/B1")
+        expect(screen.queryByRole("link", { name: "Back" })).toBeNull()
         expect((screen.getByRole("button", { name: /submit my ballot/i }) as HTMLButtonElement).disabled).toBe(false)
         expect(screen.getByRole("link", { name: "Back to ballot" }).getAttribute("href")).toBe("/app/ballots/B1")
     })

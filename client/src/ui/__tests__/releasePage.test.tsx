@@ -35,7 +35,7 @@ describe("ReleasePage", () => {
         expect(screen.getAllByRole("link", { name: "Go to tally" })).toHaveLength(1)
         expect(screen.getByRole("link", { name: "Go to tally" }).getAttribute("href")).toBe("/app/profile/ballots/b1")
         expect(screen.getByRole("link", { name: "Not yet" })).toBeTruthy()
-        expect(screen.getByRole("link", { name: /Back/ })).toBeTruthy()
+        expect(screen.queryByRole("link", { name: "Back" })).toBeNull()
         expect(screen.getByText("Members never see vote counts")).toBeTruthy()
     })
 

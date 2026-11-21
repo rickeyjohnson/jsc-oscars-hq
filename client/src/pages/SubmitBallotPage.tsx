@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link, Navigate, useParams } from "react-router-dom"
-import { Check, ChevronLeft, TriangleAlert } from "lucide-react"
+import { Check, TriangleAlert } from "lucide-react"
 import { vibrate } from "../ui/haptics"
 import { fetchBallotDetail } from "../api/ballots"
 import { fetchMyVotes } from "../api/votes"
@@ -21,17 +21,9 @@ type Load =
 const quietLink = "inline-flex min-h-11 items-center justify-center rounded-control px-4 text-body font-bold underline underline-offset-4"
 const pill = "inline-flex min-h-14 items-center justify-center rounded-full bg-bg px-6 text-title-3 text-label"
 
-const Page = ({ backTo, children }: { backTo: string; children: React.ReactNode }) => (
+const Page = ({ children }: { children: React.ReactNode }) => (
     <div className="min-h-dvh bg-pebble-lime text-on-pebble-lime">
-        <main className="mx-auto flex min-h-dvh max-w-[560px] flex-col gap-6 px-gutter pb-safe pt-safe">
-            <div className="flex min-h-14 items-center">
-                <Link to={backTo} aria-label="Back" className="-ml-2 inline-flex min-h-11 items-center gap-1 rounded-control pl-1 pr-4 text-body font-bold">
-                    <ChevronLeft aria-hidden className="size-6" />
-                    <span>Back</span>
-                </Link>
-            </div>
-            {children}
-        </main>
+        <main className="mx-auto flex min-h-dvh max-w-[560px] flex-col gap-4 px-gutter pb-safe pt-safe [@media(max-height:640px)]:gap-2">{children}</main>
     </div>
 )
 
@@ -78,10 +70,10 @@ const SubmitBallotPage = () => {
     }
 
     const back = `/app/ballots/${ballotId}`
-    if (load.state === "loading") return <Page backTo={back}><div className="text-body">Loading…</div></Page>
+    if (load.state === "loading") return <Page><div className="text-body">Loading…</div></Page>
     if (load.state === "error")
         return (
-            <Page backTo={back}>
+            <Page>
                 <div role="alert" className="text-body font-bold">Couldn't load your ballot. Check your connection and try again.</div>
                 <button type="button" className={pill} onClick={() => { setLoad({ state: "loading" }); setAttempt((n) => n + 1) }}>Try again</button>
             </Page>
@@ -97,9 +89,9 @@ const SubmitBallotPage = () => {
 
     if (doneAt) {
         return (
-            <Page backTo={back}>
-                <div role="status" className="space-y-4 pt-4">
-                    <h1 className="text-display">Ballot submitted</h1>
+            <Page>
+                <div role="status" className="mt-auto space-y-4 pt-4">
+                    <h1 className="text-display [@media(max-height:640px)]:text-title-1">Ballot submitted</h1>
                     <p className="text-body">
                         {voted} of {total} categories voted. Submitted {closesLabel(new Date(doneAt))}.
                     </p>
@@ -117,14 +109,14 @@ const SubmitBallotPage = () => {
 
     const skipped = Math.max(0, total - voted)
     return (
-        <Page backTo={back}>
-            <div className="space-y-3 pt-4">
-                <h1 className="text-display">Submit your ballot?</h1>
+        <Page>
+            <div className="mt-auto space-y-3 pt-4 [@media(max-height:640px)]:space-y-1 [@media(max-height:640px)]:pt-2">
+                <h1 className="text-display [@media(max-height:640px)]:text-title-1">Submit your ballot?</h1>
                 <p className="text-title-3">
                     {voted} of {total} {total === 1 ? "category" : "categories"} voted{skipped > 0 ? `, ${skipped} skipped` : ""}.
                 </p>
             </div>
-            <ul className="space-y-1">
+            <ul className="space-y-1 [@media(max-height:640px)]:space-y-0">
                 {list.items.map((c) => (
                     <li key={c.id} className="flex min-h-11 items-center gap-3 text-callout">
                         {c.ok ? <Check aria-hidden className="size-5 shrink-0" /> : <TriangleAlert aria-hidden className="size-5 shrink-0" />}
@@ -133,7 +125,7 @@ const SubmitBallotPage = () => {
                     </li>
                 ))}
             </ul>
-            <div className="mt-auto space-y-3 pb-4">
+            <div className="mt-auto space-y-3 pb-4 [@media(max-height:640px)]:space-y-1 [@media(max-height:640px)]:pb-2">
                 <Button fullWidth size="lg" variant="primary" disabled={!ready} onClick={() => setConfirming(true)}>
                     Submit my ballot
                 </Button>
