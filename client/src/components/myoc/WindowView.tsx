@@ -103,7 +103,7 @@ export function WindowView({ season, window: w, phase, now, onChanged }: { seaso
                     </Button>
                 )}
             </form>
-            <p className="px-1 text-footnote text-label-2">Each member can send up to 5 ideas. Other members never see each other's ideas.</p>
+            <p className="px-1 text-footnote text-label-2">Members can send as many ideas as they like until it closes. Other members never see each other's ideas.</p>
         </div>
     )
 }

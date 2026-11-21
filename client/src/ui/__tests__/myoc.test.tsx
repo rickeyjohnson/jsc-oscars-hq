@@ -65,7 +65,7 @@ describe("member view", () => {
         renderPage()
         await screen.findByRole("form", { name: "Suggest a category" })
         expect(screen.queryByRole("tab", { name: "Review" })).toBeNull()
-        expect(screen.getByText(/0 of 5 used/)).toBeTruthy()
+        expect(screen.queryByText(/of 5/)).toBeNull()
     })
     it("validates before submitting, then submits and clears", async () => {
         renderPage()
@@ -80,19 +80,19 @@ describe("member view", () => {
         await waitFor(() => expect(submitIdea).toHaveBeenCalledWith("W1", { name: "  Best Lurker  ", description: "", hint: "group" }))
         await waitFor(() => expect((screen.getByLabelText("Category name") as HTMLInputElement).value).toBe(""))
     })
-    it("shows the limit message from the database", async () => {
+    it("explains the old database limit instead of crashing", async () => {
         vi.mocked(submitIdea).mockRejectedValue({ message: "suggestion limit reached" })
         renderPage()
         await screen.findByRole("form", { name: "Suggest a category" })
         fireEvent.change(screen.getByLabelText("Category name"), { target: { value: "x" } })
         fireEvent.click(screen.getByRole("button", { name: "Submit idea" }))
-        expect((await screen.findByRole("alert")).textContent).toMatch(/used all 5 ideas/)
+        expect((await screen.findByRole("alert")).textContent).toMatch(/old limit; ask a committee member/)
     })
-    it("at 5 ideas the form is replaced by the limit note", async () => {
-        vi.mocked(fetchIdeas).mockResolvedValue(["a", "b", "c", "d", "e"].map((i) => idea(i)))
+    it("keeps the form open however many ideas there are", async () => {
+        vi.mocked(fetchIdeas).mockResolvedValue(Array.from({ length: 12 }, (_, i) => idea(`n${i}`)))
         renderPage()
-        expect(await screen.findByText(/You've used all 5 ideas/)).toBeTruthy()
-        expect(screen.queryByRole("button", { name: "Submit idea" })).toBeNull()
+        expect(await screen.findByRole("button", { name: "Submit idea" })).toBeTruthy()
+        expect(screen.queryByText(/used all/)).toBeNull()
     })
     it("closed: no form and no edit or withdraw", async () => {
         vi.mocked(fetchMyocWindows).mockResolvedValue([win(-48, -1)])

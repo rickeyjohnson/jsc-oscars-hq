@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
     acceptedIdeas, canChange, filterCounts, filterIdeas, hintToMode, mergeTargets, memberStatusLabel, myocErrorKind, myocMessage, MYOC_UNAVAILABLE,
-    pickWindow, readBuilderState, sortForBuilder, reviewActions, slotsLeft, toDraftCategories, validateIdea, windowPhase, windowProblem, withAuthors,
+    pickWindow, readBuilderState, sortForBuilder, reviewActions, toDraftCategories, validateIdea, windowPhase, windowProblem, withAuthors,
     type MyocIdea, type MyocWindow,
 } from "./myoc"
 
@@ -43,12 +43,6 @@ describe("member side", () => {
         expect(validateIdea({ name: "ok", description: "y".repeat(301) }).description).toMatch(/300/)
         expect(validateIdea({ name: "ok", description: "y".repeat(300) })).toEqual({})
     })
-    it("withdrawn ideas free a slot; the limit is 5", () => {
-        const six = ["a", "b", "c", "d", "e"].map((i) => idea(i))
-        expect(slotsLeft(six)).toBe(0)
-        expect(slotsLeft([...six.slice(1), idea("w", { status: "withdrawn" })])).toBe(1)
-        expect(slotsLeft([])).toBe(5)
-    })
     it("never shows accepted, rejected or merged to members", () => {
         expect(memberStatusLabel("submitted")).toBe("Submitted")
         for (const s of ["accepted", "rejected", "merged"] as const) expect(memberStatusLabel(s)).toBe("Submitted")
@@ -66,11 +60,11 @@ describe("errors", () => {
     it("classifies", () => {
         expect(myocErrorKind({ code: "PGRST205", message: "Could not find the table 'public.myoc_windows' in the schema cache" })).toBe("unavailable")
         expect(myocErrorKind({ code: "42P01", message: "relation \"myoc_ideas\" does not exist" })).toBe("unavailable")
-        expect(myocErrorKind({ message: "suggestion limit reached" })).toBe("limit")
-        expect(myocErrorKind({ message: "suggestions are not open" })).toBe("closed")
+                expect(myocErrorKind({ message: "suggestions are not open" })).toBe("closed")
         expect(myocErrorKind(new Error("boom"))).toBe("other")
         expect(myocMessage({ code: "PGRST205", message: "x" })).toBe(MYOC_UNAVAILABLE)
-        expect(myocMessage({ message: "suggestion limit reached" })).toMatch(/Withdraw one/)
+        expect(myocErrorKind({ message: "suggestion limit reached" })).toBe("old-limit")
+        expect(myocMessage({ message: "suggestion limit reached" })).toMatch(/old limit; ask a committee member/)
     })
 })
 

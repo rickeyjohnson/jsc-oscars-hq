@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from "react"
 import { Lightbulb } from "lucide-react"
 import { fetchIdeas, submitIdea, withdrawIdea } from "../../api/myoc"
 import {
-    canChange, closesLabel, hasErrors, hintLabel, memberStatusLabel, myocErrorKind, myocMessage, MYOC_LIMIT, MYOC_LOAD_FAILED, MYOC_UNAVAILABLE,
-    slotsLeft, slotsUsed, validateIdea, type IdeaDraft, type IdeaErrors, type MyocIdea, type MyocWindow, type WindowPhase,
+    canChange, closesLabel, hasErrors, hintLabel, memberStatusLabel, myocErrorKind, myocMessage, MYOC_LOAD_FAILED, MYOC_UNAVAILABLE,
+    validateIdea, type IdeaDraft, type IdeaErrors, type MyocIdea, type MyocWindow, type WindowPhase,
 } from "../../lib/myoc"
 import { Button } from "../../ui/Button"
 import { Chip } from "../../ui/Chip"
@@ -80,7 +80,6 @@ export function SuggestView({ window: w, phase, now }: { window: MyocWindow | nu
     }
 
     const ideas = load.ideas
-    const left = slotsLeft(ideas)
     const open = phase === "open"
 
     const submit = async () => {
@@ -127,9 +126,7 @@ export function SuggestView({ window: w, phase, now }: { window: MyocWindow | nu
                     {open && (
                         <>
                             <h2 className="mt-1 text-headline">Suggest a category</h2>
-                            <p className="mt-1 text-callout text-label-2">
-                                {closesLabel(w, now)} · {slotsUsed(ideas)} of {MYOC_LIMIT} used
-                            </p>
+                            <p className="mt-1 text-callout text-label-2">{closesLabel(w, now)}</p>
                         </>
                     )}
                     {phase === "upcoming" && (
@@ -156,23 +153,15 @@ export function SuggestView({ window: w, phase, now }: { window: MyocWindow | nu
                             void submit()
                         }}
                     >
-                        {left === 0 ? (
-                            <p role="status" className="text-callout text-label-2">
-                                You've used all {MYOC_LIMIT} ideas. Withdraw one to add another.
+                        <IdeaFields value={draft} onChange={setDraft} errors={errors} />
+                        {formError && (
+                            <p role="alert" className="text-callout text-danger">
+                                {formError}
                             </p>
-                        ) : (
-                            <>
-                                <IdeaFields value={draft} onChange={setDraft} errors={errors} />
-                                {formError && (
-                                    <p role="alert" className="text-callout text-danger">
-                                        {formError}
-                                    </p>
-                                )}
-                                <Button type="submit" variant="primary" size="md" fullWidth loading={busy} loadingLabel="Submitting…">
-                                    Submit idea
-                                </Button>
-                            </>
                         )}
+                        <Button type="submit" variant="primary" size="md" fullWidth loading={busy} loadingLabel="Submitting…">
+                            Submit idea
+                        </Button>
                     </form>
                 )}
             </div>

@@ -1,10 +1,10 @@
 import type { Category, Member, NomineeMode } from "../types"
 import { closesInLabel } from "./time"
 
-export const MYOC_LIMIT = 5
 export const NAME_MAX = 80
 export const DESC_MAX = 300
 export const MYOC_UNAVAILABLE = "MYOC isn't available yet."
+export const MYOC_OLD_LIMIT = "MYOC still has the old limit; ask a committee member to apply the update."
 export const MYOC_LOAD_FAILED = "Couldn't load MYOC. Check your connection and try again."
 
 export type MyocHint = "person" | "group" | "thing" | "other"
@@ -82,9 +82,6 @@ export function validateIdea(d: Pick<IdeaDraft, "name" | "description">): IdeaEr
 }
 export const hasErrors = (e: IdeaErrors): boolean => Boolean(e.name || e.description)
 
-/** Withdrawn ideas free their slot. */
-export const slotsUsed = (ideas: MyocIdea[]): number => ideas.filter((i) => i.status !== "withdrawn").length
-export const slotsLeft = (ideas: MyocIdea[]): number => Math.max(0, MYOC_LIMIT - slotsUsed(ideas))
 
 /** Members only ever see "Submitted" or "Withdrawn": the committee's decision is never shown to them. */
 export const memberStatusLabel = (s: MyocStatus): "Submitted" | "Withdrawn" => (s === "withdrawn" ? "Withdrawn" : "Submitted")
@@ -93,19 +90,19 @@ export const canChange = (i: Pick<MyocIdea, "status">, phase: WindowPhase): bool
 
 // ---------------------------------------------------------------- errors
 
-export type MyocErrorKind = "unavailable" | "limit" | "closed" | "other"
+export type MyocErrorKind = "unavailable" | "old-limit" | "closed" | "other"
 export function myocErrorKind(e: unknown): MyocErrorKind {
     const err = e as { code?: string; message?: string } | null
     const msg = String(err?.message ?? "")
     if (err?.code === "PGRST205" || err?.code === "42P01" || /could not find the table|schema cache|relation .* does not exist/i.test(msg)) return "unavailable"
-    if (/suggestion limit reached/i.test(msg)) return "limit"
+    if (/suggestion limit reached/i.test(msg)) return "old-limit"
     if (/suggestions are (not open|closed)/i.test(msg)) return "closed"
     return "other"
 }
 export function myocMessage(e: unknown, fallback = "Couldn't save that. Check your connection and try again."): string {
     const k = myocErrorKind(e)
     if (k === "unavailable") return MYOC_UNAVAILABLE
-    if (k === "limit") return `You've used all ${MYOC_LIMIT} ideas. Withdraw one to add another.`
+    if (k === "old-limit") return MYOC_OLD_LIMIT
     if (k === "closed") return "MYOC isn't open right now."
     return fallback
 }
