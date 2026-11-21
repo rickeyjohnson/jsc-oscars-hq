@@ -109,6 +109,30 @@ describe("IntroHost", () => {
         settle()
         expect(screen.getByRole("dialog", { name: "Voting" })).toBeTruthy()
     })
+    it("Results intro is for Winners; the Leaderboard has its own, only once the leaderboard is showing", () => {
+        const { unmount } = host("/app/results")
+        settle()
+        expect(screen.getByRole("dialog", { name: "Results" })).toBeTruthy()
+        expect(screen.getByText(/Tap Leaderboard to see everyone's stats/)).toBeTruthy()
+        unmount()
+        cleanup()
+        mem.clear()
+        mem.set(firstRunKey("u1"), "1")
+        const lb = host("/app/results?view=leaderboard", null)
+        settle()
+        expect(dialog()).toBeNull() // Results intro never shows on the leaderboard, and the leaderboard one waits for its page
+        lb.unmount()
+        host("/app/results?view=leaderboard", "leaderboard")
+        settle()
+        expect(screen.getByRole("dialog", { name: "Leaderboard" })).toBeTruthy()
+    })
+    it("You intro talks about My stats and the Leaderboard; Previous Oscars is gone", () => {
+        const you = INTROS.find((i) => i.id === "you")!
+        expect(JSON.stringify(you.cards)).toMatch(/My stats/)
+        expect(JSON.stringify(you.cards)).not.toMatch(/Previous Oscars/)
+        expect(INTROS.map((i) => i.id)).not.toContain("previous")
+        expect(INTROS.map((i) => i.title)).not.toContain("Previous Oscars")
+    })
     it("queues: one sheet at a time, the next one after the first closes", () => {
         user.committee = true
         host("/app/profile")
@@ -136,6 +160,8 @@ describe("Settings > How it works", () => {
         renderSettings()
         expect(screen.getByText("Welcome guide")).toBeTruthy()
         expect(screen.getByText("Voting")).toBeTruthy()
+        expect(screen.getByText("Leaderboard")).toBeTruthy()
+        expect(screen.queryByText("Previous Oscars")).toBeNull()
         expect(screen.queryByText("The envelope")).toBeNull()
         fireEvent.click(screen.getByText("Voting"))
         expect(screen.getByRole("dialog", { name: "Voting" })).toBeTruthy()

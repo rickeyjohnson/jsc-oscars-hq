@@ -7,7 +7,7 @@ import SignupPage from "./pages/SignupPage"
 import LoginPage from "./pages/LoginPage"
 import HomePage from "./pages/HomePage"
 import BallotsPage from "./pages/BallotsPage"
-import PreviousOscarsPage from "./pages/PreviousOscarsPage"
+import MemberStatsPage from "./pages/MemberStatsPage"
 import ResultsPage from "./pages/ResultsPage"
 import ProfilePage from "./pages/ProfilePage"
 import ResetPassword from "./pages/ResetPassword"
@@ -89,7 +89,8 @@ const App = () => {
                     <Route path="ballots/:ballotId" element={<VotePage />} />
                     <Route path="ballots/:ballotId/submit" element={<SubmitBallotPage />} />
                     <Route path="results" element={<ResultsPage />} />
-                    <Route path="results/previous" element={<PreviousOscarsPage />} />
+                    <Route path="results/previous" element={<Navigate to="/app/results?view=leaderboard" replace />} />
+                    <Route path="results/members/:memberId" element={<MemberStatsPage />} />
                     <Route path="stats" element={<Navigate to="/app/results?view=leaderboard" replace />} />
                     <Route path="profile" element={<ProfilePage />} />
                     <Route path="profile/settings" element={<SettingsPage />} />

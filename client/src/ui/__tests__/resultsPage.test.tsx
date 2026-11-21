@@ -1,16 +1,18 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom"
 import ResultsPage from "../../pages/ResultsPage"
 import { fetchCurrentSeason } from "../../api/ballots"
 import { fetchSeasonResults } from "../../api/results"
-import { fetchMemberAvatars, fetchMembers } from "../../api/members"
+import { fetchMemberAvatars, fetchMemberDirectory, fetchMembers } from "../../api/members"
+import { fetchPastStats } from "../../api/pastStats"
 import type { Category, ResultRow, Season } from "../../types"
 
 vi.mock("../../api/ballots", () => ({ fetchCurrentSeason: vi.fn() }))
 vi.mock("../../api/results", () => ({ fetchSeasonResults: vi.fn() }))
-vi.mock("../../api/members", () => ({ fetchMemberAvatars: vi.fn(), fetchMembers: vi.fn() }))
+vi.mock("../../api/members", () => ({ fetchMemberAvatars: vi.fn(), fetchMembers: vi.fn(), fetchMemberDirectory: vi.fn() }))
+vi.mock("../../api/pastStats", () => ({ fetchPastStats: vi.fn(), PAST_STATS_UNAVAILABLE: "Previous stats aren't available yet" }))
 let profile: { is_committee: boolean } | null = { is_committee: false }
 const me = { id: "m1", name: "Micah" }
 vi.mock("../../context/UserContenxt", () => ({
@@ -46,6 +48,8 @@ describe("ResultsPage", () => {
         vi.mocked(fetchSeasonResults).mockReset().mockResolvedValue({ categories, results })
         vi.mocked(fetchMembers).mockReset().mockResolvedValue([{ id: "m1", name: "Micah" }, { id: "m2", name: "Bo" }] as never)
         vi.mocked(fetchMemberAvatars).mockReset().mockResolvedValue({})
+        vi.mocked(fetchMemberDirectory).mockReset().mockResolvedValue([])
+        vi.mocked(fetchPastStats).mockReset().mockResolvedValue({ available: true, rows: [{ season_label: "Fall 25", season_order: 1, member_id: "m1", noms: 6, wins: 2 }, { season_label: "Fall 25", season_order: 1, member_id: "m2", noms: 5, wins: 1 }] })
     })
 
     it("shows the sealed state to members before release and requests no results", async () => {
@@ -58,10 +62,15 @@ describe("ResultsPage", () => {
         expect(fetchMemberAvatars).not.toHaveBeenCalled()
     })
 
-    it("does not request results on the leaderboard view before release either", async () => {
+    it("the leaderboard before release shows past stats only: the live season is a locked slot and its results are never requested", async () => {
         vi.mocked(fetchCurrentSeason).mockResolvedValue(season())
         renderAt("/app/results?view=leaderboard")
-        expect(await screen.findByText("Results are sealed.")).toBeTruthy()
+        const seasonGroup = await screen.findByRole("group", { name: "Season" })
+        expect(screen.queryByText("Results are sealed.")).toBeNull()
+        const chips = within(seasonGroup).getAllByRole("button").map((b) => b.textContent)
+        expect(chips).toEqual(["All time", "Fall 25", "2026"])
+        expect((within(seasonGroup).getByRole("button", { name: "2026" }) as HTMLButtonElement).disabled).toBe(true)
+        expect(screen.getByText(/appears here once results are released/)).toBeTruthy()
         expect(fetchSeasonResults).not.toHaveBeenCalled()
     })
 
@@ -113,7 +122,7 @@ describe("ResultsPage", () => {
         await screen.findByText(/1 · Best Hair/)
         fireEvent.click(screen.getByRole("tab", { name: "Leaderboard" }))
         expect(screen.getByTestId("loc").textContent).toContain("view=leaderboard")
-        expect(await screen.findByText("Categories you won")).toBeTruthy()
+        expect(await screen.findByRole("group", { name: "Sort by" })).toBeTruthy()
         fireEvent.click(screen.getByRole("tab", { name: "Winners" }))
         expect(await screen.findByText(/1 · Best Hair/)).toBeTruthy()
     })

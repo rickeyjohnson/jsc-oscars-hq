@@ -49,10 +49,12 @@ export function IntroHost() {
     }, [])
 
     const storage = safeStorage()
-    const tab = new URLSearchParams(search).get("tab")
+    const sp = new URLSearchParams(search)
+    const tab = sp.get("tab")
+    const view = sp.get("view")
     const showing = open?.on && open.visit === visit
     const eligible = Boolean(userId) && hasSeenGuide(storage, userId) && muted !== visit && !showing
-    const next = eligible ? introsFor(committee).find((i) => i.match({ path, tab, topic }) && !hasSeenIntro(storage, userId, i.id)) : undefined
+    const next = eligible ? introsFor(committee).find((i) => i.match({ path, tab, view, topic }) && !hasSeenIntro(storage, userId, i.id)) : undefined
     const nextId = next?.id
     useEffect(() => {
         if (!nextId) return

@@ -1,7 +1,7 @@
 // The registry of contextual feature intros. Each is shown once per member per device on the first visit to its screen.
 export type IntroCard = { title: string; body?: string[]; points?: string[] }
-/** What the host knows about the screen: the path, the ?tab= value, and the topic the page reports once it is ready (null until then). */
-export type IntroRoute = { path: string; tab: string | null; topic: string | null }
+/** What the host knows about the screen: the path, the ?tab= and ?view= values, and the topic the page reports once it is ready (null until then). */
+export type IntroRoute = { path: string; tab: string | null; view?: string | null; topic: string | null }
 export type IntroDef = { id: string; title: string; audience: "member" | "committee"; cards: IntroCard[]; match: (r: IntroRoute) => boolean }
 
 const is = (p: string) => (r: IntroRoute) => r.path === p
@@ -45,10 +45,10 @@ export const INTROS: IntroDef[] = [
         id: "results",
         title: "Results",
         audience: "member",
-        match: is("/app/results"),
+        match: (r) => r.path === "/app/results" && r.view !== "leaderboard",
         cards: [
-            { title: "Sealed until the reveal", body: ["The committee reveals the winners on ceremony night. Until then this page stays sealed."] },
-            { title: "After the reveal", points: ["Each category shows its podium.", "The leaderboard ranks everyone by wins.", "Tap Previous to see past Oscars."] },
+            { title: "Sealed until the reveal", body: ["The committee reveals the winners on ceremony night. Until then Winners stays sealed."] },
+            { title: "After the reveal", points: ["Winners shows each category's podium.", "Tap Leaderboard to see everyone's stats, past semesters included."] },
         ],
     },
     {
@@ -57,8 +57,8 @@ export const INTROS: IntroDef[] = [
         audience: "member",
         match: is("/app/profile"),
         cards: [
-            { title: "Your numbers", body: ["Your stats show your nominations and wins. Wins appear after the reveal.", "Once past semesters are added, All time totals include them."] },
-            { title: "More to explore", points: ["Previous Oscars: stats from past semesters.", "Settings: reduce motion, add Oscar night to your calendar, and replay these tips under How it works."] },
+            { title: "My stats", body: ["Your wins, noms and win rate across every semester, with charts and where you rank.", "This season's numbers join once results are released."] },
+            { title: "More to explore", points: ["Tap Leaderboard on Results to see everyone.", "Settings: reduce motion, add Oscar night to your calendar, and replay these tips under How it works."] },
         ],
     },
     {
@@ -73,13 +73,14 @@ export const INTROS: IntroDef[] = [
         ],
     },
     {
-        id: "previous",
-        title: "Previous Oscars",
+        id: "leaderboard",
+        title: "Leaderboard",
         audience: "member",
-        match: is("/app/results/previous"),
+        match: (r) => r.path === "/app/results" && r.view === "leaderboard" && r.topic === "leaderboard",
         cards: [
-            { title: "How stats are counted", points: ["Stats count nominations: the top 3 in votes in each category.", "Ties count too, even if only one name was shown on screen.", "Group votes count toward wins and nominations."] },
-            { title: "Pick a semester", body: ["Choose All time or one semester to see its leaderboard.", "Live-voting categories aren't included."] },
+            { title: "Everyone's numbers", points: ["Sort by wins, noms or win %.", "Pick All time or any semester.", "Tap a member to see their stats."] },
+            { title: "How stats are counted", points: ["Stats count nominations: the top 3 in votes in each category.", "Ties and group votes count. Live-voting categories aren't included.", "~ means counted from slides, so noms run a little low."] },
+            { title: "Head to head", body: ["Tap Compare two members to put two win rates side by side."] },
         ],
     },
     {

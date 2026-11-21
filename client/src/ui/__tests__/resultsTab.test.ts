@@ -16,6 +16,6 @@ describe("parseResultsTab", () => {
 
 describe("results page source", () => {
     it("keeps the release gate", () => {
-        expect(read("src/pages/ResultsPage.tsx")).toMatch(/results_released_at/)
+        expect(read("src/pages/results/WinnersPane.tsx")).toMatch(/results_released_at/)
     })
 })
