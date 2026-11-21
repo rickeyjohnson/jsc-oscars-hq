@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { createRoundBallot, setBallotStatus } from "../../api/ballots"
+import { createRoundBallot, RoundExistsError, setBallotStatus } from "../../api/ballots"
 import { recordResultsGuarded, updatePlaces, upsertResults } from "../../api/results"
 import ResultsSection, { type CsvEntry } from "../../components/committee/ResultsSection"
 import { ActionSheet, CloseTimeField } from "../../components/committee/ActionSheet"
@@ -206,7 +206,16 @@ const BallotAdminPage = () => {
         if (problem) return setActionError(problem)
         const ok = await run(async () => {
             const until = nextKind === "tiebreak" ? toUtcIso(closesAt) : new Date(Date.now() + 7 * 86_400_000).toISOString()
-            await createRoundBallot(family.main, nextKind, entries, until)
+            try {
+                await createRoundBallot(family.main, nextKind, entries, until)
+            } catch (e) {
+                if (e instanceof RoundExistsError) {
+                    setActionError(e.message)
+                    await reload()
+                    return false
+                }
+                throw e
+            }
             const f = await reload()
             const made = f?.rounds.find((r) => r.round === nextKind)
             if (made) setSelectedId(made.id)

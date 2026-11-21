@@ -183,6 +183,9 @@ export const fetchRoundBallots = async (mainId: string): Promise<Ballot[]> => {
     return (data ?? []) as Ballot[]
 }
 
+export class RoundExistsError extends Error {}
+export const ROUND_EXISTS = "Someone already started it."
+
 // Creates an open round ballot under the main ballot with only the given nominees.
 // Refuses a second round of the same kind; deletes the ballot again if its nominees fail to save.
 export const createRoundBallot = async (
@@ -198,7 +201,7 @@ export const createRoundBallot = async (
     if (new Date(closesAt).getTime() <= Date.now()) throw new Error("The round must close in the future")
 
     const existing = await fetchRoundBallots(main.id)
-    if (existing.some((b) => b.round === round)) throw new Error(`A ${round} round already exists for this ballot`)
+    if (existing.some((b) => b.round === round)) throw new RoundExistsError(ROUND_EXISTS)
 
     const { data, error } = await supabase
         .from("ballots")
@@ -213,6 +216,8 @@ export const createRoundBallot = async (
         })
         .select("id")
         .single()
+    // the unique index (parent_ballot_id, round) turns a simultaneous second start into this error
+    if (error?.code === "23505") throw new RoundExistsError(ROUND_EXISTS)
     if (error) throw error
     const id = data.id as string
 
