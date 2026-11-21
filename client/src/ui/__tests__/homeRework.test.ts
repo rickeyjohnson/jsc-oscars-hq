@@ -37,11 +37,12 @@ describe("dropIndex", () => {
 describe("widget registry rework", () => {
     it("adds the ready widgets, all default OFF, admin flags right", () => {
         const byId = Object.fromEntries(WIDGETS.map((w) => [w.id, w]))
-        for (const id of ["ballotCloses", "yourStats", "ballotHealth", "tiebreak", "revealReadiness"]) {
+        for (const id of ["ballotCloses", "yourStats", "tiebreak", "revealReadiness"]) {
             expect(byId[id].defaultMember).toBe(false)
             expect(byId[id].defaultCommittee).toBe(false)
         }
-        expect(WIDGETS.filter((w) => w.adminOnly).map((w) => w.id).sort()).toEqual(["attention", "ballotHealth", "notVoted", "quickActions", "revealReadiness", "tiebreak"])
+        expect(byId.quickActions).toBeUndefined()
+        expect(WIDGETS.filter((w) => w.adminOnly).map((w) => w.id).sort()).toEqual(["attention", "ballotHealth", "notVoted", "revealReadiness", "tiebreak"])
         expect(byId.yourStats.requiresRelease).toBe(true)
     })
     it("default layouts stay 5 / 6 / 7", () => {
@@ -63,26 +64,32 @@ describe("widget colors", () => {
         expect(Object.fromEntries(WIDGETS.map((w) => [w.id, widgetColor(w.id)]))).toMatchInlineSnapshot(`
           {
             "attention": "cherry",
-            "ballotCloses": "lime",
-            "ballotHealth": "lime",
+            "ballotCloses": "cherry",
+            "ballotHealth": "strawberry",
             "ceremony": "lemon",
-            "countdown": "lemon",
+            "countdown": "grape",
             "latestWinners": "tangerine",
             "leaderboardPeek": "strawberry",
             "notVoted": "grape",
             "pending": "lime",
             "progress": "sky",
-            "quickActions": "ink",
             "revealReadiness": "lemon",
-            "tiebreak": "tangerine",
-            "yourStats": "tangerine",
+            "tiebreak": "lime",
+            "yourStats": "grape",
           }
         `)
+    })
+    it("every pebble color is used once before any repeats on the default layouts", () => {
+        for (const isCommittee of [false, true]) {
+            const colors = resolveWidgets(null, { isCommittee, released: false }).map((w) => widgetColor(w.id))
+            expect(new Set(colors).size).toBe(colors.length)
+        }
+        const all = WIDGETS.map((w) => widgetColor(w.id))
+        expect(new Set(all).size).toBe(7)
     })
     it("every pebble-colored widget keeps readable ink (grape: large text only)", () => {
         for (const w of WIDGETS) {
             const c = widgetColor(w.id)
-            if (c === "ink") continue
             const r = contrastRatio(PEBBLE_COLORS[c].on, PEBBLE_COLORS[c].bg)
             expect(r).toBeGreaterThanOrEqual(c === "grape" ? 3 : 4.5)
         }

@@ -4,8 +4,6 @@ import ProfileSetup from "../components/ProfileSetup"
 import { useAuth } from "../context/AuthContext"
 import { useUserData } from "../context/UserContenxt"
 import { supabase } from "../supabaseClient"
-import { Avatar } from "../ui/Avatar"
-import { Chip } from "../ui/Chip"
 import { Screen } from "../ui/Screen"
 import { Skeleton, SkeletonScreen } from "../ui/Skeleton"
 import { useToast } from "../ui/Toast"
@@ -26,7 +24,7 @@ const storage = (): Storage | null => {
 
 const GRID = "grid grid-flow-dense grid-cols-1 items-start gap-3 lg:grid-cols-2 min-[1400px]:grid-cols-3"
 
-const HomeBody = ({ userId, isCommittee, name, memberId, imageUrl }: { userId: string; isCommittee: boolean; name: string; memberId?: string; imageUrl?: string | null }) => {
+const HomeBody = ({ userId, isCommittee, name, memberId }: { userId: string; isCommittee: boolean; name: string; memberId?: string }) => {
     const state = useHomeData(isCommittee)
     const toast = useToast()
     const [prefs, setPrefs] = useState<HomePrefs>(() => loadHomePrefs(storage(), userId, isCommittee))
@@ -62,10 +60,7 @@ const HomeBody = ({ userId, isCommittee, name, memberId, imageUrl }: { userId: s
             }
         >
             <div className="mx-auto max-w-[1280px]">
-                <div className="mb-4 flex items-center gap-3">
-                    <Avatar id={memberId || name || userId} name={name || "You"} src={imageUrl} size={40} ring="pebble" decorative />
-                    <p className="text-large-title">{name ? `Hey ${name}.` : "Hey."}</p>
-                </div>
+                <p className="mb-4 text-large-title">{name ? `Hey ${name}.` : "Hey."}</p>
                 <div className={GRID}>
                     {memberWidgets.map((w) => (
                         <div key={w.id} className={w.span === 2 ? "lg:col-span-2" : ""}>
@@ -74,11 +69,8 @@ const HomeBody = ({ userId, isCommittee, name, memberId, imageUrl }: { userId: s
                     ))}
                 </div>
                 {committeeWidgets.length > 0 && (
-                    <div role="group" aria-label="Committee" className="mt-8 border-t border-sep pt-5">
-                        <div className="mb-3 flex items-center gap-2">
-                            <p className="text-caption-2 uppercase tracking-wider text-label-2">Committee</p>
-                            <Chip>Committee</Chip>
-                        </div>
+                    <div role="group" aria-label="Committee" className="mt-10">
+                        <p className="mb-3 text-title-3 uppercase tracking-wider">Committee</p>
                         <div className={GRID}>
                             {committeeWidgets.map((w) => (
                                 <div key={w.id} className={w.span === 2 ? "lg:col-span-2" : ""}>
@@ -151,7 +143,7 @@ const HomePage = () => {
                     </SkeletonScreen>
                 </Screen>
             ) : (
-                <HomeBody userId={user?.id ?? ""} isCommittee={Boolean(profile?.is_committee)} name={firstName(member?.name ?? profile?.display_name)} memberId={member?.id} imageUrl={profile?.image_url} />
+                <HomeBody userId={user?.id ?? ""} isCommittee={Boolean(profile?.is_committee)} name={firstName(member?.name ?? profile?.display_name)} memberId={member?.id} />
             )}
             <ProfileSetup open={!profileSetupComplete} onComplete={handleProfileSetupComplete} onSkip={handleProfileSetupSkip} />
         </>

@@ -64,7 +64,7 @@ function Group({ defs, prefs, onChange }: { defs: WidgetDef[]; prefs: HomePrefs;
         <ul ref={listRef} className="relative list-none rounded-card bg-surface px-3 py-1">
             {defs.map((w, i) => {
                 const lifted = drag?.id === w.id
-                const dot = w.color === "ink" ? "bg-surface-2 ring-1 ring-label-3" : PEBBLE_CLASS[w.color].bg
+                const dot = PEBBLE_CLASS[w.color].bg
                 return (
                     <li
                         key={w.id}

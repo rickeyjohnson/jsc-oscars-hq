@@ -51,7 +51,7 @@ afterEach(() => {
 
 describe("Home widgets", () => {
     it("member sees the 5 default widgets and no committee widgets, even with saved committee prefs", () => {
-        mem.set("jsc.home.v1.u1", JSON.stringify({ version: 1, order: ["notVoted", "attention", "quickActions", "ceremony", "countdown", "pending", "progress", "latestWinners", "leaderboardPeek"], hidden: [] }))
+        mem.set("jsc.home.v1.u1", JSON.stringify({ version: 1, order: ["notVoted", "attention", "ballotHealth", "ceremony", "countdown", "pending", "progress", "latestWinners", "leaderboardPeek"], hidden: [] }))
         renderHome()
         const h = headings()
         expect(h).toEqual(expect.arrayContaining(["Oscar night", "Countdown", "Your ballots", "Your progress", "Latest winners"]))
@@ -72,7 +72,9 @@ describe("Home widgets", () => {
         const att = screen.getByRole("region", { name: "Needs your attention" })
         expect(within(att).getByText(/ended but is still open/)).toBeTruthy()
         const nv = screen.getByRole("region", { name: "Who hasn't voted" })
-        expect(within(nv).getByText("Nick")).toBeTruthy()
+        expect(within(nv).getByRole("img", { name: "Nick" })).toBeTruthy()
+        expect(within(nv).getByRole("img", { name: "TJ" })).toBeTruthy()
+        expect(within(nv).getAllByRole("columnheader")).toHaveLength(2)
     })
 
     it("shows the pending ballot with a Continue link and N left", () => {
@@ -80,13 +82,14 @@ describe("Home widgets", () => {
         const r = screen.getByRole("region", { name: "Your ballots" })
         expect(within(r).getByText("3 left")).toBeTruthy()
         expect((within(r).getByRole("link", { name: /continue main ballot/i }) as HTMLAnchorElement).getAttribute("href")).toBe("/app/ballots/b1")
+        expect(within(r).queryByRole("button")).toBeNull()
     })
 
     it("pending empty state links to Ballots", () => {
         hook.state = ready(data({ summaries: [ballot({ my_vote_count: 5 })] }))
         renderHome()
         expect(screen.getByText("You're all caught up.")).toBeTruthy()
-        expect((screen.getByRole("link", { name: /see your ballots/i }) as HTMLAnchorElement).getAttribute("href")).toBe("/app/ballots")
+        expect((screen.getByRole("link", { name: "Your ballots" }) as HTMLAnchorElement).getAttribute("href")).toBe("/app/ballots")
     })
 
     it("customize: hiding Countdown removes it and persists; Move up reorders; reset restores", () => {
@@ -115,7 +118,7 @@ describe("Home widgets", () => {
         renderHome()
         fireEvent.click(screen.getByRole("button", { name: "Customize Home" }))
         expect(screen.getByText("COMMITTEE ONLY")).toBeTruthy()
-        expect(screen.getByRole("switch", { name: "Quick actions" })).toBeTruthy()
+        expect(screen.getByRole("switch", { name: "Ballot health" })).toBeTruthy()
     })
 
     it("a failing widget fetch shows its own error with retry and leaves the others", () => {
@@ -127,7 +130,7 @@ describe("Home widgets", () => {
         fireEvent.click(within(nv).getByRole("button", { name: /try again/i }))
         expect(reload).toHaveBeenCalled()
         expect(screen.getByRole("region", { name: "Your ballots" }).textContent).toMatch(/3 left/)
-        expect(screen.getByRole("region", { name: "Oscar night" }).textContent).toMatch(/Add to calendar/)
+        expect(within(screen.getByRole("region", { name: "Oscar night" })).getByRole("button", { name: "Add to calendar" })).toBeTruthy()
     })
 
     it("shows loading skeletons per widget", () => {
@@ -175,14 +178,24 @@ describe("Home rework", () => {
         profile.is_committee = true
         renderHome()
         const sec = screen.getByRole("group", { name: "Committee" })
-        expect(within(sec).getByRole("region", { name: "Quick actions" })).toBeTruthy()
+        expect(within(sec).getByRole("region", { name: "Ballot health" })).toBeTruthy()
         expect(within(sec).getByRole("region", { name: "Needs your attention" })).toBeTruthy()
         expect(within(sec).queryByRole("region", { name: "Oscar night" })).toBeNull()
         expect(screen.getByRole("region", { name: "Oscar night" })).toBeTruthy()
     })
+    it("no widget has buttons inside (cards are links), no Quick actions, no R pill, no tagline", () => {
+        profile.is_committee = true
+        const { container } = renderHome()
+        expect(screen.queryByRole("region", { name: "Quick actions" })).toBeNull()
+        expect(container.textContent).not.toMatch(/be there or be/i)
+        for (const r of screen.getAllByRole("region")) {
+            if (r.getAttribute("aria-label") === "Oscar night" || /Oscar night/.test(r.textContent ?? "")) continue
+            expect(within(r).queryAllByRole("button")).toHaveLength(0)
+        }
+    })
     it("faces on Home carry pebble rings", () => {
         profile.is_committee = true
-        hook.state = ready(data({ completion: { ballot: ballot(), members: [{ name: "Nick", voted: 0, total: 5, claimed: true }] } }))
+        hook.state = ready(data({ completion: { ballot: ballot(), members: [{ name: "Nick", voted: 0, total: 5, claimed: true }, { name: "TJ", voted: 5, total: 5, claimed: true }] } }))
         const { container } = renderHome()
         expect(container.querySelectorAll("[class*='ring-pebble-']").length).toBeGreaterThanOrEqual(2)
     })
@@ -199,6 +212,6 @@ describe("Home rework", () => {
         hook.state = ready(data({ checks: [{ id: "winners", ok: true, label: "Winners decided" }] as never, completion: { ballot: ballot(), members: [{ name: "Nick", voted: 2, total: 5, claimed: true }] } }))
         renderHome()
         for (const n of ["Ballot closes", "Ballot health", "Tiebreak status", "Reveal readiness"]) expect(screen.getByRole("region", { name: n })).toBeTruthy()
-        expect((within(screen.getByRole("region", { name: "Reveal readiness" })).getByRole("link") as HTMLAnchorElement).getAttribute("href")).toBe("/app/profile/release")
+        expect((within(screen.getByRole("region", { name: "Reveal readiness" })).getByRole("link", { name: "Reveal readiness" }) as HTMLAnchorElement).getAttribute("href")).toBe("/app/profile/release")
     })
 })

@@ -109,7 +109,10 @@ export function AppShell() {
                     )}
                     <div className="flex min-h-dvh flex-col">
                         <div id="main-content" tabIndex={-1} className="flex-1 outline-none" style={{ paddingBottom: "var(--content-pb)" }}>
-                            <Outlet />
+                            {/* Keyed by tab: switching tabs replays a subtle fade/slide (no fill-forwards, so no lingering transform). */}
+                            <div key={active} className="tab-enter">
+                                <Outlet />
+                            </div>
                         </div>
                         {desktop && <div ref={setSlot} data-testid="shell-accessory" className="sticky bottom-0 z-20" />}
                     </div>

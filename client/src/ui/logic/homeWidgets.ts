@@ -2,10 +2,10 @@ import type { PebbleName } from "../tokens"
 
 export type WidgetId =
     | "ceremony" | "countdown" | "pending" | "ballotCloses" | "progress" | "yourStats" | "leaderboardPeek" | "latestWinners"
-    | "notVoted" | "attention" | "ballotHealth" | "tiebreak" | "revealReadiness" | "quickActions"
+    | "notVoted" | "attention" | "ballotHealth" | "tiebreak" | "revealReadiness"
 
-/** "ink" = the dark card (Quick actions). */
-export type WidgetColor = PebbleName | "ink"
+/** The pebble used for the widget's accent edge and its Customize dot. */
+export type WidgetColor = PebbleName
 
 export type WidgetDef = {
     id: WidgetId
@@ -21,22 +21,21 @@ export type WidgetDef = {
 // Default order. adminOnly widgets are committee-only: resolveWidgets drops them for everyone else.
 export const WIDGETS: readonly WidgetDef[] = [
     { id: "ceremony", title: "Oscar night", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: true, span: 2, color: "lemon" },
-    { id: "countdown", title: "Countdown", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: false, span: 1, color: "lemon" },
+    { id: "countdown", title: "Countdown", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: false, span: 1, color: "grape" },
     { id: "pending", title: "Your ballots", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: true, span: 2, color: "lime" },
-    { id: "ballotCloses", title: "Ballot closes", adminOnly: false, requiresRelease: false, defaultMember: false, defaultCommittee: false, span: 1, color: "lime" },
+    { id: "ballotCloses", title: "Ballot closes", adminOnly: false, requiresRelease: false, defaultMember: false, defaultCommittee: false, span: 1, color: "cherry" },
     { id: "progress", title: "Your progress", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: true, span: 1, color: "sky" },
-    { id: "yourStats", title: "Your stats", adminOnly: false, requiresRelease: true, defaultMember: false, defaultCommittee: false, span: 1, color: "tangerine" },
+    { id: "yourStats", title: "Your stats", adminOnly: false, requiresRelease: true, defaultMember: false, defaultCommittee: false, span: 1, color: "grape" },
     { id: "latestWinners", title: "Latest winners", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: true, span: 2, color: "tangerine" },
     { id: "leaderboardPeek", title: "Leaderboard", adminOnly: false, requiresRelease: true, defaultMember: true, defaultCommittee: true, span: 2, color: "strawberry" },
     { id: "notVoted", title: "Who hasn't voted", adminOnly: true, requiresRelease: false, defaultMember: false, defaultCommittee: true, span: 2, color: "grape" },
     { id: "attention", title: "Needs your attention", adminOnly: true, requiresRelease: false, defaultMember: false, defaultCommittee: true, span: 2, color: "cherry" },
-    { id: "ballotHealth", title: "Ballot health", adminOnly: true, requiresRelease: false, defaultMember: false, defaultCommittee: false, span: 1, color: "lime" },
-    { id: "tiebreak", title: "Tiebreak status", adminOnly: true, requiresRelease: false, defaultMember: false, defaultCommittee: false, span: 1, color: "tangerine" },
+    { id: "ballotHealth", title: "Ballot health", adminOnly: true, requiresRelease: false, defaultMember: false, defaultCommittee: true, span: 1, color: "strawberry" },
+    { id: "tiebreak", title: "Tiebreak status", adminOnly: true, requiresRelease: false, defaultMember: false, defaultCommittee: false, span: 1, color: "lime" },
     { id: "revealReadiness", title: "Reveal readiness", adminOnly: true, requiresRelease: false, defaultMember: false, defaultCommittee: false, span: 1, color: "lemon" },
-    { id: "quickActions", title: "Quick actions", adminOnly: true, requiresRelease: false, defaultMember: false, defaultCommittee: true, span: 2, color: "ink" },
 ]
 
-export const widgetColor = (id: WidgetId): WidgetColor => WIDGETS.find((w) => w.id === id)?.color ?? "ink"
+export const widgetColor = (id: WidgetId): WidgetColor => WIDGETS.find((w) => w.id === id)?.color ?? "lemon"
 
 export type HomeCtx = { isCommittee: boolean; released: boolean }
 
