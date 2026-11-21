@@ -3,14 +3,18 @@ import type { Member } from "../types"
 
 export type PastStatRow = { season_label: string; season_order: number; member_id: string; noms: number; wins: number }
 export type Semester = { label: string; order: number }
-export type PastLeaderRow = { member_id: string; name: string; wins: number; noms: number; pct: string; rank: number; tied: boolean }
+export type PastLeaderRow = { member_id: string; name: string; wins: number; noms: number; pct: string | null; rank: number; tied: boolean }
 
 export const ALL_TIME = "all"
-export const NO_NOMS_RATE = "0%"
+export const NO_RATE = "—"
+export const NO_RATE_LABEL = "No nominations yet"
 
-/** wins / noms rounded to 2 decimals, shown like "44.44%". No nominations: "0%" (never a divide by zero). */
-export function winPct(wins: number, noms: number): string {
-    if (!(noms > 0)) return NO_NOMS_RATE
+/** What to show for a win % (null = no nominations). */
+export const rateText = (pct: string | null): string => pct ?? NO_RATE
+
+/** wins / noms rounded to 2 decimals, shown like "44.44%". No nominations: null (shown as a dash; never a divide by zero). */
+export function winPct(wins: number, noms: number): string | null {
+    if (!(noms > 0)) return null
     return `${(Math.round((wins / noms) * 10000) / 100).toFixed(2)}%`
 }
 

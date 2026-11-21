@@ -88,7 +88,7 @@ const ProfilePage = () => {
                                         {s.locked ? (
                                             <p className="flex items-center gap-1 text-headline"><Lock aria-hidden className="size-4 shrink-0" />{s.label}</p>
                                         ) : (
-                                            <p className="font-display text-title-1 tabular-nums">{s.value}</p>
+                                            <p className="font-display text-title-1 tabular-nums" aria-label={s.aria}>{s.value}</p>
                                         )}
                                         <p className="break-words text-caption-1 text-label-2">{s.locked ? s.value : s.label}</p>
                                         {s.caption && <p className="text-caption-2 text-label-3">{s.caption}</p>}

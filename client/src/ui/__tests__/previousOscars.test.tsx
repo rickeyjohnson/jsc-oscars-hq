@@ -29,7 +29,7 @@ describe("Previous Oscars page", () => {
         const chips = within(screen.getByRole("group", { name: "Semester" })).getAllByRole("button").map((b) => b.textContent)
         expect(chips).toEqual(["All time", "Spring 24", "Fall 25"])
         expect(screen.getByText("Rico")).toBeTruthy()
-        expect(screen.getByText("0%")).toBeTruthy()
+        expect(screen.getByText("—")).toBeTruthy()
         expect(screen.getByText(PAST_FOOTNOTE)).toBeTruthy()
     })
     it("a semester shows only members with a row there", async () => {

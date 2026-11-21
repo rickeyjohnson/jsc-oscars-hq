@@ -5,7 +5,7 @@ import { useMemberDirectory } from "../../ui/useMemberDirectory"
 import { memberFaces } from "../../lib/memberAvatar"
 import { ordinal } from "../../lib/resultsView"
 import { PEBBLE_EDGE } from "../../ui/logic/pebble"
-import type { PastLeaderRow } from "../../lib/pastStats"
+import { NO_RATE_LABEL, rateText, type PastLeaderRow } from "../../lib/pastStats"
 
 const winsText = (n: number) => `${n} ${n === 1 ? "win" : "wins"}`
 const rankLabel = (r: PastLeaderRow) => (r.tied ? `T${r.rank}` : String(r.rank))
@@ -58,8 +58,8 @@ export function PastLeaderboard({ title, rows }: { title: string; rows: PastLead
                             <span className="min-w-0 flex-1 break-words">{r.name}</span>
                             <span aria-hidden="true" className="w-10 text-right tabular-nums">{r.wins}</span>
                             <span aria-hidden="true" className="w-10 text-right tabular-nums text-label-2">{r.noms}</span>
-                            <span aria-hidden="true" className="w-16 text-right text-footnote tabular-nums text-label-2">{r.pct}</span>
-                            <span className="sr-only">{`${winsText(r.wins)}, ${r.noms} ${r.noms === 1 ? "nomination" : "nominations"}, ${r.pct} win rate`}</span>
+                            <span aria-hidden="true" className="w-16 text-right text-footnote tabular-nums text-label-2">{rateText(r.pct)}</span>
+                            <span className="sr-only">{`${winsText(r.wins)}, ${r.noms} ${r.noms === 1 ? "nomination" : "nominations"}, ${r.pct === null ? NO_RATE_LABEL : `${r.pct} win rate`}`}</span>
                         </li>
                     ))}
                 </ol>

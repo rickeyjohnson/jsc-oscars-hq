@@ -36,12 +36,16 @@ describe("ProfilePage source", () => {
         expect(s.tiles.map((x) => [x.label, x.value, Boolean(x.locked)])).toEqual([["Wins", "3", false], ["Noms", "9", false], ["Win rate", "42.86%", false]])
         expect(JSON.stringify(s)).not.toContain("12")
     })
-    it("a member with no past rows (0 / 0) and no nominations: zeros and 0%, no NaN", () => {
+    it("a member with no past rows (0 / 0) and no nominations: zeros and a dash, no NaN", () => {
         for (const released of [true, false]) {
             const s = youStats({ released, tally: released ? { wins: 0, noms: 0 } : null, noms: 0, past: { wins: 0, noms: 0 } })
-            expect(s.tiles.map((x) => x.value)).toEqual(["0", "0", "0%"])
+            expect(s.tiles.map((x) => x.value)).toEqual(["0", "0", "—"])
         }
-        expect(youStats({ released: true, tally: null, noms: null, past: { wins: 0, noms: 0 } }).tiles.map((x) => x.value)).toEqual(["0", "0", "0%"])
+        expect(youStats({ released: true, tally: null, noms: null, past: { wins: 0, noms: 0 } }).tiles.map((x) => x.value)).toEqual(["0", "0", "—"])
+    })
+    it("the dash tile has an accessible label", () => {
+        const t = youStats({ released: true, tally: null, noms: null, past: { wins: 0, noms: 0 } }).tiles[2]
+        expect([t.value, t.aria]).toEqual(["—", "No nominations yet"])
     })
     it("without past (table missing) the old behavior stays", () => {
         expect(youStats({ released: false, tally: null, noms: 4, past: null }).tiles[0].locked).toBe(true)

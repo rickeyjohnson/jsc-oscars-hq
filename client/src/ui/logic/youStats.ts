@@ -1,14 +1,16 @@
 import type { PebbleName } from "../tokens"
-import { winPct } from "../../lib/pastStats"
+import { NO_RATE_LABEL, rateText, winPct } from "../../lib/pastStats"
 
-export type YouStat = { label: string; value: string; pebble: PebbleName | null; /** Hidden until the reveal (so winners never leak). */ locked?: boolean; /** Tiny line under the label. */ caption?: string }
+export type YouStat = { label: string; value: string; pebble: PebbleName | null; /** Hidden until the reveal (so winners never leak). */ locked?: boolean; /** Tiny line under the label. */ caption?: string; /** Accessible label when the value alone is not enough. */ aria?: string }
 export type YouStats = { tiles: YouStat[] }
 
 // Wins / Noms / Win rate are plain cards like the rest; wins and win rate stay locked until results are released, Noms always shows.
 // `noms` is the member's nominations (known before the reveal); `tally` (wins) exists only after release.
 // With `past` (the member's previous-semester totals, public; 0 / 0 for a member with no rows) the tiles are lifetime totals:
 // past + this season once released. Before the reveal only this season's wins stay hidden: Wins and Win rate show the
-// past totals (captioned "Before this season") and Noms adds this season's nominations. Win rate with 0 noms is "0%".
+// past totals (captioned "Before this season") and Noms adds this season's nominations. Win rate with 0 noms is a dash (aria: "No nominations yet").
+const rateTile = (label: string, pct: string | null, caption?: string): YouStat => ({ label, value: rateText(pct), pebble: null, caption, ...(pct === null ? { aria: NO_RATE_LABEL } : {}) })
+
 export function youStats(i: { released: boolean; tally: { wins: number; noms: number } | null; noms: number | null; past?: { wins: number; noms: number } | null }): YouStats {
     if (i.past) {
         const p = i.past
@@ -19,7 +21,7 @@ export function youStats(i: { released: boolean; tally: { wins: number; noms: nu
             tiles: [
                 { label: "Wins", value: String(p.wins + cur.wins), pebble: null, caption: before },
                 { label: "Noms", value: String(noms), pebble: null, caption: "All time" },
-                { label: "Win rate", value: i.released ? winPct(p.wins + cur.wins, noms) : winPct(p.wins, p.noms), pebble: null, caption: before },
+                rateTile("Win rate", i.released ? winPct(p.wins + cur.wins, noms) : winPct(p.wins, p.noms), before),
             ],
         }
     }
