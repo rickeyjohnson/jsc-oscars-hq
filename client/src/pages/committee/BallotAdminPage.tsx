@@ -286,6 +286,11 @@ const BallotAdminPage = () => {
 
                 <div className="space-y-5 lg:col-start-1">
                     <NextCard next={next} blockers={blockers} busy={busy} onPrimary={goPrimary}>
+                        {phase === "draft" && (
+                            <Button to={`/app/profile/ballots/create?draft=${sel.id}`} variant="secondary" size="md" fullWidth>
+                                Edit draft
+                            </Button>
+                        )}
                         {showClose && (
                             <Button variant="dangerOutline" size="md" fullWidth disabled={busy} onClick={() => { setActionError(null); setSheet("close") }}>
                                 {sel.round === "main" ? "Close now" : `Close ${ROUND_LABEL[sel.round].toLowerCase()} now`}

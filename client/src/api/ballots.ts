@@ -18,6 +18,25 @@ export const assertDraft = (status: BallotStatus): void => {
 
 // Saves the form as a draft (insert or update) and rewrites its categories and nominees.
 export const saveBallotDraft = async (form: BallotFormData, members: Member[], ballotId?: string): Promise<string> => {
+    // One transaction when the database function exists; the older step-by-step path otherwise.
+    const { data, error } = await supabase.rpc("save_ballot_draft", {
+        p_ballot_id: (ballotId ?? null) as string,
+        p_ballot: { season_id: form.season_id, name: form.name.trim(), opens_at: toUtcIso(form.opens_at), closes_at: toUtcIso(form.closes_at) },
+        p_categories: form.categories.map((c, i) => ({
+            name: c.name,
+            description: c.description,
+            sort_order: i,
+            nominee_mode: c.nominee_mode,
+            allow_member_add: c.allow_member_add,
+            nominees: buildNomineeRows(c, members),
+        })),
+    })
+    if (!error) return data as string
+    if (error.code !== "PGRST202" && error.code !== "42883" && !/could not find the function/i.test(error.message ?? "")) throw error
+    return saveBallotDraftSteps(form, members, ballotId)
+}
+
+const saveBallotDraftSteps = async (form: BallotFormData, members: Member[], ballotId?: string): Promise<string> => {
     const fields = {
         season_id: form.season_id,
         name: form.name.trim(),

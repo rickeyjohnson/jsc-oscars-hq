@@ -37,3 +37,10 @@ export const opensAtLabel = (opensAt: Date): string =>
 
 export const closedAtLabel = (closesAt: Date): string =>
     `Voting closed at ${closesAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
+
+// ISO instant -> datetime-local value ("2026-11-25T18:00") in the viewer's local time.
+export const toLocalInput = (iso: string): string => {
+    const d = new Date(iso)
+    const p = (n: number) => String(n).padStart(2, "0")
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`
+}

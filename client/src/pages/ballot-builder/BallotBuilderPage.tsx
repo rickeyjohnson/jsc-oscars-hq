@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
-import { useLocation, useNavigate } from "react-router-dom"
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { Plus } from "lucide-react"
-import { fetchSeasons, saveBallotDraft, setBallotStatus } from "../../api/ballots"
+import { fetchBallotDetail, fetchSeasons, saveBallotDraft, setBallotStatus } from "../../api/ballots"
 import { fetchMembers } from "../../api/members"
 import type { BallotFormData, Category, Member, Season } from "../../types"
 import { Screen } from "../../ui/Screen"
@@ -10,6 +10,8 @@ import { BottomAccessory } from "../../ui/BottomAccessory"
 import { GroupedSection } from "../../ui/GroupedSection"
 import { ListRow } from "../../ui/ListRow"
 import { useToast } from "../../ui/Toast"
+import { useConfirm } from "../../ui/ConfirmProvider"
+import { detailToForm, isDirty } from "../../lib/draftForm"
 import { readBuilderState, toDraftCategories } from "../../lib/myoc"
 import { BUILDER_STEPS, stepIssues, type BuilderStep } from "../../ui/logic/builder"
 import BallotBasicInfo from "./BallotBasicInfo"
@@ -49,6 +51,46 @@ const BallotBuilderPage = () => {
     const [busy, setBusy] = useState(false)
     const navigate = useNavigate()
     const toast = useToast()
+    const confirm = useConfirm()
+    const [params] = useSearchParams()
+    const draftId = params.get("draft")
+    const [loadingDraft, setLoadingDraft] = useState(Boolean(draftId))
+    // The last saved (or loaded) form: leaving with anything different asks the browser to confirm.
+    const [saved, setSaved] = useState<BallotFormData>(formData)
+    const dirty = isDirty(formData, saved)
+
+    useEffect(() => {
+        if (!dirty) return
+        const warn = (e: BeforeUnloadEvent) => {
+            e.preventDefault()
+            e.returnValue = ""
+        }
+        window.addEventListener("beforeunload", warn)
+        return () => window.removeEventListener("beforeunload", warn)
+    }, [dirty])
+
+    // ?draft=<id>: open a saved draft to keep working on it (only drafts can be rewritten).
+    useEffect(() => {
+        if (!draftId) return
+        let live = true
+        fetchBallotDetail(draftId)
+            .then((d) => {
+                if (!live) return
+                if (d.status !== "draft") {
+                    setErrors(["Only draft ballots can be edited"])
+                    return
+                }
+                const f = detailToForm(d)
+                setFormData(f)
+                setSaved(f)
+                setBallotId(d.id)
+            })
+            .catch(() => live && setErrors(["Could not load that draft"]))
+            .finally(() => live && setLoadingDraft(false))
+        return () => {
+            live = false
+        }
+    }, [draftId])
 
     useEffect(() => {
         if (seed.categories.length > 0) toast.show(`${seed.categories.length} ${seed.categories.length === 1 ? "category" : "categories"} added from MYOC`)
@@ -71,10 +113,12 @@ const BallotBuilderPage = () => {
         } else {
             setErrors([])
         }
+        if (publish && !(await confirm({ title: "Publish this ballot?", message: `Members can vote from ${new Date(formData.opens_at).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })} until ${new Date(formData.closes_at).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}.`, confirmLabel: "Publish" }))) return
         setBusy(true)
         try {
             const id = await saveBallotDraft(formData, members, ballotId)
             setBallotId(id)
+            setSaved(formData)
             if (publish) {
                 await setBallotStatus(id, "open")
                 navigate(`/app/profile/ballots/${id}`)
@@ -101,8 +145,9 @@ const BallotBuilderPage = () => {
     const fmt = (v: string) => (v ? new Date(v).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) : "Not set")
 
     return (
-        <Screen title="New ballot" back={{ to: "/app/profile", label: "You" }}>
+        <Screen title={draftId ? "Edit draft" : "New ballot"} back={{ to: "/app/profile", label: "You" }}>
             <StepIndicator step={step} />
+            {loadingDraft && <p role="status" className="mb-4 text-callout text-label-2">Loading draft…</p>}
 
             {step === "details" && <BallotBasicInfo formData={formData} setFormData={setFormData} seasons={seasons} />}
 

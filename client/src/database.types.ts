@@ -392,6 +392,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      save_ballot_draft: {
+        Args: {
+          p_ballot_id: string | null
+          p_ballot: Json
+          p_categories: Json
+        }
+        Returns: string
+      }
       reopen_ballot: {
         Args: {
           p_ballot_id: string
