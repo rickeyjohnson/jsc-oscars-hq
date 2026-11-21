@@ -5,3 +5,9 @@ passwords.txt
 .env.*
 !.env.example
 .superpowers/
+
+# personal database backups (votes + emails)
+backups/
+
+# browser tool leftovers
+.playwright-mcp/
