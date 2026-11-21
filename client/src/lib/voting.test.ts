@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { pendingBallots, selectableNominees, groupCandidates, votedCount, dashStates, nextUnvotedIndex, findMatchingNominee, ballotCardStatus, completionByMember, chipStatus, lockedNominees, nomineePebbles, findGroupBySet, joinNames, classifySaveError, saveErrorMessage, reviewRows, firstUnvotedIndex } from "./voting"
+import { pendingBallots, selectableNominees, groupCandidates, votedCount, dashStates, nextUnvotedIndex, findMatchingNominee, ballotCardStatus, completionByMember, chipStatus, lockedNominees, nomineePebbles, findGroupBySet, joinNames, classifySaveError, saveErrorMessage, submitCandidates, reviewRows, firstUnvotedIndex } from "./voting"
 import { avatarFallback } from "../ui/logic/avatar"
 import type { Ballot, Member, Nominee } from "../types"
 
@@ -199,5 +199,15 @@ describe("group vote helpers", () => {
         expect(rows[0]).toMatchObject({ pick: "Micah, Nick", pebble: "strawberry" })
         expect(rows[1]).toMatchObject({ pick: null, pebble: null })
         expect(firstUnvotedIndex(["c1", "c2"], { c1: "x" })).toBe(1)
+    })
+})
+
+describe("submitCandidates (P1-4)", () => {
+    const now = new Date("2026-11-26T12:00:00Z")
+    const b = (id: string, voted: number): never => ({ id, season_id: "S", parent_ballot_id: null, name: id, round: "main", status: "open", opens_at: "2026-11-25T00:00:00Z", closes_at: "2026-11-30T00:00:00Z", category_count: 3, my_vote_count: voted }) as never
+    it("lists voted, open ballots and hides ones already submitted here", () => {
+        const list = [b("a", 1), b("b", 0), b("c", 2)]
+        expect(submitCandidates(list, now, () => false).map((x) => x.id)).toEqual(["a", "c"])
+        expect(submitCandidates(list, now, (id) => id === "a").map((x) => x.id)).toEqual(["c"])
     })
 })

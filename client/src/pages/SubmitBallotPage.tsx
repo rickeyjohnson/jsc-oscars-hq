@@ -85,7 +85,7 @@ const SubmitBallotPage = () => {
     const doneAt = submittedAt ?? load.submittedAt
 
     if (doneAt === null && list.blocked && list.blocked !== "empty")
-        return <Navigate to={back} replace state={{ notice: list.blocked === "closed" ? "Voting is closed, so this ballot can't be submitted." : "Voting hasn't opened yet." }} />
+        return <Navigate to={back} replace />
 
     if (doneAt) {
         return (

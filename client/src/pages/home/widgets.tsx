@@ -9,7 +9,9 @@ import { ErrorState } from "../../ui/ErrorState"
 import { Podium } from "../../ui/Podium"
 import { Skeleton, SkeletonScreen } from "../../ui/Skeleton"
 import { attentionItems } from "../../ui/logic/attention"
-import { ballotCardStatus, pendingBallots, type BallotSummary } from "../../lib/voting"
+import { ballotCardStatus, pendingBallots, submitCandidates, type BallotSummary } from "../../lib/voting"
+import { submittedHere } from "../../api/submissions"
+import { useUserData } from "../../context/UserContenxt"
 import { DEFAULT_CEREMONY_MINUTES, buildIcs, downloadIcs, icsFileName } from "../../ui/logic/ics"
 import { WIDGETS, widgetColor, type WidgetId } from "../../ui/logic/homeWidgets"
 import { buildResultCards } from "../../lib/resultsView"
@@ -128,7 +130,10 @@ function PendingBallot({ ballot, now, showName }: { ballot: BallotSummary; now: 
 
 function Pending({ state, now }: Props) {
     const pending = state.data ? pendingBallots(state.data.summaries, now) : []
-    const ready = state.data ? state.data.summaries.filter((b) => b.category_count > 0 && b.my_vote_count >= 1 && ballotCardStatus(b, b.category_count, b.my_vote_count, now) === "open") : []
+    const { profile } = useUserData()
+    const uid = profile?.user_id ?? ""
+    // Submitting is a per-device confirmation: once done here, stop asking.
+    const ready = state.data ? submitCandidates(state.data.summaries, now, (id) => submittedHere(id, uid)) : []
     return (
         <Widget id="pending" status={baseStatus(state)} retry={state.reload} to={pending.length === 0 ? "/app/ballots" : undefined}>
             {pending.length > 0 ? (
@@ -138,7 +143,7 @@ function Pending({ state, now }: Props) {
                     ))}
                 </ul>
             ) : (
-                <p className="text-title-3">You're all caught up.</p>
+                <p className="text-title-3">{state.data && state.data.summaries.length === 0 ? "Nothing to vote on yet." : "You're all caught up."}</p>
             )}
             {SUBMIT_ENABLED &&
                 ready.map((b) => (
