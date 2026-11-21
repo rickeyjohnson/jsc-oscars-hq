@@ -65,15 +65,24 @@ describe("ResultsPage", () => {
         expect(fetchSeasonResults).not.toHaveBeenCalled()
     })
 
-    it("shows the committee the cards without a banner", async () => {
+    it("shows the committee the cards with a Preview banner before release (P1-13)", async () => {
         profile = { is_committee: true }
         vi.mocked(fetchCurrentSeason).mockResolvedValue(season())
         localStorage.setItem("jsc.envelope.S", "1")
         renderAt("/app/results")
         expect(await screen.findByRole("tab", { name: "Winners" })).toBeTruthy()
-        expect(screen.queryByText(/Preview/)).toBeNull()
+        expect(screen.getByRole("status").textContent).toContain("Preview: members can't see this yet")
         expect(await screen.findByText(/1 · Best Hair/)).toBeTruthy()
         expect(fetchSeasonResults).toHaveBeenCalled()
+    })
+
+    it("no Preview banner once released", async () => {
+        profile = { is_committee: true }
+        vi.mocked(fetchCurrentSeason).mockResolvedValue(season({ results_released_at: new Date().toISOString() }))
+        localStorage.setItem("jsc.envelope.S", "1")
+        renderAt("/app/results")
+        expect(await screen.findByRole("tab", { name: "Winners" })).toBeTruthy()
+        expect(screen.queryByText(/Preview/)).toBeNull()
     })
 
     it("shows the envelope first after release, then the winners, and not again", async () => {

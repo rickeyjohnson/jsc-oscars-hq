@@ -140,6 +140,11 @@ const ResultsPage = () => {
         <Screen title="Results" width="wide">
             {showEnvelope && <Envelope onDone={closeEnvelope} />}
             <div className="space-y-4">
+                {!released && (
+                    <p role="status" className="rounded-card border-l-4 border-pebble-lemon bg-surface p-3 text-callout">
+                        Preview: members can't see this yet. Nothing is revealed until you open the envelope.
+                    </p>
+                )}
                 <SegmentedControl label="Results view" idPrefix="results" options={TABS} value={tab} onChange={setTab} />
                 <div role="tabpanel" aria-labelledby={`results-tab-${tab}`}>
                     {tab === "winners" ? (
