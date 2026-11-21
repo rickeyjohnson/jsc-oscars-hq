@@ -47,7 +47,7 @@ function Panel({ title, message, confirmLabel, destructive, onConfirm, onCancel 
                     aria-describedby={message ? descId : undefined}
                     tabIndex={-1}
                     onKeyDown={(e) => trapTab(e, ref.current)}
-                    className={`material-sheet pointer-events-auto w-full outline-none ${desktop ? "max-w-[400px] rounded-sheet" : "rounded-t-[30px]"}`}
+                    className={`material-sheet pointer-events-auto flex max-h-[92dvh] w-full flex-col overflow-y-auto outline-none ${desktop ? "max-w-[400px] rounded-sheet" : "rounded-t-[30px]"}`}
                     {...motionProps}
                 >
                     <div className={`px-6 pt-6 text-center ${desktop ? "" : "pb-2"}`}>

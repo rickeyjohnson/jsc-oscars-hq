@@ -10,9 +10,10 @@ type ProfileSetupProps = {
     open: boolean
     onComplete: () => void
     onSkip: () => void
+    title?: string
 }
 
-const ProfileSetup = ({ open, onComplete, onSkip }: ProfileSetupProps) => {
+const ProfileSetup = ({ open, onComplete, onSkip, title = "Add your photo" }: ProfileSetupProps) => {
     const { user } = useAuth()
     const toast = useToast()
     const [image, setImage] = useState<File | null>(null)
@@ -80,8 +81,8 @@ const ProfileSetup = ({ open, onComplete, onSkip }: ProfileSetupProps) => {
         <Sheet
             open={open}
             onClose={onSkip}
-            title="Add your photo"
-            detents={["medium"]}
+            title={title}
+            fit
             footer={
                 <div className="flex flex-col gap-2">
                     <Button variant="primary" fullWidth disabled={!image} loading={loading} loadingLabel="Saving…" onClick={handleImageSubmission}>

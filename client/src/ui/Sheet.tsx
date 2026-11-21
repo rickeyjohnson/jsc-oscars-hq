@@ -21,6 +21,8 @@ export type SheetProps = {
     initialFocus?: "first" | "title"
     /** Desktop dialog width: 560px by default, 720px for builder sheets. */
     width?: "default" | "wide"
+    /** Size to the content (up to 92% of the screen) instead of a fixed detent height. Content scrolls inside when taller. */
+    fit?: boolean
     /** Keep the title for assistive tech only (the content shows its own heading). */
     hideTitle?: boolean
     children: ReactNode
@@ -30,7 +32,7 @@ const HEIGHT: Record<Detent, string> = { medium: "h-[55dvh]", large: "h-[92dvh]"
 
 type FrameProps = Omit<SheetProps, "open" | "dirty" | "onClose"> & { requestClose: () => void }
 
-function Frame({ requestClose, title, detents = ["large"], initialDetent, leading, trailing, footer, initialFocus, width = "default", hideTitle, children }: FrameProps) {
+function Frame({ requestClose, title, detents = ["large"], initialDetent, leading, trailing, footer, initialFocus, width = "default", fit, hideTitle, children }: FrameProps) {
     const desktop = useIsDesktop()
     const reduce = useReducedMotion()
     const kb = useKeyboardInset(!desktop)
@@ -87,7 +89,7 @@ function Frame({ requestClose, title, detents = ["large"], initialDetent, leadin
                     className={`material-sheet pointer-events-auto relative flex w-full flex-col overflow-hidden outline-none ${
                         desktop
                             ? `max-h-[85dvh] rounded-sheet ${width === "wide" ? "max-w-[720px]" : "max-w-[560px]"}`
-                            : `${HEIGHT[detent]} max-h-full rounded-t-[30px] transition-[height] duration-200 motion-reduce:transition-none`
+                            : `${fit ? "max-h-[92dvh]" : `${HEIGHT[detent]} max-h-full`} rounded-t-[30px] transition-[height] duration-200 motion-reduce:transition-none`
                     }`}
                     {...motionProps}
                     {...(desktop
@@ -133,7 +135,7 @@ function Frame({ requestClose, title, detents = ["large"], initialDetent, leadin
                     <BodyScroll bodyRef={body} onPointerDown={(e) => !desktop && body.current?.scrollTop === 0 && controls.start(e)}>
                         {children}
                     </BodyScroll>
-                    {footer && <footer className="shrink-0 border-t border-sep px-5 pb-safe pt-3">{footer}</footer>}
+                    {footer && <footer className="shrink-0 border-t border-sep px-5 pb-safe pt-3 [padding-bottom:max(env(safe-area-inset-bottom),12px)]">{footer}</footer>}
                 </motion.div>
             </div>
         </div>
