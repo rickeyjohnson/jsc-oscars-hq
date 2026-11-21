@@ -244,22 +244,32 @@ const VotePage = () => {
 
     return (
         <Shell title={ballot.name}>
-            <div className="sticky top-0 z-30 -mx-gutter bg-bg px-gutter">
-                <ProgressStrip states={states} labels={ballot.categories.map((c) => c.name)} onJump={jump} onOpenJump={() => setJumpOpen(true)} />
-            </div>
+            {!reviewing && (
+                <div className="sticky top-0 z-30 -mx-gutter bg-bg px-gutter">
+                    <ProgressStrip states={states} labels={ballot.categories.map((c) => c.name)} onJump={jump} onOpenJump={() => setJumpOpen(true)} />
+                </div>
+            )}
 
-            <div className="mt-1 flex items-center justify-between">
-                <span className="text-subhead font-bold">{reviewing ? "Review" : `Category ${idx + 1} of ${total}`}</span>
-                <Button variant="link" size="md" className="-mr-5" onClick={() => setJumpOpen(true)}>
-                    Jump to…
+            {reviewing ? (
+                <Button variant="link" size="md" className="-ml-5" onClick={() => jump(total - 1)}>
+                    ‹ Back
                 </Button>
-            </div>
-            <div className="flex items-center justify-between text-subhead text-label-2">
-                <span>
-                    {voted} of {total} voted
-                </span>
-                <span className={chipClasses("neutral")}>{closesInLabel(new Date(ballot.closes_at), new Date(now))}</span>
-            </div>
+            ) : (
+                <>
+                    <div className="mt-1 flex items-center justify-between">
+                        <span className="text-subhead font-bold">{`Category ${idx + 1} of ${total}`}</span>
+                        <Button variant="link" size="md" className="-mr-5" onClick={() => setJumpOpen(true)}>
+                            Jump to…
+                        </Button>
+                    </div>
+                    <div className="flex items-center justify-between text-subhead text-label-2">
+                        <span>
+                            {voted} of {total} voted
+                        </span>
+                        <span className={chipClasses("neutral")}>{closesInLabel(new Date(ballot.closes_at), new Date(now))}</span>
+                    </div>
+                </>
+            )}
             {failedAway >= 0 && (
                 <VoteBanner
                     className="mt-3"
@@ -313,7 +323,6 @@ const VotePage = () => {
                 <ReviewStep
                     rows={reviewRows(ballot.categories, myVotes, myMemberId)}
                     readOnly={readOnly}
-                    finishTo={SUBMIT_ENABLED ? `/app/ballots/${ballotId}/submit` : "/app/ballots"}
                     onEdit={jump}
                 />
             )}
@@ -330,8 +339,8 @@ const VotePage = () => {
                             Back to ballots
                         </Button>
                     ) : reviewing ? (
-                        <Button size="md" variant="secondary" className="flex-1 lg:min-w-32 lg:flex-none" onClick={() => jump(total - 1)}>
-                            Back
+                        <Button size="md" className="w-full lg:w-auto lg:min-w-32" to={SUBMIT_ENABLED ? `/app/ballots/${ballotId}/submit` : "/app/ballots"}>
+                            Finish voting
                         </Button>
                     ) : (
                         <>

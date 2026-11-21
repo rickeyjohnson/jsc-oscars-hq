@@ -362,8 +362,16 @@ describe("VotePage review step", () => {
         const rev = screen.getByRole("region", { name: /review your votes/i })
         expect(within(rev).getByText("Ann")).toBeTruthy()
         expect(within(rev).getByText(/1 not voted yet/i)).toBeTruthy()
-        expect(within(rev).getByRole("link", { name: /finish voting/i }).getAttribute("href")).toBe("/app/ballots/B1/submit")
-        fireEvent.click(within(rev).getByRole("button", { name: /vote in best dressed/i }))
+        expect(screen.getByRole("link", { name: /finish voting/i }).getAttribute("href")).toBe("/app/ballots/B1/submit")
+        expect(within(rev).queryByRole("link", { name: /finish voting/i })).toBeNull() // lives in the footer
+        expect(screen.queryByText(/category \d of \d/i)).toBeNull()
+        expect(screen.queryByRole("button", { name: /voted\. jump to a category|^category \d/i })).toBeNull() // no strip
+        expect(within(rev).getByRole("button", { name: /vote in best dressed/i }).className).toMatch(/pebble-lemon/)
+        fireEvent.click(screen.getByRole("button", { name: /‹ back/i }))
+        expect(screen.queryByRole("region", { name: /review your votes/i })).toBeNull()
+        expect(section(C2).className).not.toMatch(/\bhidden\b/)
+        fireEvent.click(screen.getByRole("button", { name: /^review$/i }))
+        fireEvent.click(screen.getByRole("button", { name: /vote in best dressed/i }))
         expect(section(C2).className).not.toMatch(/\bhidden\b/)
         expect(screen.queryByRole("region", { name: /review your votes/i })).toBeNull()
     })
