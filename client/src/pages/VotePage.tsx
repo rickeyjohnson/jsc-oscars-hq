@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useLocation, useNavigate, useParams } from "react-router-dom"
+import { useIntroGate } from "../ui/introContext"
 import CategoryVoteCard from "../components/vote/CategoryVoteCard"
 import { fetchBallotDetail } from "../api/ballots"
 import { fetchMemberAvatars, fetchMembers } from "../api/members"
@@ -48,6 +49,8 @@ const VotePage = () => {
     // The Submit page can send you straight to a skipped category.
     const jumpToOnLoad = useRef((location.state as { jumpTo?: number } | null)?.jumpTo)
     const [jumpOpen, setJumpOpen] = useState(false)
+    // The feature intro waits for an open, loaded, idle ballot (no save in flight).
+    useIntroGate(ballot && ballot.categories.length > 0 && ballot.status === "open" && Date.now() >= new Date(ballot.opens_at).getTime() && Date.now() < new Date(ballot.closes_at).getTime() && !Object.values(pending).some(Boolean) ? "vote" : null)
     const [groupOpenFor, setGroupOpenFor] = useState<string | null>(null)
     const [avatars, setAvatars] = useState<Record<string, string | null>>({})
     const scrollOnChange = useRef(false)

@@ -8,6 +8,7 @@ import { HOLD_IDLE, holdProgress, holdReducer, type HoldEvent, type HoldState } 
 import { HoldButton } from "../../ui/HoldButton"
 import { releaseChecks, type ReleaseCheck } from "../../lib/release"
 import { firstFailingBallotId, winnerCount } from "../../lib/releaseView"
+import { useIntroGate } from "../../ui/introContext"
 
 const CHECK_REFRESH_MS = 30_000
 
@@ -97,6 +98,7 @@ const ReleasePage = () => {
 
     // a check turning red mid-hold cancels the hold
     const isReady = load.state === "ready" && load.ready
+    useIntroGate(load.state === "ready" && !load.released && !opened ? "ready" : null)
     useEffect(() => {
         if (!isReady) dispatch({ type: "cancel" })
     }, [isReady])

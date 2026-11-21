@@ -28,6 +28,7 @@ import { COPY } from "../../ui/copy"
 import { familyBallots, useBallotFamily, type Family } from "./useBallotFamily"
 import { pendingWrites, placeFixes, mainTallies, viewsFor } from "./familyLogic"
 import type { Nominee } from "../../types"
+import { useIntroGate } from "../../ui/introContext"
 
 const UPDATE_FAILED = "Couldn't update the ballot. Check your connection and try again."
 const ACTION_FAILED = "Couldn't save that. Check your connection and try again."
@@ -50,6 +51,7 @@ const BallotAdminPage = () => {
 
     const now = new Date()
     const sel: BallotSummary | null = family ? (familyBallots(family).find((b) => b.id === (selectedId ?? ballotId)) ?? family.main) : null
+    useIntroGate(sel ? (sel.round === "main" ? "main" : "round") : null)
     // a committee round has no voting window: it is "closed" until every winner is entered
     const phaseFor = (b: BallotSummary): Phase => {
         const p = phaseOf(b, now)

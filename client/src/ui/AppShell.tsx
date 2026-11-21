@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Outlet, useLocation } from "react-router-dom"
 import { ToastProvider } from "./Toast"
+import { IntroHost, IntroProvider } from "./IntroHost"
 import { TabBar } from "./TabBar"
 import { Sidebar } from "./Sidebar"
 import { ShellContext } from "./ShellContext"
@@ -104,6 +105,7 @@ export function AppShell() {
     return (
         <ShellContext.Provider value={api}>
             <ToastProvider>
+                <IntroProvider>
                 <div
                     ref={root}
                     className="min-h-dvh bg-bg text-label lg:pl-[260px]"
@@ -137,6 +139,8 @@ export function AppShell() {
                         </div>
                     )}
                 </div>
+                <IntroHost />
+                </IntroProvider>
             </ToastProvider>
         </ShellContext.Provider>
     )
