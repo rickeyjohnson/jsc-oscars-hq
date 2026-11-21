@@ -33,7 +33,7 @@ export default function WhoVoted({ rows, id }: { rows: MemberCompletion[]; id?: 
                 <button type="button" aria-pressed={filter === "all"} onClick={() => setFilter("all")} className={chip(filter === "all")}>All {rows.length}</button>
                 <button type="button" aria-pressed={filter === "left"} onClick={() => setFilter("left")} className={chip(filter === "left")}>Not finished {sum.left}</button>
             </div>
-            <ul className="list-none divide-y divide-sep overflow-hidden rounded-card bg-surface p-0">
+            <ul className="list-none divide-y divide-sep overflow-y-auto rounded-card bg-surface p-0 lg:max-h-[60dvh]">
                 {shown.map((r) => {
                     const pct = r.total > 0 ? Math.round((r.voted / r.total) * 100) : 0
                     return (

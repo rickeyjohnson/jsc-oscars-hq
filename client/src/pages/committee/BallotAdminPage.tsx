@@ -264,7 +264,7 @@ const BallotAdminPage = () => {
 
     return (
         <Screen title={sel.name} back={{ to: "/app/profile/ballots", label: "Ballots" }} width="wide">
-            <div className="grid gap-x-8 gap-y-5 lg:grid-cols-2 lg:items-start">
+            <div className="grid gap-x-8 gap-y-5 lg:grid-cols-2 lg:grid-rows-[repeat(4,auto)_1fr] lg:items-start">
                 <div className="space-y-3 lg:col-start-1">
                     <div className="flex flex-wrap items-center gap-2">
                         <Chip tone={phasePebble === "grape" ? "neutral" : phasePebble}>{PHASE_LABEL[phase]}</Chip>
@@ -301,7 +301,7 @@ const BallotAdminPage = () => {
                 </div>
 
                 {phase !== "draft" && phase !== "scheduled" && !committeeRound && (
-                    <div className="lg:col-start-2 lg:row-start-1 lg:row-span-3">
+                    <div className="lg:sticky lg:top-20 lg:col-start-2 lg:row-start-1 lg:row-span-5 lg:self-start">
                         <WhoVoted id="who-voted" rows={rows} />
                     </div>
                 )}
