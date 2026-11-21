@@ -191,7 +191,7 @@ describe("VotePage behavior", () => {
 
     it("closed ballot is read-only", async () => {
         await loaded(ballot({ status: "closed", categories: twoCategories() }))
-        for (const r of screen.getAllByRole("radio")) expect((r as HTMLButtonElement).disabled).toBe(true)
+        for (const r of screen.getAllByRole("radio")) expect(r.getAttribute("aria-disabled")).toBe("true")
         expect(screen.getByRole("status").textContent).toMatch(/voting closed at|voting is closed/i)
         expect(screen.getAllByRole("link", { name: /back to ballots/i }).length).toBeGreaterThan(0)
         expect(screen.queryByRole("button", { name: /^(back|skip|next)$/i })).toBeNull()
@@ -201,7 +201,7 @@ describe("VotePage behavior", () => {
 
     it("a window that closes mid-session turns read-only without a tap", async () => {
         await loaded(ballot({ closes_at: new Date(Date.now() + 400).toISOString(), categories: twoCategories() }))
-        expect((radio(ANN) as HTMLButtonElement).getAttribute("aria-disabled")).not.toBe("true")
+        expect(radio(ANN).getAttribute("aria-disabled")).toBeNull()
         await waitFor(() => expect(screen.getByRole("status").textContent).toMatch(/voting closed at/i), { timeout: 1500 })
         expect(screen.getAllByRole("link", { name: /back to ballots/i }).length).toBeGreaterThan(0)
         fireEvent.click(radio(ANN))
@@ -224,7 +224,7 @@ describe("VotePage behavior", () => {
         const opens = new Date(Date.now() + 86_400_000)
         await loaded(ballot({ opens_at: opens.toISOString(), closes_at: new Date(Date.now() + 3 * 86_400_000).toISOString(), categories: twoCategories() }))
         expect(screen.getByRole("status").textContent).toBe(opensAtLabel(opens))
-        for (const r of screen.getAllByRole("radio")) expect((r as HTMLButtonElement).disabled).toBe(true)
+        for (const r of screen.getAllByRole("radio")) expect(r.getAttribute("aria-disabled")).toBe("true")
     })
 
     it("load failure shows an error", async () => {
@@ -332,6 +332,37 @@ describe("VotePage one-per-page flow", () => {
         const other = screen.getByRole("button", { name: /best dressed/i })
         expect(other.getAttribute("aria-current")).toBeNull()
         expect(other.textContent).toMatch(/Not voted/)
+    })
+    it("radiogroup: one tab stop, arrows move focus without voting, click votes once", async () => {
+        await loaded()
+        const ann = radio(ANN)
+        const bo = radio(BO)
+        expect(ann.tabIndex).toBe(0)
+        expect(bo.tabIndex).toBe(-1)
+        ann.focus()
+        fireEvent.keyDown(ann, { key: "ArrowDown" })
+        expect(document.activeElement).toBe(bo)
+        fireEvent.keyDown(bo, { key: "ArrowDown" })
+        expect(document.activeElement).toBe(ann) // wraps
+        fireEvent.keyDown(ann, { key: "ArrowUp" })
+        expect(document.activeElement).toBe(bo)
+        expect(castVote).not.toHaveBeenCalled()
+        fireEvent.click(bo) // Enter/Space on a button dispatches click
+        await waitFor(() => expect(castVote).toHaveBeenCalledTimes(1))
+        expect(castVote).toHaveBeenCalledWith("B1", "c1", "n-bo")
+    })
+    it("the selected radio is the tab stop", async () => {
+        await loaded(undefined, { c1: "n-bo" })
+        expect(radio(BO).tabIndex).toBe(0)
+        expect(radio(ANN).tabIndex).toBe(-1)
+    })
+    it("focus moves to Try again on a new error when focus was in that category", async () => {
+        await loaded()
+        vi.mocked(castVote).mockRejectedValueOnce(new TypeError("Failed to fetch"))
+        radio(ANN).focus()
+        fireEvent.click(radio(ANN))
+        const alert = await within(section(C1)).findByRole("alert")
+        await waitFor(() => expect(document.activeElement).toBe(within(alert).getByRole("button", { name: /try again/i })))
     })
     it("Skip moves to the next category and shows it; Back returns", async () => {
         await loaded()

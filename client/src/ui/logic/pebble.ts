@@ -75,3 +75,6 @@ export const PEBBLE_INK_FACE: Record<PebbleName, string> = {
     sky: "bg-on-pebble-sky text-pebble-sky",
     grape: "bg-on-pebble-grape text-pebble-grape",
 }
+
+/** Footnote text on a selected card: pebbles whose ink is under 4.5:1 (grape) put it in a small dark pill. */
+export const selectedSmallTextClass = (n: PebbleName): string => (SMALL_TEXT_OK.includes(n) ? "" : "w-fit rounded-full bg-bg/80 px-2 text-label")

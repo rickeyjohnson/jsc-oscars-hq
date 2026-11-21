@@ -1,11 +1,11 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Check, Lock } from "lucide-react"
 import type { Category, Member } from "../../types"
 import { groupCandidates, lockedNominees, nomineeKey, nomineePebbles, selectableNominees, type VoteMessage } from "../../lib/voting"
 import { Avatar } from "../../ui/Avatar"
 import { Button, Spinner } from "../../ui/Button"
 import { Sheet } from "../../ui/Sheet"
-import { PEBBLE_CLASS } from "../../ui/logic/pebble"
+import { PEBBLE_CLASS, selectedSmallTextClass } from "../../ui/logic/pebble"
 import { VoteBanner } from "./VoteBanner"
 import GroupSheet from "./GroupSheet"
 
@@ -42,11 +42,32 @@ const CategoryVoteCard = (p: Props) => {
     const locked = lockedNominees(category.nominees, p.myMemberId)
     const pebbles = nomineePebbles(options)
     const isGroup = category.nominee_mode === "group"
+    const secRef = useRef<HTMLElement | null>(null)
+    // A new error with Try again: move focus to it only when focus was already inside this category.
+    useEffect(() => {
+        const el = secRef.current
+        if (message?.retry && el?.contains(document.activeElement)) el.querySelector<HTMLElement>("[data-retry]")?.focus()
+    }, [message])
+    // Roving tabindex: arrows move focus only (a vote is a network write); Enter/Space vote through the button's click.
+    const onRadioKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+        const keys = ["ArrowDown", "ArrowRight", "ArrowUp", "ArrowLeft"]
+        if (!keys.includes(e.key)) return
+        const radios = Array.from(e.currentTarget.querySelectorAll<HTMLElement>('[role="radio"]'))
+        const at = radios.indexOf(document.activeElement as HTMLElement)
+        if (at < 0 || radios.length === 0) return
+        e.preventDefault()
+        const step = e.key === "ArrowDown" || e.key === "ArrowRight" ? 1 : -1
+        radios[(at + step + radios.length) % radios.length].focus()
+    }
+    const tabStop = options.some((n) => n.id === selectedId) ? selectedId : options[0]?.id
     const hint = category.description || (isGroup ? "Pick one group. Groups you're in can't be chosen." : "Pick one. You can't vote for yourself.")
 
     return (
         <section
-            ref={p.registerRef}
+            ref={(el) => {
+                secRef.current = el
+                p.registerRef(el)
+            }}
             tabIndex={-1}
             aria-label={`Category ${p.index + 1} of ${p.total}: ${category.name}`}
             className={`tab-enter outline-none ${p.current ? "" : "hidden"}`}
@@ -64,7 +85,7 @@ const CategoryVoteCard = (p: Props) => {
 
             {message && <VoteBanner className="mt-2" tone={message.tone} title={message.title} detail={message.detail} retry={message.retry} />}
 
-            <div role="radiogroup" aria-label={category.name} className="mt-3 grid grid-cols-1 gap-2 lg:grid-cols-2">
+            <div role="radiogroup" aria-label={category.name} onKeyDown={onRadioKey} className="mt-3 grid grid-cols-1 gap-2 lg:grid-cols-2">
                 {options.map((n) => {
                     const on = n.id === selectedId
                     const peb = pebbles[n.id]
@@ -77,9 +98,10 @@ const CategoryVoteCard = (p: Props) => {
                             role="radio"
                             aria-checked={on}
                             aria-busy={on && pending ? true : undefined}
-                            disabled={readOnly}
+                            tabIndex={n.id === tabStop ? 0 : -1}
+                            aria-disabled={readOnly || undefined}
                             onClick={() => {
-                                if (!on) p.onVote(n.id)
+                                if (!on && !readOnly) p.onVote(n.id)
                             }}
                             className={`flex min-h-16 w-full items-center gap-3 rounded-card p-3 text-left transition-colors duration-150 motion-reduce:transition-none ${on ? `${c.bg} ${c.text}` : "bg-surface"} ${readOnly ? "opacity-70" : "cursor-pointer active:scale-[0.99]"}`}
                         >
@@ -96,9 +118,9 @@ const CategoryVoteCard = (p: Props) => {
                             <span className="min-w-0 flex-1">
                                 <span className="block text-headline">{n.display_name}</span>
                                 {group ? (
-                                    <span className={`block text-footnote ${on ? "" : "text-label-2"}`}>{n.member_ids.length} people</span>
+                                    <span className={`block text-footnote ${on ? selectedSmallTextClass(peb) : "text-label-2"}`}>{n.member_ids.length} people</span>
                                 ) : (
-                                    n.secondary_text && <span className={`block text-footnote ${on ? "" : "text-label-2"}`}>{n.secondary_text}</span>
+                                    n.secondary_text && <span className={`block text-footnote ${on ? selectedSmallTextClass(peb) : "text-label-2"}`}>{n.secondary_text}</span>
                                 )}
                             </span>
                             {on && (pending ? <Spinner /> : <Check aria-hidden strokeWidth={3} className="size-6 shrink-0" />)}

@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest"
 import { MEMBERS } from "../../test/fixtures"
-import { HERO_EXCLUDE, PEBBLES, RESULTS_EXCLUDE, STATUS_PEBBLE, pebbleAt, pebbleFor } from "../logic/pebble"
+import { HERO_EXCLUDE, PEBBLES, RESULTS_EXCLUDE, STATUS_PEBBLE, SMALL_TEXT_OK, selectedSmallTextClass, pebbleAt, pebbleFor } from "../logic/pebble"
+
+describe("selected small text", () => {
+    it("only pebbles under 4.5:1 get the dark pill", () => {
+        for (const n of PEBBLES) expect(selectedSmallTextClass(n) === "").toBe(SMALL_TEXT_OK.includes(n))
+        expect(selectedSmallTextClass("grape")).toMatch(/bg-bg/)
+    })
+})
 
 describe("pebbles", () => {
     it("has seven pebbles", () => expect(PEBBLES).toHaveLength(7))

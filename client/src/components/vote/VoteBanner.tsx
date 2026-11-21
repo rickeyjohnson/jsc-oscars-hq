@@ -17,7 +17,7 @@ export function VoteBanner({ tone, title, detail, retry, retryLabel = "Try again
                 {detail && <p className="text-footnote text-label-2">{detail}</p>}
             </div>
             {retry && (
-                <Button size="md" className="w-full lg:w-auto" onClick={retry}>
+                <Button size="md" className="w-full lg:w-auto" data-retry onClick={retry}>
                     {retryLabel}
                 </Button>
             )}
