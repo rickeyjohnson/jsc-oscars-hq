@@ -9,6 +9,7 @@ import { useUserData } from "../context/UserContenxt"
 import { fetchBallotSummaries } from "../api/ballots"
 import { pendingBallots } from "../lib/voting"
 import { supabase } from "../supabaseClient"
+import { clearAll } from "../lib/cache/clear"
 
 const DESKTOP = "(min-width: 1024px)"
 
@@ -117,7 +118,7 @@ export function AppShell() {
                             badge={badge}
                             committee={!!profile?.is_committee}
                             user={{ id: member?.id ?? profile?.user_id ?? "me", name, imageUrl: profile?.image_url }}
-                            onLogout={() => void supabase.auth.signOut()}
+                            onLogout={() => { clearAll(); void supabase.auth.signOut() }}
                         />
                     )}
                     <div className="flex min-h-dvh flex-col">

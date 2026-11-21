@@ -16,6 +16,7 @@ import { Screen } from "../ui/Screen"
 import { Skeleton } from "../ui/Skeleton"
 import { useHomeData } from "../ui/useHomeData"
 import { youStats } from "../ui/logic/youStats"
+import { clearAll } from "../lib/cache/clear"
 
 const icon = (I: typeof User) => <I aria-hidden className="size-5 text-label-2" />
 
@@ -99,6 +100,7 @@ const ProfilePage = () => {
                             destructive
                             leading={<LogOut aria-hidden className="size-5 text-danger" />}
                             onClick={async () => {
+                                clearAll()
                                 await supabase.auth.signOut()
                                 navigate("/", { replace: true })
                             }}

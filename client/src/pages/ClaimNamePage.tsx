@@ -8,6 +8,7 @@ import { AuthLayout } from "../ui/AuthLayout"
 import { Button } from "../ui/Button"
 import { NameChips } from "../ui/NameChips"
 import { Skeleton, SkeletonScreen } from "../ui/Skeleton"
+import { clearAll } from "../lib/cache/clear"
 
 const NOT_SET_UP = "Name claiming isn't set up yet. Ask a committee member."
 const TAKEN = "That name isn't available. Pick another or ask a committee member."
@@ -76,6 +77,7 @@ const ClaimNamePage = () => {
 
     const logOut = async () => {
         try {
+            clearAll()
             await supabase.auth.signOut()
         } catch {
             /* leave anyway: the landing page works signed out or in */
