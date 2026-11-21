@@ -26,8 +26,10 @@ const ClaimNamePage = () => {
     const [autoName, setAutoName] = useState<string | null>(() => (member ? null : getPendingName()))
 
     const load = useCallback((silent?: boolean) => {
-        if (!silent) setLoading(true)
-        setLoadError(false)
+        if (!silent) {
+            setLoading(true)
+            setLoadError(false)
+        }
         fetchMemberNameStatus()
             .then(setNames)
             .catch(() => setLoadError(true))
@@ -59,7 +61,8 @@ const ClaimNamePage = () => {
         if (member) navigate("/app", { replace: true })
     }, [member, navigate])
 
-    useEffect(() => load(), [load])
+    // Initial state is already "loading"; no synchronous setState needed.
+    useEffect(() => load(true), [load])
 
     // A name picked on the signup screen before Google is used once, automatically.
     useEffect(() => {

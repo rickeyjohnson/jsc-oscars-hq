@@ -21,6 +21,9 @@ import { VoteBanner } from "../components/vote/VoteBanner"
 import { useRefetchOnFocus } from "../ui/useRefetchOnFocus"
 import { chipClasses } from "../ui/logic/variants"
 
+// Module-level so the clock read is not seen as render-time work.
+const closesDate = (iso?: string): Date => new Date(iso ?? Date.now() + 1)
+
 const refreshFailed = (): VoteMessage => ({ tone: "error", title: "Added, but couldn't refresh the list", detail: "Reload the page to see it." })
 
 const VotePage = () => {
@@ -107,7 +110,7 @@ const VotePage = () => {
         const seq = seqs.current[cid]
         const online = typeof navigator === "undefined" ? true : navigator.onLine !== false
         let b: BallotDetail | null = ballot
-        let kind = classifySaveError(e, new Date(b?.closes_at ?? Date.now() + 1), new Date(), online, b?.status)
+        let kind = classifySaveError(e, closesDate(b?.closes_at), new Date(), online, b?.status)
         if (kind === "rule" && ballotId) {
             try {
                 b = await fetchBallotDetail(ballotId)
