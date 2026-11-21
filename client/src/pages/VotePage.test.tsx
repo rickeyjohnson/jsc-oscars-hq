@@ -110,6 +110,23 @@ describe("VotePage behavior", () => {
         expect(screen.getByText(/0 of 2 voted/i)).toBeTruthy()
     })
 
+    it("a save that fails after jumping away is flagged on the category you are viewing", async () => {
+        await loaded()
+        const d = deferred()
+        vi.mocked(castVote).mockReturnValueOnce(d.promise)
+        fireEvent.click(radio(ANN))
+        await waitFor(() => expect(castVote).toHaveBeenCalled())
+        fireEvent.click(screen.getByRole("button", { name: /^jump to category$/i }))
+        fireEvent.click(screen.getByRole("button", { name: /best dressed/i }))
+        expect(section(C2).className).not.toMatch(/\bhidden\b/)
+        d.reject(new Error("nope"))
+        const note = await screen.findByText(/couldn't save your vote in best picture/i)
+        expect(note.closest("[role=alert]")).toBeTruthy()
+        fireEvent.click(screen.getByRole("button", { name: /go to it/i }))
+        expect(section(C1).className).not.toMatch(/\bhidden\b/)
+        expect(within(section(C1)).getByRole("button", { name: /try again/i })).toBeTruthy()
+    })
+
     it("failed save falls back to the last confirmed vote", async () => {
         await loaded(undefined, { c1: "n-ann" })
         await expandCard(C1)

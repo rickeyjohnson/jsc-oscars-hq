@@ -7,10 +7,10 @@ export const segmentsTappable = (widthPx: number, count: number): boolean => cou
 
 // Strip: current = sky and taller (7px vs 5px; vertical: wider), voted = label, unvoted = faint cream.
 export function dashClass(s: DashState, orientation: "horizontal" | "vertical"): string {
-    const color = s.current ? "bg-pebble-sky" : s.voted ? "bg-label" : "bg-strip-off"
+    const color = s.current ? "bg-pebble-sky" : s.failed ? "bg-pebble-cherry" : s.voted ? "bg-label" : "bg-strip-off"
     const size = orientation === "horizontal" ? (s.current ? "h-[7px] w-full" : "h-[5px] w-full") : s.current ? "w-[7px] h-full" : "w-[5px] h-full"
     return `block rounded-full ${color} ${size}`
 }
 
 export const dashAriaLabel = (i: number, label: string, s: DashState): string =>
-    `Category ${i + 1}: ${label}, ${s.voted ? "voted" : "not voted"}${s.current ? ", current" : ""}`
+    `Category ${i + 1}: ${label}, ${s.failed ? "couldn't save" : s.voted ? "voted" : "not voted"}${s.current ? ", current" : ""}`

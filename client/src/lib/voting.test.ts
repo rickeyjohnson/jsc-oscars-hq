@@ -160,6 +160,11 @@ describe("group vote helpers", () => {
         expect(joinNames(["A", "B"])).toBe("A & B")
         expect(joinNames(["A", "B", "C"])).toBe("A, B & C")
     })
+    it("dashStates flags failed categories except the current one", () => {
+        const d = dashStates(["a", "b"], {}, 0, new Set(["a", "b"]))
+        expect(d[0].failed).toBeUndefined()
+        expect(d[1].failed).toBe(true)
+    })
     it("classifies save errors", () => {
         const open = new Date(Date.now() + 1000)
         const now = new Date()

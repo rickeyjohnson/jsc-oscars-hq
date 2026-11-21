@@ -19,6 +19,10 @@ describe("progress strip logic", () => {
         expect(dashClass({ voted: true, current: true }, "horizontal")).toContain("bg-pebble-sky")
         expect(dashClass({ voted: true, current: true }, "horizontal")).not.toContain("outline")
     })
+    it("failed dash is cherry and announced", () => {
+        expect(dashClass({ voted: true, current: false, failed: true }, "horizontal")).toContain("bg-pebble-cherry")
+        expect(dashAriaLabel(0, "X", { voted: false, current: false, failed: true })).toBe("Category 1: X, couldn't save")
+    })
     it("aria label per dash", () => {
         expect(dashAriaLabel(2, "Best locs", { voted: true, current: false })).toBe("Category 3: Best locs, voted")
         expect(dashAriaLabel(0, "X", { voted: false, current: true })).toBe("Category 1: X, not voted, current")

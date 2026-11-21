@@ -14,10 +14,11 @@ export const groupCandidates = (members: Member[], myMemberId: string | null): M
 export const votedCount = (myVotes: Record<string, string>, categoryIds: string[]): number =>
     categoryIds.filter((id) => myVotes[id]).length
 
-export type DashState = { voted: boolean; current: boolean }
+export type DashState = { voted: boolean; current: boolean; failed?: boolean }
 
-export const dashStates = (categoryIds: string[], myVotes: Record<string, string>, currentIndex: number): DashState[] =>
-    categoryIds.map((id, i) => ({ voted: Boolean(myVotes[id]), current: i === currentIndex }))
+/** `failed` marks categories (other than the current one) whose last save failed. */
+export const dashStates = (categoryIds: string[], myVotes: Record<string, string>, currentIndex: number, failed?: ReadonlySet<string>): DashState[] =>
+    categoryIds.map((id, i) => ({ voted: Boolean(myVotes[id]), current: i === currentIndex, ...(failed?.has(id) && i !== currentIndex ? { failed: true } : {}) }))
 
 // Next unvoted category after `currentIndex`, wrapping; -1 when everything is voted.
 export const nextUnvotedIndex = (categoryIds: string[], myVotes: Record<string, string>, currentIndex: number): number => {

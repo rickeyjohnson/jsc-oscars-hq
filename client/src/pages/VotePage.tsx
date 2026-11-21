@@ -173,7 +173,10 @@ const VotePage = () => {
     const total = ballot.categories.length
     const voted = votedCount(myVotes, ids)
     const left = total - voted
-    const states = dashStates(ids, myVotes, idx)
+    const failedIds = new Set(ids.filter((id) => messages[id]?.tone === "error"))
+    const states = dashStates(ids, myVotes, idx, failedIds)
+    // A save that failed after you moved on: say so on the category you are looking at.
+    const failedAway = reviewing ? ids.findIndex((id) => failedIds.has(id)) : ids.findIndex((id, i) => i !== idx && failedIds.has(id))
 
     const jump = (i: number) => {
         if (i < 0 || i >= total) return
@@ -242,6 +245,16 @@ const VotePage = () => {
             <Button variant="plain" size="md" className="-ml-5" onClick={() => setJumpOpen(true)}>
                 Jump to category
             </Button>
+            {failedAway >= 0 && (
+                <VoteBanner
+                    className="mt-3"
+                    tone="error"
+                    title={`Couldn't save your vote in ${ballot.categories[failedAway].name}`}
+                    detail="Your previous vote there is still saved."
+                    retry={() => jump(failedAway)}
+                    retryLabel="Go to it"
+                />
+            )}
             {readOnly &&
                 (upcoming ? (
                     <VoteBanner className="mt-3" tone="warn" title={opensAtLabel(new Date(ballot.opens_at))} />
@@ -320,7 +333,7 @@ const VotePage = () => {
                         <ListRow
                             key={c.id}
                             title={c.name}
-                            subtitle={myVotes[c.id] ? "Voted" : "Not voted"}
+                            subtitle={failedIds.has(c.id) ? "Couldn't save" : myVotes[c.id] ? "Voted" : "Not voted"}
                             selected={i === idx && !reviewing}
                             onClick={() => {
                                 setJumpOpen(false)
