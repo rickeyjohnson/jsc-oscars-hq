@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react"
 import { ConfirmSheet } from "./ConfirmSheet"
 
-export type ConfirmOptions = { title: string; message?: string; confirmLabel: string; destructive?: boolean }
+export type ConfirmOptions = { title: string; message?: string; confirmLabel: string; cancelLabel?: string; destructive?: boolean }
 type Confirm = (o: ConfirmOptions) => Promise<boolean>
 
 const ConfirmContext = createContext<Confirm | null>(null)

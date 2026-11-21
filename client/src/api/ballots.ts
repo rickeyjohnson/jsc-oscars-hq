@@ -4,6 +4,7 @@ import { toUtcIso } from "../lib/time"
 import type { BallotSummary } from "../lib/voting"
 import type { Ballot, BallotDetail, BallotFormData, BallotStatus, Category, Member, Nominee, Season } from "../types"
 import type { RoundEntry } from "../lib/rounds"
+import { classifyReopenError, REOPEN_UNAVAILABLE } from "../lib/reopen"
 
 export const fetchSeasons = async (): Promise<Season[]> => {
     const { data, error } = await supabase.from("seasons").select("*").order("ceremony_at", { ascending: false })
@@ -204,4 +205,17 @@ export const createRoundBallot = async (
         )
     }
     return id
+}
+
+// Reopen a closed ballot with a new close time (committee only; the rules live in the reopen_ballot database function).
+export class ReopenUnavailableError extends Error {}
+export class ReopenRefusedError extends Error {}
+
+export const reopenBallot = async (ballotId: string, closesAtIso: string): Promise<void> => {
+    const { error } = await supabase.rpc("reopen_ballot", { p_ballot_id: ballotId, p_closes_at: closesAtIso })
+    if (!error) return
+    const kind = classifyReopenError(error)
+    if (kind === "unavailable") throw new ReopenUnavailableError(REOPEN_UNAVAILABLE)
+    if (kind === "refused") throw new ReopenRefusedError(error.message)
+    throw error
 }

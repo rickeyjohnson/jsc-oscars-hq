@@ -392,6 +392,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      reopen_ballot: {
+        Args: {
+          p_ballot_id: string
+          p_closes_at: string
+        }
+        Returns: undefined
+      }
       add_nominee: {
         Args: {
           p_category: string
