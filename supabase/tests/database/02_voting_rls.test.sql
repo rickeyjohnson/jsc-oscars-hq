@@ -14,6 +14,7 @@ create function public.__id(p_k text) returns uuid language sql stable security 
 
 insert into public.__tap(line) select plan(71);
 
+update members set user_id = null, claimed_at = null where name in ('Rickey','Kadin','Micah','Nick'); -- real accounts may hold these names; undone by the rollback
 -- ---------------------------------------------------------------- setup (as postgres)
 insert into public.__ids values ('rickey', tests.create_user('Rickey')), ('kadin', tests.create_user('Kadin')),
   ('micah', tests.create_user('Micah')), ('nick', tests.create_user('Nick'));

@@ -1,5 +1,6 @@
 begin;
 select plan(12);
+update members set user_id = null, claimed_at = null; -- real accounts may already hold names; undone by the rollback
 
 select lives_ok($$ select tests.create_user('Rico', '{"is_committee": true}') $$, 'Rico signs up');
 select is((select is_committee from profiles p join members m on m.user_id = p.user_id where m.name = 'Rico'), false, 'metadata cannot grant committee');
