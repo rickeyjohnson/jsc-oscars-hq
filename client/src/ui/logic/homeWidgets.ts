@@ -10,6 +10,8 @@ export type WidgetColor = PebbleName
 export type WidgetDef = {
     id: WidgetId
     title: string
+    /** One line shown under the title in Customize. */
+    blurb: string
     adminOnly: boolean
     requiresRelease: boolean
     defaultMember: boolean
@@ -20,19 +22,19 @@ export type WidgetDef = {
 
 // Default order. adminOnly widgets are committee-only: resolveWidgets drops them for everyone else.
 export const WIDGETS: readonly WidgetDef[] = [
-    { id: "ceremony", title: "Oscar night", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: true, span: 2, color: "lemon" },
-    { id: "countdown", title: "Countdown", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: false, span: 1, color: "grape" },
-    { id: "pending", title: "Your ballots", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: true, span: 2, color: "lime" },
-    { id: "ballotCloses", title: "Ballot closes", adminOnly: false, requiresRelease: false, defaultMember: false, defaultCommittee: false, span: 1, color: "cherry" },
-    { id: "progress", title: "Your progress", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: true, span: 1, color: "sky" },
-    { id: "yourStats", title: "Your stats", adminOnly: false, requiresRelease: true, defaultMember: false, defaultCommittee: false, span: 1, color: "grape" },
-    { id: "latestWinners", title: "Latest winners", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: true, span: 2, color: "tangerine" },
-    { id: "leaderboardPeek", title: "Leaderboard", adminOnly: false, requiresRelease: true, defaultMember: true, defaultCommittee: true, span: 2, color: "strawberry" },
-    { id: "notVoted", title: "Who hasn't voted", adminOnly: true, requiresRelease: false, defaultMember: false, defaultCommittee: true, span: 2, color: "grape" },
-    { id: "attention", title: "Needs your attention", adminOnly: true, requiresRelease: false, defaultMember: false, defaultCommittee: true, span: 2, color: "cherry" },
-    { id: "ballotHealth", title: "Ballot health", adminOnly: true, requiresRelease: false, defaultMember: false, defaultCommittee: true, span: 1, color: "strawberry" },
-    { id: "tiebreak", title: "Tiebreak status", adminOnly: true, requiresRelease: false, defaultMember: false, defaultCommittee: false, span: 1, color: "lime" },
-    { id: "revealReadiness", title: "Reveal readiness", adminOnly: true, requiresRelease: false, defaultMember: false, defaultCommittee: false, span: 1, color: "lemon" },
+    { id: "ceremony", title: "Oscar night", blurb: "Date, place, calendar", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: true, span: 2, color: "lemon" },
+    { id: "countdown", title: "Countdown", blurb: "Days until the ceremony", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: false, span: 1, color: "grape" },
+    { id: "pending", title: "Your ballots", blurb: "Ballots you still need to vote on", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: true, span: 2, color: "lime" },
+    { id: "ballotCloses", title: "Ballot closes", blurb: "When the next ballot closes", adminOnly: false, requiresRelease: false, defaultMember: false, defaultCommittee: false, span: 1, color: "cherry" },
+    { id: "progress", title: "Your progress", blurb: "Votes you've cast so far", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: true, span: 1, color: "sky" },
+    { id: "yourStats", title: "Your stats", blurb: "Your picks and win rate", adminOnly: false, requiresRelease: true, defaultMember: false, defaultCommittee: false, span: 1, color: "grape" },
+    { id: "latestWinners", title: "Latest winners", blurb: "Who just won", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: true, span: 2, color: "tangerine" },
+    { id: "leaderboardPeek", title: "Leaderboard", blurb: "Top of the standings", adminOnly: false, requiresRelease: true, defaultMember: true, defaultCommittee: true, span: 2, color: "strawberry" },
+    { id: "notVoted", title: "Who hasn't voted", blurb: "Members who haven't voted yet", adminOnly: true, requiresRelease: false, defaultMember: false, defaultCommittee: true, span: 2, color: "grape" },
+    { id: "attention", title: "Needs your attention", blurb: "Things that need a committee decision", adminOnly: true, requiresRelease: false, defaultMember: false, defaultCommittee: true, span: 2, color: "cherry" },
+    { id: "ballotHealth", title: "Ballot health", blurb: "How complete the ballot is", adminOnly: true, requiresRelease: false, defaultMember: false, defaultCommittee: true, span: 1, color: "strawberry" },
+    { id: "tiebreak", title: "Tiebreak status", blurb: "Ties that need a call", adminOnly: true, requiresRelease: false, defaultMember: false, defaultCommittee: false, span: 1, color: "lime" },
+    { id: "revealReadiness", title: "Reveal readiness", blurb: "Checks before results go live", adminOnly: true, requiresRelease: false, defaultMember: false, defaultCommittee: false, span: 1, color: "lemon" },
 ]
 
 export const widgetColor = (id: WidgetId): WidgetColor => WIDGETS.find((w) => w.id === id)?.color ?? "lemon"

@@ -81,7 +81,7 @@ const HomeBody = ({ userId, isCommittee, name, memberId }: { userId: string; isC
                     </div>
                 )}
             </div>
-            <CustomizeHomeSheet open={customizing} onClose={() => setCustomizing(false)} prefs={prefs} isCommittee={isCommittee} onChange={change} />
+            <CustomizeHomeSheet open={customizing} onClose={() => setCustomizing(false)} prefs={prefs} isCommittee={isCommittee} released={released} onChange={change} />
         </Screen>
     )
 }

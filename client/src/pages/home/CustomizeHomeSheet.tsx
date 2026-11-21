@@ -29,7 +29,7 @@ const HELP_ID = "customize-reorder-help"
 
 type Grab = { id: WidgetId; orig: HomePrefs }
 
-function Group({ defs, prefs, onChange, announce }: { defs: WidgetDef[]; prefs: HomePrefs; onChange: (p: HomePrefs) => void; announce: (msg: string) => void }) {
+function Group({ defs, prefs, onChange, announce, released }: { defs: WidgetDef[]; prefs: HomePrefs; onChange: (p: HomePrefs) => void; announce: (msg: string) => void; released: boolean }) {
     const ids = defs.map((d) => d.id)
     const hidden = new Set(prefs.hidden)
     const listRef = useRef<HTMLUListElement>(null)
@@ -143,7 +143,11 @@ function Group({ defs, prefs, onChange, announce }: { defs: WidgetDef[]; prefs: 
                             <GripVertical aria-hidden className="size-5" />
                         </button>
                         <span aria-hidden className={`size-2.5 shrink-0 rounded-full ${dot}`} />
-                        <span className="min-w-0 flex-1 truncate pl-1 text-headline">{w.title}</span>
+                        <span className="min-w-0 flex-1 pl-1">
+                            <span className="block truncate text-headline">{w.title}</span>
+                            <span className="block text-footnote text-label-2">{w.blurb}</span>
+                            {w.requiresRelease && !released && <span className="block text-footnote text-label-2">Appears after results are released</span>}
+                        </span>
                         {w.adminOnly && <Chip>Committee</Chip>}
                         <button type="button" tabIndex={-1} aria-label={`Move ${w.title} up`} disabled={i === 0} onClick={() => onChange(moveVisible(prefs, ids, w.id, -1))} className={KEY_BTN}>
                             <ChevronUp aria-hidden className="size-5" />
@@ -160,7 +164,7 @@ function Group({ defs, prefs, onChange, announce }: { defs: WidgetDef[]; prefs: 
     )
 }
 
-export function CustomizeHomeSheet({ open, onClose, prefs, isCommittee, onChange }: { open: boolean; onClose: () => void; prefs: HomePrefs; isCommittee: boolean; onChange: (p: HomePrefs) => void }) {
+export function CustomizeHomeSheet({ open, onClose, prefs, isCommittee, released = false, onChange }: { open: boolean; onClose: () => void; prefs: HomePrefs; isCommittee: boolean; released?: boolean; onChange: (p: HomePrefs) => void }) {
     const byId = new Map(WIDGETS.map((w) => [w.id, w]))
     const ordered = prefs.order.map((id) => byId.get(id)).filter((w): w is WidgetDef => Boolean(w))
     const general = ordered.filter((w) => !w.adminOnly)
@@ -175,11 +179,11 @@ export function CustomizeHomeSheet({ open, onClose, prefs, isCommittee, onChange
             <div role="status" aria-live="polite" className="sr-only">
                 {message}
             </div>
-            <Group defs={general} prefs={prefs} onChange={onChange} announce={setMessage} />
+            <Group defs={general} prefs={prefs} onChange={onChange} announce={setMessage} released={released} />
             {admin.length > 0 && (
                 <>
                     <h3 className="mb-2 mt-5 px-1 text-caption-2 tracking-wider text-label-2">COMMITTEE ONLY</h3>
-                    <Group defs={admin} prefs={prefs} onChange={onChange} announce={setMessage} />
+                    <Group defs={admin} prefs={prefs} onChange={onChange} announce={setMessage} released={released} />
                 </>
             )}
             <div className="mt-5">

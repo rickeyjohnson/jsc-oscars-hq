@@ -229,6 +229,12 @@ describe("Home rework", () => {
         expect(order.indexOf("countdown")).toBeGreaterThan(order.indexOf("pending"))
         expect(screen.getByText(/cancelled\. countdown is back at position 3/i)).toBeTruthy()
     })
+    it("customize: rows show a blurb, and release-gated rows say when they appear until released", () => {
+        renderHome()
+        fireEvent.click(screen.getByRole("button", { name: "Customize Home" }))
+        expect(screen.getByText("Date, place, calendar")).toBeTruthy()
+        expect(screen.getAllByText(/appears after results are released/i)).toHaveLength(2) // Leaderboard, Your stats
+    })
     it("customize: the Move up/down twins are never keyboard tab stops", () => {
         renderHome()
         fireEvent.click(screen.getByRole("button", { name: "Customize Home" }))

@@ -3,6 +3,12 @@ import { WIDGETS, resolveWidgets } from "../logic/homeWidgets"
 
 const ids = (w: { id: string }[]) => w.map((x) => x.id)
 
+describe("widget blurbs", () => {
+    it("every widget has a non-empty one-line blurb", () => {
+        for (const w of WIDGETS) expect(w.blurb.trim().length, w.id).toBeGreaterThan(0)
+    })
+})
+
 describe("resolveWidgets", () => {
     it("member defaults: 5 before release, 6 after", () => {
         expect(ids(resolveWidgets(null, { isCommittee: false, released: false }))).toEqual(["ceremony", "countdown", "pending", "progress", "latestWinners"])
