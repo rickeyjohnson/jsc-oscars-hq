@@ -65,3 +65,17 @@ export function ballotPresentation(b: BallotSummary, now: Date): BallotPresentat
 }
 
 export const roundLabel = (round: BallotSummary["round"]): string | null => (round === "tiebreak" ? "Tiebreak" : round === "committee" ? "Committee" : null)
+
+/** The soonest ballot that has not opened yet, or null. */
+export function nextOpening(list: BallotSummary[], now: Date): BallotSummary | null {
+    const upcoming = list.filter((b) => b.status !== "closed" && b.status !== "released" && new Date(b.opens_at).getTime() > now.getTime())
+    upcoming.sort((a, b) => new Date(a.opens_at).getTime() - new Date(b.opens_at).getTime())
+    return upcoming[0] ?? null
+}
+
+/** Plain-words explanation for a member who has no ballot to vote on. Includes the open time when one is scheduled. */
+export function noBallotNote(list: BallotSummary[], now: Date): string {
+    const next = nextOpening(list, now)
+    if (next) return `${opensAtLabel(new Date(next.opens_at))}.`
+    return "Voting opens when the committee publishes a ballot. It will show up here."
+}

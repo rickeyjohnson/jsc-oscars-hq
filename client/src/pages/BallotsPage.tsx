@@ -9,8 +9,9 @@ import { Skeleton, SkeletonScreen } from "../ui/Skeleton"
 import { EmptyState } from "../ui/EmptyState"
 import { ErrorState } from "../ui/ErrorState"
 import { COPY } from "../ui/copy"
+import { opensAtLabel } from "../lib/time"
 import { useRefetchOnFocus } from "../ui/useRefetchOnFocus"
-import { BALLOT_FILTERS, emptyFilterText, filterBallots, type BallotFilter } from "../ui/logic/ballotsView"
+import { BALLOT_FILTERS, emptyFilterText, nextOpening, filterBallots, type BallotFilter } from "../ui/logic/ballotsView"
 
 const BallotsPage = () => {
     const [selected, setSelected] = useState<BallotFilter>("all")
@@ -68,7 +69,11 @@ const BallotsPage = () => {
                     ))}
                 </div>
             )}
-            {!error && ballots !== null && filtered.length === 0 && <EmptyState icon={Inbox} title={emptyFilterText(selected)} />}
+            {!error && ballots !== null && filtered.length === 0 && <EmptyState
+                    icon={Inbox}
+                    title={emptyFilterText(selected)}
+                    body={selected === "all" || selected === "open" ? (nextOpening(ballots, now) ? `${opensAtLabel(new Date(nextOpening(ballots, now)!.opens_at))}.` : "Voting opens when the committee publishes a ballot. You'll see it here.") : undefined}
+                />}
         </Screen>
     )
 }

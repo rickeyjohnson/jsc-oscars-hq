@@ -8,6 +8,7 @@ import { SUBMIT_ENABLED } from "../../ui/copy"
 import { ErrorState } from "../../ui/ErrorState"
 import { Podium } from "../../ui/Podium"
 import { Skeleton, SkeletonScreen } from "../../ui/Skeleton"
+import { noBallotNote } from "../../ui/logic/ballotsView"
 import { attentionItems } from "../../ui/logic/attention"
 import { ballotCardStatus, pendingBallots, submitCandidates, type BallotSummary } from "../../lib/voting"
 import { submittedHere } from "../../api/submissions"
@@ -143,7 +144,14 @@ function Pending({ state, now }: Props) {
                     ))}
                 </ul>
             ) : (
-                <p className="text-title-3">{state.data && state.data.summaries.length === 0 ? "Nothing to vote on yet." : "You're all caught up."}</p>
+                state.data && state.data.summaries.every((b) => ballotCardStatus(b, b.category_count, b.my_vote_count, now) !== "open" && ballotCardStatus(b, b.category_count, b.my_vote_count, now) !== "voted") ? (
+                <>
+                    <p className="text-title-3">Nothing to vote on yet.</p>
+                    <p className="mt-1 text-footnote text-label-2">{noBallotNote(state.data.summaries, now)}</p>
+                </>
+            ) : (
+                <p className="text-title-3">You're all caught up.</p>
+            )
             )}
             {SUBMIT_ENABLED &&
                 ready.map((b) => (
@@ -172,7 +180,10 @@ function Progress({ state, now }: Props) {
     return (
         <Widget id="progress" status={baseStatus(state)} retry={state.reload} to="/app/ballots">
             {total === 0 ? (
-                <p className="text-title-3">No open ballots right now.</p>
+                <>
+                    <p className="text-title-3">No open ballots right now.</p>
+                    <p className="mt-1 text-footnote text-label-2">{noBallotNote(state.data?.summaries ?? [], now)}</p>
+                </>
             ) : (
                 <>
                     <p className="text-title-2 sm:text-title-1 font-display tabular-nums">
@@ -206,7 +217,7 @@ function LatestWinners({ state }: Props) {
     return (
         <Widget id="latestWinners" status={resultsStatus(state)} retry={state.reload} to="/app/results">
             {cards.length === 0 ? (
-                <p className="text-callout text-label-2">No winners yet.</p>
+                <p className="text-callout text-label-2">No winners yet. They show up here after the ceremony.</p>
             ) : (
                 <ul className="list-none p-0 space-y-3">
                     {cards.map((c) => {
@@ -356,7 +367,10 @@ function BallotCloses({ state, now }: Props) {
         .sort((a, b) => new Date(a.closes_at).getTime() - new Date(b.closes_at).getTime())[0]
     return (
         <Widget id="ballotCloses" status={baseStatus(state)} retry={state.reload} to={open ? `/app/ballots/${open.id}` : undefined}>
-            {open ? <LiveTimer target={new Date(open.closes_at)} /> : <p className="text-title-3">No ballots are open.</p>}
+            {open ? <LiveTimer target={new Date(open.closes_at)} /> : <>
+                    <p className="text-title-3">No ballots are open.</p>
+                    <p className="mt-1 text-footnote text-label-2">{noBallotNote(state.data?.summaries ?? [], now)}</p>
+                </>}
         </Widget>
     )
 }

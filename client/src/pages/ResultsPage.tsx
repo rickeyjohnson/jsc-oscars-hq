@@ -121,6 +121,7 @@ const ResultsPage = () => {
                             ? `The winners are revealed at the ceremony on ${at.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} at ${at.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}.`
                             : "The winners are revealed at the ceremony."}
                     </p>
+                    <p className="mt-2 text-callout text-label-2">Nothing to see yet. Cast your votes, then come back on ceremony night to find out who won and how you did.</p>
                     <div className="mt-4">
                         <Countdown target={at} />
                     </div>
