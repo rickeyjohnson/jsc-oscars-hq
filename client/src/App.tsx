@@ -12,6 +12,7 @@ import ResetPassword from "./pages/ResetPassword"
 import ComfirmedEmailPage from "./pages/ComfirmedEmailPage"
 import { UserDataProvider } from "./context/UserContenxt"
 import RequireCommittee from "./components/RequireCommittee"
+import SettingsPage from "./pages/SettingsPage"
 import BallotBuilderPage from "./pages/ballot-builder/BallotBuilderPage"
 import VotePage from "./pages/VotePage"
 import ManageBallotsPage from "./pages/committee/ManageBallotsPage"
@@ -104,6 +105,7 @@ const App = () => {
                     <Route path="results" element={<ResultsPage />} />
                     <Route path="stats" element={<Navigate to="/app/results?view=leaderboard" replace />} />
                     <Route path="profile" element={<ProfilePage />} />
+                    <Route path="profile/settings" element={<SettingsPage />} />
                     <Route
                         element={
                             <RequireCommittee>

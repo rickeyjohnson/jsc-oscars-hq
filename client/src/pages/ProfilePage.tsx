@@ -1,199 +1,108 @@
-import {
-    Award,
-    Calendar,
-    FlaskConical,
-    Laugh,
-    Plus,
-    Settings,
-    Shield,
-    SquareCheckBig,
-    Target,
-    TrendingUp,
-    User,
-    Users,
-} from "lucide-react"
-import NavigationBar from "../components/NavigationBar"
-import NavigationTabs from "../components/NavigationTabs"
+import { useMemo, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { Calendar, KeyRound, Laugh, LogOut, Plus, Settings, SquareCheckBig, User, Users } from "lucide-react"
 import { supabase } from "../supabaseClient"
 import { useUserData } from "../context/UserContenxt"
-import ProfilePageButton from "../components/ProfilePageButton"
 import ManageOscarsModal from "../components/ManageOscarsModal"
-import { useState } from "react"
 import JokeGeneratorModal from "../components/JokeGeneratorModal"
 import EditProfileModal from "../components/EditProfileModal"
-import { useNavigate } from "react-router-dom"
+import { nomineeStats } from "../lib/stats"
+import type { Nominee } from "../types"
+import { Avatar } from "../ui/Avatar"
+import { ColorBlock } from "../ui/ColorBlock"
+import { GroupedSection } from "../ui/GroupedSection"
+import { ListRow } from "../ui/ListRow"
+import { Screen } from "../ui/Screen"
+import { Skeleton } from "../ui/Skeleton"
+import { useHomeData } from "../ui/useHomeData"
+import { youStats } from "../ui/logic/youStats"
+
+const icon = (I: typeof User) => <I aria-hidden className="size-5 text-label-2" />
 
 const ProfilePage = () => {
-    const { profile } = useUserData()
+    const { profile, member } = useUserData()
+    const isCommittee = Boolean(profile?.is_committee)
     const navigate = useNavigate()
-    const [openManageOscarModal, setOpenManageOscarModal] = useState(false)
-    const [openJokeGenerator, setOpenJokeGenerator] = useState(false)
-    const [openEditProfile, setOpenEditProfile] = useState(false)
+    const state = useHomeData(isCommittee)
+    const [manageOpen, setManageOpen] = useState(false)
+    const [jokeOpen, setJokeOpen] = useState(false)
+    const [editOpen, setEditOpen] = useState(false)
 
-    const handleLogout = async () => {
-        await supabase.auth.signOut()
-    }
+    const d = state.data
+    const stats = useMemo(() => {
+        if (!d) return null
+        let tally: { wins: number; noms: number } | null = null
+        if (d.released && d.results && member) {
+            const nominees: Record<string, Nominee> = {}
+            for (const c of d.results.categories) for (const n of c.nominees) nominees[n.id] = n
+            tally = nomineeStats(Object.values(d.results.results), nominees).members[member.id] ?? { wins: 0, noms: 0 }
+        }
+        return youStats({ released: d.released, summaries: d.summaries, tally, ceremonyAt: d.season?.ceremony_at ? new Date(d.season.ceremony_at) : null, now: new Date() })
+    }, [d, member])
 
+    const name = profile?.username ?? ""
     return (
-        <div>
-            <div className="bg-zinc-900 min-h-screen text-[#fffadd] pb-24">
-                <NavigationBar />
-
-                <main className="px-6 py-6 space-y-6">
-                    <div className="text-center">
-                        <img
-                            className="w-24 h-24 rounded-full mx-auto mb-4"
-                            src={profile?.image_url || "/blank-pfp.png"}
+        <Screen title="You" width="wide">
+            <div className="lg:grid lg:grid-cols-[320px_1fr] lg:items-start lg:gap-8">
+                <div>
+                    <div className="flex items-center gap-4 pb-5">
+                        <Avatar id={profile?.user_id ?? name} name={name || "You"} src={profile?.image_url} size={96} ring="pebble" />
+                        <div className="min-w-0">
+                            <h2 className="truncate text-title-1">{name}</h2>
+                            {profile?.email && <p className="truncate text-subhead text-label-2">{profile.email}</p>}
+                        </div>
+                    </div>
+                    {stats ? (
+                        <div className="mb-6 grid grid-cols-3 gap-2 lg:grid-cols-1">
+                            {stats.map((s) => (
+                                <ColorBlock key={s.label} pebble={s.pebble} className="!p-3 lg:!p-4">
+                                    <p className="font-display text-title-1 tabular-nums">{s.value}</p>
+                                    <p className="text-caption-1">{s.label}</p>
+                                </ColorBlock>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="mb-6 grid grid-cols-3 gap-2 lg:grid-cols-1">
+                            <Skeleton shape="block" />
+                            <Skeleton shape="block" />
+                            <Skeleton shape="block" />
+                        </div>
+                    )}
+                </div>
+                <div className="space-y-6">
+                    <GroupedSection header="Account">
+                        <ListRow title="Edit profile" leading={icon(User)} chevron onClick={() => setEditOpen(true)} />
+                        <ListRow title="Settings" leading={icon(Settings)} chevron to="/app/profile/settings" />
+                    </GroupedSection>
+                    {isCommittee && (
+                        <GroupedSection header="Committee">
+                            <ListRow title="New ballot" leading={icon(Plus)} chevron to="/app/profile/ballots/create" />
+                            <ListRow title="Manage ballots" leading={icon(SquareCheckBig)} chevron to="/app/profile/ballots" />
+                            <ListRow title="Members" leading={icon(Users)} chevron to="/app/profile/members" />
+                            <ListRow title="The envelope" leading={icon(KeyRound)} chevron to="/app/profile/release" />
+                            <ListRow title="Event dates" leading={icon(Calendar)} chevron onClick={() => setManageOpen(true)} />
+                        </GroupedSection>
+                    )}
+                    <GroupedSection header="Labs">
+                        <ListRow title="Joke generator" leading={icon(Laugh)} chevron onClick={() => setJokeOpen(true)} />
+                    </GroupedSection>
+                    <GroupedSection>
+                        <ListRow
+                            title="Log out"
+                            destructive
+                            leading={<LogOut aria-hidden className="size-5 text-danger" />}
+                            onClick={async () => {
+                                await supabase.auth.signOut()
+                                navigate("/", { replace: true })
+                            }}
                         />
-                        <h2 className="text-2xl font-black text-amber-100">
-                            {profile?.username || "username"}
-                        </h2>
-                        <p className="text-amber-100/60">
-                            {profile?.email || "username@example.com"}
-                        </p>
-                    </div>
-
-                    {/* Stats Summary */}
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="bg-amber-100/5 border border-amber-100/10 rounded-2xl p-4 text-center">
-                            <Award className="w-6 h-6 text-amber-100 mx-auto mb-2" />
-                            <div className="text-2xl font-black text-amber-100">
-                                --
-                            </div>
-                            <div className="text-xs text-amber-100/60">
-                                Wins
-                            </div>
-                        </div>
-                        <div className="bg-amber-100/5 border border-amber-100/10 rounded-2xl p-4 text-center">
-                            <Target className="w-6 h-6 text-amber-100 mx-auto mb-2" />
-                            <div className="text-2xl font-black text-amber-100">
-                                --
-                            </div>
-                            <div className="text-xs text-amber-100/60">
-                                Votes
-                            </div>
-                        </div>
-                        <div className="bg-amber-100/5 border border-amber-100/10 rounded-2xl p-4 text-center">
-                            <TrendingUp className="w-6 h-6 text-amber-100 mx-auto mb-2" />
-                            <div className="text-2xl font-black text-amber-100">
-                                --
-                            </div>
-                            <div className="text-xs text-amber-100/60">
-                                Rate
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Account Settings */}
-                    <div>
-                        <div className="space-y-3 mb-6">
-                            <ProfilePageButton
-                                label="Edit Profile"
-                                icon={<User className="w-5 h-5" />}
-                                onClick={() => setOpenEditProfile(true)}
-                            />
-                            <ProfilePageButton
-                                label="View Results"
-                                icon={<Award className="w-5 h-5" />}
-                                onClick={() => navigate("/app/results")}
-                            />
-                            <ProfilePageButton
-                                label="Settings"
-                                icon={<Settings className="w-5 h-5" />}
-                            />
-                        </div>
-
-                        <div className="pt-4 border-t border-amber-100/10 space-y-3 mb-6">
-                            <div className="flex items-center gap-2 mb-6">
-                                <FlaskConical className="w-5 h-5 text-amber-100" />
-                                <span className="text-sm font-bold text-amber-100">
-                                    Experimental
-                                </span>
-                            </div>
-                            <ProfilePageButton
-                                label="Joke Generator"
-                                icon={<Laugh className="w-5 h-5" />}
-                                variant="gradient"
-                                textColor="text-zinc-900"
-                                iconColor="text-zinc-900"
-                                rightIconColor="text-zinc-900"
-                                className="from-green-500 to-cyan-600 hover:from-green-600 hover:to-cyan-700"
-                                onClick={() => setOpenJokeGenerator(true)}
-                            />
-                        </div>
-
-                        {/* Committee Only */}
-                        {profile?.is_committee && (
-                            <div className="pt-4 border-t border-amber-100/10 space-y-3">
-                                <div className="flex items-center gap-2 mb-6">
-                                    <Shield className="w-5 h-5 text-amber-100" />
-                                    <span className="text-sm font-bold text-amber-100">
-                                        Admin Controls
-                                    </span>
-                                </div>
-                                <ProfilePageButton
-                                    label="Create New Ballot"
-                                    icon={<Plus className="w-5 h-5" />}
-                                    variant="gradient"
-                                    textColor="text-zinc-900"
-                                    iconColor="text-zinc-900"
-                                    onClick={() => navigate("/app/profile/ballots/create")}
-                                />
-                                <ProfilePageButton
-                                    label="Manage Ballots"
-                                    icon={<Settings className="w-5 h-5" />}
-                                    onClick={() => navigate("/app/profile/ballots")}
-                                />
-                                <ProfilePageButton
-                                    label="View Results"
-                                    icon={
-                                        <SquareCheckBig className="w-5 h-5" />
-                                    }
-                                    onClick={() => navigate("/app/profile/ballots")}
-                                />
-                                <ProfilePageButton
-                                    label="User Management"
-                                    icon={<Users className="w-5 h-5" />}
-                                    onClick={() => navigate("/app/profile/members")}
-                                />
-                                <ProfilePageButton
-                                    label="Manage Events"
-                                    icon={<Calendar className="w-5 h-5" />}
-                                    onClick={() =>
-                                        setOpenManageOscarModal(true)
-                                    }
-                                />
-                            </div>
-                        )}
-                    </div>
-
-                    <button
-                        onClick={handleLogout}
-                        className="w-full bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl p-4 font-bold hover:bg-red-500/20 transition mt-6"
-                    >
-                        Sign Out
-                    </button>
-                </main>
-
-                <NavigationTabs activeTab={"profile"} />
-
-                {/* Modals */}
-                <ManageOscarsModal
-                    isOpen={openManageOscarModal}
-                    onClose={() => setOpenManageOscarModal(false)}
-                />
-
-                <JokeGeneratorModal
-                    isOpen={openJokeGenerator}
-                    onClose={() => setOpenJokeGenerator(false)}
-                />
-
-                <EditProfileModal
-                    isOpen={openEditProfile}
-                    onClose={() => setOpenEditProfile(false)}
-                />
+                    </GroupedSection>
+                </div>
             </div>
-        </div>
+            <ManageOscarsModal isOpen={manageOpen} onClose={() => setManageOpen(false)} />
+            <JokeGeneratorModal isOpen={jokeOpen} onClose={() => setJokeOpen(false)} />
+            <EditProfileModal isOpen={editOpen} onClose={() => setEditOpen(false)} />
+        </Screen>
     )
 }
 
