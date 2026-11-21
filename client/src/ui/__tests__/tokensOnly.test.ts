@@ -45,6 +45,14 @@ const MIGRATED = ["components/OscarLogo.tsx", "components/ProfileSetup.tsx", "pa
     "pages/ballot-builder/CategoryList.tsx",
     "pages/ballot-builder/CategoryModal.tsx",
     "pages/ballot-builder/NomineeModePicker.tsx",
+    "components/Modal.tsx",
+    "components/ManageOscarsModal.tsx",
+    "components/EditOscarEvent.tsx",
+    "components/JokeGeneratorModal.tsx",
+    "components/DeleteConfirmationModal.tsx",
+    "components/FullScreenLoader.tsx",
+    "components/StatusBadge.tsx",
+    "components/ProfileSetup.tsx",
 ]
 // Directories scanned wholesale (tests excluded: they legitimately hold literal values).
 const SCANNED_DIRS = ["ui", "dev"]
