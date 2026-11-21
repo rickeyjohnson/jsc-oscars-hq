@@ -173,7 +173,7 @@ const LoginPage = () => {
         >
             <ForgotPasswordModal open={showForgotPasswordModal} closeModal={closeModal} />
             {google && (
-                <div className="mt-6 flex flex-col items-center gap-3">
+                <div className="flex flex-col items-center gap-4">
                     <GoogleButton onClick={handleGoogle} loading={googleLoading} />
                     {!useEmail && (
                         <EmailToggle onOpen={() => setUseEmail(true)} />
@@ -186,7 +186,7 @@ const LoginPage = () => {
                 </div>
             )}
             {(!google || useEmail) && (
-            <div className={google ? "mt-6" : undefined}>
+            <div className={google ? "mt-7" : undefined}>
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <TextField
                     label="Email"

@@ -18,12 +18,12 @@ export function AuthLayout({ title, subtitle, step, back = "/", action, footer, 
                     {action}
                     {step && <span className="text-footnote text-label-2">{step}</span>}
                 </div>
-                <div className="my-auto py-6">
-                    <h1 className="text-display mb-1">{title}</h1>
-                    {subtitle && <p className="text-callout text-label-2 mb-5">{subtitle}</p>}
+                <div className="flex flex-1 flex-col justify-center py-6 pb-12 lg:flex-none lg:pb-6">
+                    <h1 className="mb-2.5 text-[1.875rem] leading-[1.05] font-bold min-[361px]:text-display">{title}</h1>
+                    {subtitle && <p className="mb-7 text-callout text-label-2">{subtitle}</p>}
                     {children}
                 </div>
-                {footer && <div className="pt-2 text-center">{footer}</div>}
+                {footer && <div className="pb-2 pt-2 text-center">{footer}</div>}
             </div>
         </div>
     )
