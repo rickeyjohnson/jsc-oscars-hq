@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react"
+import { Sheet } from "../../ui/Sheet"
+import { Button } from "../../ui/Button"
+import { TextField } from "../../ui/TextField"
 import type { Category, Member } from "../../types"
 import NomineeModePicker from "./NomineeModePicker"
 
@@ -11,27 +14,24 @@ interface CategoryModalProps {
     members: Member[]
 }
 
-export const CategoryModal: React.FC<CategoryModalProps> = ({
-    isOpen, onClose, onSave, initialData, existingCategoriesCount, members,
-}) => {
+/** The category editor: a Sheet (bottom on phones, centered on desktop). */
+export const CategoryModal: React.FC<CategoryModalProps> = ({ isOpen, onClose, onSave, initialData, existingCategoriesCount, members }) => {
     const [name, setName] = useState("")
     const [description, setDescription] = useState("")
     const [nomineeConfig, setNomineeConfig] = useState<Category | null>(null)
+    const [dirty, setDirty] = useState(false)
 
     useEffect(() => {
         if (isOpen) {
+            setDirty(false)
             setName(initialData?.name ?? "")
             setDescription(initialData?.description ?? "")
             setNomineeConfig(
-                initialData ?? {
-                    id: crypto.randomUUID(), name: "", description: "", order: existingCategoriesCount,
-                    nominee_mode: "everyone", allow_member_add: false, nominees: [],
-                },
+                initialData ?? { id: crypto.randomUUID(), name: "", description: "", order: existingCategoriesCount, nominee_mode: "everyone", allow_member_add: false, nominees: [] },
             )
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, initialData])
-
-    if (!isOpen) return null
 
     const handleSave = () => {
         if (!name.trim()) return
@@ -44,60 +44,70 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
             allow_member_add: nomineeConfig?.allow_member_add ?? false,
             nominees: nomineeConfig?.nominees ?? [],
         })
+        setDirty(false)
         onClose()
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative bg-zinc-900 border border-amber-100/20 rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl shadow-black/50 overflow-hidden">
-                <div className="px-8 py-6 border-b border-amber-100/5">
-                    <h2 className="text-2xl font-black text-amber-100">
-                        {initialData ? "Edit Category" : "Add Category"}
-                    </h2>
-                </div>
-                <div className="p-6 sm:p-8 overflow-y-auto space-y-4">
-                    <div>
-                        <label className="block text-sm font-bold mb-2 text-amber-100 uppercase tracking-wide">Category Name</label>
-                        <input
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            className="w-full bg-amber-100/5 border border-amber-100/10 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-100/30 transition text-amber-100 text-lg placeholder-amber-100/20"
-                            placeholder="e.g. Best Locs"
-                            autoFocus
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-bold mb-2 text-amber-100 uppercase tracking-wide">Description (Optional)</label>
-                        <textarea
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            className="w-full bg-amber-100/5 border border-amber-100/10 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-100/30 transition text-amber-100 resize-none placeholder-amber-100/20"
-                            rows={2}
-                        />
-                    </div>
-                    {nomineeConfig && (
-                        <div>
-                            <label className="block text-sm font-bold mb-2 text-amber-100 uppercase tracking-wide">Nominees</label>
-                            <NomineeModePicker category={nomineeConfig} members={members} onChange={setNomineeConfig} />
-                        </div>
-                    )}
-                </div>
-                <div className="p-6 bg-zinc-900 border-t border-amber-100/5 flex gap-3">
-                    <button onClick={onClose} className="flex-1 py-3.5 bg-zinc-800 text-amber-100/70 rounded-xl font-bold hover:bg-zinc-700 hover:text-amber-100 transition">
+        <Sheet
+            open={isOpen}
+            onClose={onClose}
+            dirty={dirty}
+            title={initialData ? "Edit category" : "Add category"}
+            detents={["large"]}
+            width="wide"
+            footer={
+                <div className="flex gap-3">
+                    <Button variant="tinted" onClick={onClose}>
                         Cancel
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        disabled={!name.trim()}
-                        className="flex-1 py-3.5 bg-amber-100 text-zinc-950 rounded-xl font-bold hover:bg-white transition disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {initialData ? "Save Changes" : "Create Category"}
-                    </button>
+                    </Button>
+                    <Button variant="primary" fullWidth onClick={handleSave} disabled={!name.trim()}>
+                        {initialData ? "Save changes" : "Add category"}
+                    </Button>
                 </div>
+            }
+        >
+            <div className="space-y-4">
+                <TextField
+                    label="Category name"
+                    value={name}
+                    onChange={(e) => {
+                        setDirty(true)
+                        setName(e.target.value)
+                    }}
+                    placeholder="e.g. Best Locs"
+                    data-autofocus
+                />
+                <div>
+                    <label htmlFor="cat-desc" className="mb-1.5 block text-subhead font-bold text-label-2">
+                        Description (optional)
+                    </label>
+                    <textarea
+                        id="cat-desc"
+                        value={description}
+                        onChange={(e) => {
+                            setDirty(true)
+                            setDescription(e.target.value)
+                        }}
+                        rows={2}
+                        className="w-full resize-none rounded-control bg-surface-2 px-4 py-3 text-body text-label outline-none placeholder:text-label-3 focus-visible:ring-2 focus-visible:ring-accent"
+                    />
+                </div>
+                {nomineeConfig && (
+                    <div>
+                        <p className="mb-1.5 text-subhead font-bold text-label-2">Nominees</p>
+                        <NomineeModePicker
+                            category={nomineeConfig}
+                            members={members}
+                            onChange={(c) => {
+                                setDirty(true)
+                                setNomineeConfig(c)
+                            }}
+                        />
+                    </div>
+                )}
             </div>
-        </div>
+        </Sheet>
     )
 }
 

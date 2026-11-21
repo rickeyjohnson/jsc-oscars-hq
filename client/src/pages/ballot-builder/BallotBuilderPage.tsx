@@ -1,36 +1,51 @@
-import { useEffect, useRef, useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
-import { ChevronRight, Plus, Save } from "lucide-react"
-import NavigationBar from "../../components/NavigationBar"
-import NavigationTabs from "../../components/NavigationTabs"
+import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { Plus } from "lucide-react"
 import { fetchSeasons, saveBallotDraft, setBallotStatus } from "../../api/ballots"
 import { fetchMembers } from "../../api/members"
-import { validateBallotForPublish } from "../../lib/ballotForm"
 import type { BallotFormData, Category, Member, Season } from "../../types"
+import { Screen } from "../../ui/Screen"
+import { Button } from "../../ui/Button"
+import { BottomAccessory } from "../../ui/BottomAccessory"
+import { GroupedSection } from "../../ui/GroupedSection"
+import { ListRow } from "../../ui/ListRow"
+import { useToast } from "../../ui/Toast"
+import { BUILDER_STEPS, stepIssues, type BuilderStep } from "../../ui/logic/builder"
+import { PEBBLE_EDGE, pebbleAt } from "../../ui/logic/pebble"
 import BallotBasicInfo from "./BallotBasicInfo"
 import CategoryList from "./CategoryList"
 import CategoryModal from "./CategoryModal"
 import BulkImportPanel from "./BulkImportPanel"
 
+function StepIndicator({ step }: { step: BuilderStep }) {
+    const at = BUILDER_STEPS.findIndex((s) => s.id === step)
+    return (
+        <ol aria-label="Steps" className="mb-6 flex list-none gap-2 p-0">
+            {BUILDER_STEPS.map((s, i) => (
+                <li key={s.id} aria-current={s.id === step ? "step" : undefined} className="flex-1">
+                    <span aria-hidden className={`block h-1 rounded-full ${i <= at ? "bg-label" : "bg-strip-off"}`} />
+                    <span className={`mt-1.5 block text-footnote font-bold ${s.id === step ? "text-label" : "text-label-2"}`}>
+                        {i + 1}. {s.label}
+                    </span>
+                </li>
+            ))}
+        </ol>
+    )
+}
+
 const BallotBuilderPage = () => {
-    const [formData, setFormData] = useState<BallotFormData>({
-        season_id: "",
-        name: "",
-        opens_at: "",
-        closes_at: "",
-        categories: [],
-    })
+    const [formData, setFormData] = useState<BallotFormData>({ season_id: "", name: "", opens_at: "", closes_at: "", categories: [] })
+    const [step, setStep] = useState<BuilderStep>("details")
     const [seasons, setSeasons] = useState<Season[]>([])
     const [modalOpen, setModalOpen] = useState(false)
     const [editIndex, setEditIndex] = useState<number | null>(null)
     const [importOpen, setImportOpen] = useState(false)
-    const importBtnRef = useRef<HTMLButtonElement>(null)
     const [members, setMembers] = useState<Member[]>([])
     const [ballotId, setBallotId] = useState<string | undefined>()
     const [errors, setErrors] = useState<string[]>([])
-    const [notice, setNotice] = useState("")
     const [busy, setBusy] = useState(false)
     const navigate = useNavigate()
+    const toast = useToast()
 
     useEffect(() => {
         fetchSeasons().then(setSeasons).catch(() => setErrors((p) => [...p, "Could not load seasons"]))
@@ -39,7 +54,7 @@ const BallotBuilderPage = () => {
 
     const handleSave = async (publish: boolean) => {
         if (publish) {
-            const problems = validateBallotForPublish(formData)
+            const problems = stepIssues("review", formData)
             setErrors(problems)
             if (problems.length > 0) return
         } else if (!formData.season_id || !formData.name.trim() || !formData.opens_at || !formData.closes_at) {
@@ -56,7 +71,7 @@ const BallotBuilderPage = () => {
                 await setBallotStatus(id, "open")
                 navigate(`/app/profile/ballots/${id}`)
             } else {
-                setNotice("Draft saved")
+                toast.show("Draft saved")
             }
         } catch (e) {
             setErrors([e instanceof Error ? e.message : "Save failed"])
@@ -65,75 +80,47 @@ const BallotBuilderPage = () => {
         }
     }
 
-    const setCategories = (categories: Category[]) => {
-        setNotice("")
-        setFormData((prev) => ({ ...prev, categories }))
-    }
-
+    const setCategories = (categories: Category[]) => setFormData((prev) => ({ ...prev, categories }))
     const handleSaveCategory = (category: Category) => {
         if (editIndex === null) setCategories([...formData.categories, category])
         else setCategories(formData.categories.map((c, i) => (i === editIndex ? category : c)))
     }
 
+    const at = BUILDER_STEPS.findIndex((s) => s.id === step)
+    const issues = step === "review" ? [] : stepIssues(step, formData)
+    const blockers = stepIssues("review", formData)
+    const season = seasons.find((s) => s.id === formData.season_id)
+    const fmt = (v: string) => (v ? new Date(v).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) : "Not set")
+
     return (
-        <div className="min-h-screen bg-zinc-950 text-amber-50 pb-32 font-sans selection:bg-amber-500/30">
-            <NavigationBar />
-            <NavigationTabs activeTab="profile" />
+        <Screen title="New ballot" back={{ to: "/app/profile", label: "You" }}>
+            <StepIndicator step={step} />
 
-            <div className="sticky top-0 z-30 bg-zinc-950/80 backdrop-blur-md border-b border-white/5">
-                <div className="px-4 py-3 flex items-center justify-between max-w-4xl mx-auto">
-                    <Link to={"/app/profile"} className="flex items-center gap-2 group">
-                        <div className="p-1 rounded-full bg-amber-100/5 group-hover:bg-amber-100/10 transition">
-                            <ChevronRight className="w-5 h-5 rotate-180 text-amber-100/70" />
-                        </div>
-                        <span className="text-sm font-medium text-amber-100/70 group-hover:text-amber-100 transition">
-                            Cancel
-                        </span>
-                    </Link>
-                    <h1 className="text-base font-bold text-amber-100">Create Ballot</h1>
-                    <div className="w-16" />
-                </div>
-            </div>
+            {step === "details" && <BallotBasicInfo formData={formData} setFormData={setFormData} seasons={seasons} />}
 
-            <div className="px-4 py-6 max-w-3xl mx-auto space-y-8">
-                <section className="bg-zinc-900/50 rounded-3xl p-6 border border-white/5 shadow-xl shadow-black/20">
-                    <BallotBasicInfo formData={formData} setFormData={(d) => { setNotice(""); setFormData(d) }} seasons={seasons} />
-                </section>
-
-                <section>
-                    <div className="flex flex-wrap items-end justify-between gap-2 mb-4 px-2">
-                        <div className="min-w-0">
-                            <h2 className="text-lg sm:text-xl font-bold text-amber-100 flex items-center gap-2">
-                                Category count
-                                <span className="text-sm font-normal text-amber-100/40 bg-white/5 px-2 py-0.5 rounded-full">
-                                    {formData.categories.length}
-                                </span>
-                            </h2>
-                            <p className="text-xs text-amber-100/50 mt-1">Drag items to reorder priority</p>
-                        </div>
+            {step === "categories" && (
+                <section aria-label="Categories">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                        <p className="text-footnote text-label-2">
+                            {formData.categories.length} {formData.categories.length === 1 ? "category" : "categories"}. Drag the grip to reorder.
+                        </p>
                         <div className="flex gap-2">
-                            <button
-                                type="button"
-                                ref={importBtnRef}
-                                onClick={() => setImportOpen(true)}
-                                className="px-4 py-2 bg-[#302f2d] text-[#fffadd] rounded-full text-sm font-bold hover:brightness-125 transition"
-                            >
+                            <Button variant="tinted" size="sm" onClick={() => setImportOpen(true)}>
                                 Import
-                            </button>
-                            <button
-                                type="button"
+                            </Button>
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                icon={<Plus aria-hidden className="size-4" />}
                                 onClick={() => {
                                     setEditIndex(null)
                                     setModalOpen(true)
                                 }}
-                                className="px-4 py-2 bg-gradient-to-br from-amber-400 to-amber-600 text-zinc-900 rounded-xl text-sm font-bold hover:brightness-110 active:scale-95 transition flex items-center gap-2 shadow-lg shadow-amber-500/10"
                             >
-                                <Plus className="w-4 h-4" />
-                                Add
-                            </button>
+                                Add category
+                            </Button>
                         </div>
                     </div>
-
                     <CategoryList
                         categories={formData.categories}
                         onChange={setCategories}
@@ -143,32 +130,76 @@ const BallotBuilderPage = () => {
                         }}
                     />
                 </section>
+            )}
 
-                <div className="fixed bottom-0 left-0 right-0 p-4 bg-zinc-950/80 backdrop-blur-xl border-t border-white/10 sm:relative sm:bg-transparent sm:border-0 sm:backdrop-blur-none sm:p-0">
-                    {errors.length > 0 && (
-                        <ul role="alert" className="max-w-3xl mx-auto mb-3 space-y-1 text-sm text-red-300 bg-red-950/60 rounded-xl p-3">
-                            {errors.map((e) => <li key={e}>{e}</li>)}
+            {step === "review" && (
+                <div className="space-y-6">
+                    <GroupedSection header="Details">
+                        <ListRow title="Name" trailing={<span className="text-subhead text-label-2">{formData.name || "Not set"}</span>} />
+                        <ListRow title="Season" trailing={<span className="text-subhead text-label-2">{season?.name ?? "Not set"}</span>} />
+                        <ListRow title="Opens" trailing={<span className="text-subhead text-label-2">{fmt(formData.opens_at)}</span>} />
+                        <ListRow title="Closes" trailing={<span className="text-subhead text-label-2">{fmt(formData.closes_at)}</span>} />
+                    </GroupedSection>
+                    <GroupedSection header={`${formData.categories.length} categories`}>
+                        {formData.categories.map((c, i) => (
+                            <li key={c.id} className={`border-l-4 px-4 py-3 ${PEBBLE_EDGE[pebbleAt(i)]}`}>
+                                <p className="text-headline">{c.name}</p>
+                                <p className="text-footnote text-label-2">{c.nominee_mode === "everyone" ? "Everyone" : `${c.nominees.length} options`}</p>
+                            </li>
+                        ))}
+                    </GroupedSection>
+                    {blockers.length > 0 && (
+                        <section aria-label="Before you can publish" className="rounded-card border-l-4 border-pebble-strawberry bg-surface p-4">
+                            <h2 className="mb-2 text-caption-2 uppercase tracking-wider text-label-2">Before you can publish</h2>
+                            <ul className="list-disc space-y-1 pl-5 text-subhead">
+                                {blockers.map((b) => (
+                                    <li key={b}>{b}</li>
+                                ))}
+                            </ul>
+                        </section>
+                    )}
+                </div>
+            )}
+
+            <BottomAccessory>
+                <div className="mx-auto w-full max-w-[720px] space-y-2 bg-bg px-gutter py-3">
+                    {step !== "review" && issues.length > 0 && (
+                        <ul aria-label="To continue" className="list-none space-y-0.5 p-0 text-footnote text-label-2">
+                            {issues.map((e) => (
+                                <li key={e}>{e}</li>
+                            ))}
                         </ul>
                     )}
-                    {notice && errors.length === 0 && <p role="status" className="max-w-3xl mx-auto mb-2 text-sm text-amber-100/70">{notice}</p>}
-                    <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => { setNotice(""); handleSave(false) }}
-                        className="w-full max-w-3xl mx-auto mb-2 py-3 bg-[#3f3f46] text-[#fffadd] rounded-2xl font-bold hover:brightness-125 transition disabled:opacity-50 block"
-                    >
-                        Save draft
-                    </button>
-                    <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => { setNotice(""); handleSave(true) }}
-                        className="w-full max-w-3xl mx-auto py-4 disabled:opacity-50 bg-amber-100 text-zinc-900 rounded-2xl font-bold text-lg hover:bg-white active:scale-[0.98] transition shadow-xl shadow-amber-900/20 flex items-center justify-center gap-2">
-                        <Save className="w-5 h-5" />
-                        Publish Ballot
-                    </button>
+                    {errors.length > 0 && (
+                        <ul role="alert" className="list-none space-y-0.5 p-0 text-footnote text-danger">
+                            {errors.map((e) => (
+                                <li key={e}>{e}</li>
+                            ))}
+                        </ul>
+                    )}
+                    <div className="flex gap-3">
+                        {at > 0 && (
+                            <Button variant="tinted" onClick={() => setStep(BUILDER_STEPS[at - 1].id)}>
+                                Back
+                            </Button>
+                        )}
+                        {step !== "review" ? (
+                            <Button variant="primary" fullWidth disabled={issues.length > 0} onClick={() => setStep(BUILDER_STEPS[at + 1].id)}>
+                                Next
+                            </Button>
+                        ) : (
+                            <>
+                                <Button variant="secondary" disabled={busy} onClick={() => handleSave(false)}>
+                                    Save draft
+                                </Button>
+                                <Button variant="primary" fullWidth loading={busy} onClick={() => handleSave(true)}>
+                                    Publish
+                                </Button>
+                            </>
+                        )}
+                    </div>
                 </div>
-            </div>
+            </BottomAccessory>
 
             <CategoryModal
                 isOpen={modalOpen}
@@ -180,12 +211,11 @@ const BallotBuilderPage = () => {
             />
             <BulkImportPanel
                 isOpen={importOpen}
-                returnFocusRef={importBtnRef}
                 onClose={() => setImportOpen(false)}
                 existingNames={formData.categories.map((c) => c.name)}
                 onImport={(cats) => setCategories([...formData.categories, ...cats])}
             />
-        </div>
+        </Screen>
     )
 }
 

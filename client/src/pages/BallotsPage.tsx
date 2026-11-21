@@ -63,8 +63,8 @@ const BallotsPage = () => {
             )}
             {!error && ballots !== null && filtered.length > 0 && (
                 <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-                    {filtered.map((b) => (
-                        <BallotCard key={b.id} ballot={b} now={now} />
+                    {filtered.map((b, i) => (
+                        <BallotCard key={b.id} ballot={b} now={now} index={i} />
                     ))}
                 </div>
             )}

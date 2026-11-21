@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { X } from "lucide-react"
+import { SegmentedControl } from "../../ui/SegmentedControl"
 import { useConfirm } from "../../ui/ConfirmProvider"
 import type { Category, Member, NomineeMode } from "../../types"
 
@@ -67,38 +68,24 @@ const NomineeModePicker: React.FC<Props> = ({ category, members, onChange }) => 
         setSecondary("")
     }
 
-    const input = "w-full bg-zinc-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-amber-100 placeholder-amber-100/30 focus:outline-none focus:border-amber-100/30"
+    const input = "h-11 w-full rounded-control bg-surface-2 px-3 text-subhead text-label placeholder:text-label-3 outline-none focus-visible:ring-2 focus-visible:ring-accent"
 
     return (
         <div className="space-y-3">
-            <div role="group" aria-label="Nominee mode" className="grid grid-cols-4 gap-1 bg-[#27272a] p-1 rounded-lg">
-                {MODES.map((m) => (
-                    <button
-                        key={m.value}
-                        type="button"
-                        aria-pressed={category.nominee_mode === m.value}
-                        onClick={() => setMode(m.value)}
-                        className={`py-2 rounded-lg text-xs font-bold transition ${
-                            category.nominee_mode === m.value ? "bg-[#fffadd] text-black" : "bg-[#3f3f46] text-amber-100/70 hover:brightness-125"
-                        }`}
-                    >
-                        {m.label}
-                    </button>
-                ))}
-            </div>
+            <SegmentedControl label="Nominee mode" idPrefix="nominee-mode" options={MODES} value={category.nominee_mode} onChange={setMode} />
 
             {category.nominee_mode === "everyone" && (
-                <p className="text-xs text-amber-100/50">All {members.length} members are nominees.</p>
+                <p className="text-footnote text-label-2">All {members.length} members are nominees.</p>
             )}
 
             {category.nominee_mode === "group" && (
-                <p className="text-xs text-amber-100/50">Voters pick 2+ members.</p>
+                <p className="text-footnote text-label-2">Voters pick 2+ members.</p>
             )}
 
             {category.nominee_mode === "subset" && (
                 <div className="grid grid-cols-2 gap-2">
                     {members.map((m) => (
-                        <label key={m.id} className="flex items-center gap-2 bg-[#27272a] rounded-lg px-3 py-2 text-sm text-amber-100 cursor-pointer">
+                        <label key={m.id} className="flex items-center gap-2 bg-surface-2 rounded-control px-3 py-2 min-h-11 text-subhead text-label cursor-pointer">
                             <input type="checkbox" checked={selectedIds.has(m.id)} onChange={() => toggleMember(m)} />
                             {m.name}
                         </label>
@@ -111,27 +98,27 @@ const NomineeModePicker: React.FC<Props> = ({ category, members, onChange }) => 
                     <div className="flex gap-2">
                         <input className={input} value={custom} onChange={(e) => setCustom(e.target.value)} placeholder="Option name" aria-label="Option name" />
                         <input className={input} value={secondary} onChange={(e) => setSecondary(e.target.value)} placeholder="Detail (optional)" aria-label="Option detail" />
-                        <button type="button" onClick={addCustom} className="px-3 bg-[#fffadd] text-black rounded-lg text-xs font-bold">Add</button>
+                        <button type="button" onClick={addCustom} className="px-4 h-11 bg-inverse text-on-inverse rounded-full text-subhead font-bold">Add</button>
                     </div>
-                    {dupError && <p role="alert" className="text-xs text-red-300">{dupError}</p>}
+                    {dupError && <p role="alert" className="text-footnote text-danger">{dupError}</p>}
                     <ul className="space-y-1">
                         {category.nominees.map((n) => (
-                            <li key={n.id} className="flex items-center justify-between bg-[#27272a] rounded-lg px-3 py-2 text-sm text-amber-100">
+                            <li key={n.id} className="flex items-center justify-between bg-surface-2 rounded-control px-3 py-2 min-h-11 text-subhead text-label">
                                 <span>
                                     {n.display_name}
-                                    {n.secondary_text && <span className="text-amber-100/40"> - {n.secondary_text}</span>}
+                                    {n.secondary_text && <span className="text-label-3"> - {n.secondary_text}</span>}
                                 </span>
                                 <button
                                     type="button"
                                     aria-label={`Remove ${n.display_name}`}
                                     onClick={() => onChange({ ...category, nominees: category.nominees.filter((x) => x.id !== n.id) })}
                                 >
-                                    <X className="w-4 h-4 text-amber-100/50" />
+                                    <X aria-hidden className="size-5 text-label-2" />
                                 </button>
                             </li>
                         ))}
                     </ul>
-                    <label className="flex items-center gap-2 text-sm text-amber-100">
+                    <label className="flex items-center gap-2 text-subhead text-label">
                         <input
                             type="checkbox"
                             checked={category.allow_member_add}

@@ -16,7 +16,7 @@ import { leaderboard } from "../../lib/leaderboard"
 import { nomineeStats } from "../../lib/stats"
 import { closesInLabel, countdownParts, urgency } from "../../lib/time"
 import type { Nominee } from "../../types"
-import type { PebbleName } from "../../ui/tokens"
+import { PEBBLE_EDGE as EDGE } from "../../ui/logic/pebble"
 import { ceremonyDate, ceremonyTime, mapsUrl } from "./format"
 import type { HomeState } from "./useHomeData"
 
@@ -24,16 +24,6 @@ type Status = "loading" | "ready" | "error"
 
 const titleOf = (id: WidgetId) => WIDGETS.find((w) => w.id === id)?.title ?? id
 
-// A 4px edge in the widget's pebble color: the card itself stays on the dark surface. Literal strings for Tailwind's scanner.
-const EDGE: Record<PebbleName, string> = {
-    strawberry: "border-pebble-strawberry",
-    cherry: "border-pebble-cherry",
-    tangerine: "border-pebble-tangerine",
-    lemon: "border-pebble-lemon",
-    lime: "border-pebble-lime",
-    sky: "border-pebble-sky",
-    grape: "border-pebble-grape",
-}
 const STRETCH = "after:absolute after:inset-0 after:rounded-card after:content-['']"
 
 /**

@@ -53,3 +53,14 @@ export const PEBBLE_CLASS: Record<PebbleName, { bg: string; text: string }> = {
     sky: { bg: "bg-pebble-sky", text: "text-on-pebble-sky" },
     grape: { bg: "bg-pebble-grape", text: "text-on-pebble-grape" },
 }
+
+// 4px left edge for dark info cards. Literal strings for Tailwind's scanner.
+export const PEBBLE_EDGE: Record<PebbleName, string> = {
+    strawberry: "border-pebble-strawberry",
+    cherry: "border-pebble-cherry",
+    tangerine: "border-pebble-tangerine",
+    lemon: "border-pebble-lemon",
+    lime: "border-pebble-lime",
+    sky: "border-pebble-sky",
+    grape: "border-pebble-grape",
+}
