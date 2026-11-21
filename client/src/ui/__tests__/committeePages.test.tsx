@@ -5,19 +5,18 @@ import { MemoryRouter, Route, Routes } from "react-router-dom"
 import ManageBallotsPage from "../../pages/committee/ManageBallotsPage"
 import BallotAdminPage from "../../pages/committee/BallotAdminPage"
 import MemberNamesPage from "../../pages/committee/MemberNamesPage"
-import TallyPanel from "../../components/committee/TallyPanel"
 import StatusChip from "../../components/committee/StatusChip"
 import { Avatar } from "../Avatar"
 import { ConfirmProvider } from "../ConfirmProvider"
 import { fetchBallotDetail, fetchBallotSummaries, fetchRoundBallots, setBallotStatus } from "../../api/ballots"
 import { countVotesBy, fetchCommitteeMemberIds, fetchMembers, resetMemberClaim } from "../../api/members"
-import { fetchResults, upsertResults } from "../../api/results"
+import { fetchResults, recordResultsGuarded, updatePlaces, upsertResults } from "../../api/results"
 import { fetchAllVotes } from "../../api/votes"
 import type { BallotSummary } from "../../lib/voting"
 
-vi.mock("../../api/ballots", () => ({ fetchBallotSummaries: vi.fn(), fetchBallotDetail: vi.fn(), setBallotStatus: vi.fn(), fetchRoundBallots: vi.fn(), createRoundBallot: vi.fn() }))
+vi.mock("../../api/ballots", () => ({ fetchBallotSummaries: vi.fn(), fetchBallotDetail: vi.fn(), setBallotStatus: vi.fn(), fetchRoundBallots: vi.fn(), createRoundBallot: vi.fn(), fetchCurrentSeason: vi.fn(), reopenBallot: vi.fn() }))
 vi.mock("../../api/members", () => ({ fetchMembers: vi.fn(), countVotesBy: vi.fn(), resetMemberClaim: vi.fn(), fetchCommitteeMemberIds: vi.fn() }))
-vi.mock("../../api/results", () => ({ fetchResults: vi.fn(), upsertResults: vi.fn(), updatePlaces: vi.fn() }))
+vi.mock("../../api/results", () => ({ fetchResults: vi.fn(), upsertResults: vi.fn(), updatePlaces: vi.fn(), recordResultsGuarded: vi.fn(), fetchReleaseStatus: vi.fn() }))
 vi.mock("../../api/votes", () => ({ fetchAllVotes: vi.fn() }))
 vi.mock("../../context/UserContenxt", () => ({ useUserData: () => ({ member: { user_id: "u-me" } }) }))
 
@@ -51,6 +50,8 @@ beforeEach(() => {
     vi.mocked(fetchCommitteeMemberIds).mockReset().mockResolvedValue(["u-me"])
     vi.mocked(fetchResults).mockReset().mockResolvedValue([])
     vi.mocked(upsertResults).mockReset()
+    vi.mocked(recordResultsGuarded).mockReset().mockResolvedValue()
+    vi.mocked(updatePlaces).mockReset().mockResolvedValue(0)
     vi.mocked(fetchAllVotes).mockReset().mockResolvedValue([])
 })
 afterEach(() => {
@@ -95,28 +96,36 @@ describe("ManageBallotsPage", () => {
         wrap(<ManageBallotsPage />)
         expect(await screen.findByText("No ballots yet")).toBeTruthy()
     })
-    it("populated: rows link to the control page, with actions", async () => {
-        vi.mocked(fetchBallotSummaries).mockResolvedValue([ballot(), ballot({ id: "b2", name: "Tie", round: "tiebreak", status: "draft" })])
+    it("populated: grouped, rounds nested under the main ballot, one primary New ballot", async () => {
+        vi.mocked(fetchBallotSummaries).mockResolvedValue([
+            ballot({ id: "b1", name: "Main Ballot", status: "closed" }),
+            ballot({ id: "b2", name: "Tie", round: "tiebreak", parent_ballot_id: "b1" }),
+            ballot({ id: "b3", name: "Hot Takes" }),
+            ballot({ id: "b4", name: "Fall Bonus", status: "draft" }),
+        ])
         wrap(<ManageBallotsPage />)
         const link = (await screen.findByText("Main Ballot")).closest("a")!
         expect(link.getAttribute("href")).toBe("/app/profile/ballots/b1")
-        expect(screen.getByText("tiebreak")).toBeTruthy()
+        expect(screen.getAllByRole("region").map((r) => r.getAttribute("aria-label"))).toEqual(["Needs you", "Open", "Drafts"])
+        const needs = screen.getByRole("region", { name: "Needs you" })
+        expect(within(needs).getByText("Tie")).toBeTruthy()
+        expect(screen.getByText("Next: check the rounds")).toBeTruthy()
         expect(screen.getByRole("link", { name: /New ballot/ }).getAttribute("href")).toBe("/app/profile/ballots/create")
-        expect(screen.getByRole("link", { name: /Reveal results/ }).getAttribute("href")).toBe("/app/profile/release")
+        expect(screen.queryByRole("link", { name: /Reveal results/ })).toBeNull()
         expect(vi.mocked(fetchBallotSummaries)).toHaveBeenCalledWith(true)
     })
 })
 
-const renderAdmin = () =>
-    wrap(<Routes><Route path="/app/profile/ballots/:ballotId" element={<BallotAdminPage />} /></Routes>, "/app/profile/ballots/b1")
+const renderAdmin = (path = "/app/profile/ballots/b1") =>
+    wrap(<Routes><Route path="/app/profile/ballots/:ballotId" element={<BallotAdminPage />} /></Routes>, path)
 
 describe("BallotAdminPage", () => {
     const members = [{ id: "m1", name: "Micah", user_id: "u1" }, { id: "m2", name: "Dee", user_id: null }]
-    const prime = (o: Partial<BallotSummary> = {}) => {
+    const prime = (o: Partial<BallotSummary> = {}, votes = [vote("u1", "n1")]) => {
         vi.mocked(fetchBallotSummaries).mockResolvedValue([ballot(o)])
         vi.mocked(fetchBallotDetail).mockResolvedValue(detail(o) as never)
         vi.mocked(fetchMembers).mockResolvedValue(members)
-        vi.mocked(fetchAllVotes).mockResolvedValue([vote("u1", "n1")])
+        vi.mocked(fetchAllVotes).mockResolvedValue(votes)
     }
     it("skeleton, then error with retry", async () => {
         vi.mocked(fetchBallotSummaries).mockRejectedValueOnce(new Error("raw")).mockResolvedValue([ballot()])
@@ -127,79 +136,98 @@ describe("BallotAdminPage", () => {
         const alert = await screen.findByRole("alert")
         expect(alert.textContent).not.toContain("raw")
         fireEvent.click(screen.getByRole("button", { name: "Try again" }))
-        expect(await screen.findByText("Who has voted")).toBeTruthy()
+        expect(await screen.findByText("Who voted")).toBeTruthy()
     })
-    it("open ballot: completion rows, Close now goes through the confirm sheet", async () => {
+    it("open ballot: one primary, who voted list, Close now is an outlined danger that opens a sheet naming who is left", async () => {
         prime()
         vi.mocked(setBallotStatus).mockResolvedValue()
         renderAdmin()
-        expect(await screen.findByText("Who has voted")).toBeTruthy()
+        expect(await screen.findByText("Who voted")).toBeTruthy()
         expect(screen.getByText("1 of 1")).toBeTruthy()
         expect(screen.getByText("not signed up")).toBeTruthy()
-        expect(screen.getByRole("button", { name: /Export CSV/ })).toBeTruthy()
+        expect(screen.getByRole("region", { name: "Next" }).textContent).toContain("Everyone has finished")
+        // Export CSV lives only in Results
+        expect(within(screen.getByRole("region", { name: "Results" })).getByRole("button", { name: /Export CSV/ })).toBeTruthy()
+        expect(screen.getAllByRole("button", { name: /Export CSV/ })).toHaveLength(1)
         fireEvent.click(screen.getByRole("button", { name: "Close now" }))
         expect(setBallotStatus).not.toHaveBeenCalled()
-        const dlg = await screen.findByRole("alertdialog")
-        fireEvent.click(within(dlg).getByRole("button", { name: "Close voting" }))
+        const dlg = await screen.findByRole("dialog")
+        expect(dlg.textContent).toContain("1 of 1 have finished")
+        fireEvent.click(within(dlg).getByRole("button", { name: "Close voting now" }))
         await waitFor(() => expect(setBallotStatus).toHaveBeenCalledWith("b1", "closed"))
     })
-    it("cancelling the confirm does nothing", async () => {
-        prime()
-        renderAdmin()
-        fireEvent.click(await screen.findByRole("button", { name: "Close now" }))
-        const dlg = await screen.findByRole("alertdialog")
-        fireEvent.click(within(dlg).getByRole("button", { name: "Cancel" }))
-        await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull())
-        expect(setBallotStatus).not.toHaveBeenCalled()
-    })
-    it("a failed status change shows a mapped alert", async () => {
+    it("a failed close shows a mapped alert", async () => {
         prime()
         vi.mocked(setBallotStatus).mockRejectedValue(new Error("rls denied"))
         renderAdmin()
         fireEvent.click(await screen.findByRole("button", { name: "Close now" }))
-        fireEvent.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Close voting" }))
-        const alert = await screen.findByRole("alert")
-        expect(alert.textContent).not.toContain("rls denied")
+        fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Close voting now" }))
+        await waitFor(() => expect(screen.getAllByRole("alert").length).toBeGreaterThan(0))
+        expect(screen.getAllByRole("alert").map((a) => a.textContent).join()).not.toContain("rls denied")
     })
-    it("draft with blockers: Publish is disabled and blockers listed", async () => {
+    it("draft with blockers: Publish ballot is disabled and blockers listed", async () => {
         prime({ status: "draft" })
         vi.mocked(fetchBallotDetail).mockResolvedValue({ ...detail({ status: "draft" }), categories: [] } as never)
         renderAdmin()
-        const publish = await screen.findByRole("button", { name: "Publish" })
+        const publish = await screen.findByRole("button", { name: "Publish ballot" })
         expect((publish as HTMLButtonElement).disabled).toBe(true)
+        expect(screen.getByText(/Add at least one category/)).toBeTruthy()
+        expect(screen.queryByText("Who voted")).toBeNull()
     })
-})
-
-describe("TallyPanel", () => {
-    it("closed ballot: summary blocks, ranked table with headers, Record results", async () => {
-        vi.mocked(fetchBallotDetail).mockResolvedValue(detail({ status: "closed" }) as never)
-        vi.mocked(fetchAllVotes).mockResolvedValue([vote("u1", "n1"), vote("u2", "n1"), vote("u3", "n2")])
+    it("closed ballot: results record automatically, no Record results button, Reopen is an outlined danger secondary", async () => {
+        prime({ status: "closed" }, [vote("u1", "n1"), vote("u2", "n1"), vote("u3", "n2")])
+        renderAdmin()
+        await waitFor(() => expect(recordResultsGuarded).toHaveBeenCalledTimes(1))
+        const writes = vi.mocked(recordResultsGuarded).mock.calls[0][0]
+        expect(writes).toHaveLength(1)
+        expect(writes[0].expected).toBeNull()
+        expect(writes[0].row.winner_nominee_id).toBe("n1")
+        expect(screen.queryByRole("button", { name: /Record results/ })).toBeNull()
+        expect(await screen.findByRole("button", { name: "Reopen ballot" })).toBeTruthy()
+        expect(screen.queryByRole("button", { name: "Close now" })).toBeNull()
+    })
+    it("already recorded: nothing is written when opening a closed ballot", async () => {
+        prime({ status: "closed" }, [vote("u1", "n1")])
+        vi.mocked(fetchResults).mockResolvedValue([{ category_id: "c1", decided_ballot_id: "b1", winner_nominee_id: "n1", nominee_ids: ["n1", "n2"], top3_nominee_ids: ["n1"], decided_by: "votes", places: [] }] as never)
+        renderAdmin()
+        expect(await screen.findByText("1 of 1 winners")).toBeTruthy()
+        expect(recordResultsGuarded).not.toHaveBeenCalled()
+    })
+    it("closing records as part of it", async () => {
+        const open = ballot({})
+        vi.mocked(fetchBallotSummaries).mockResolvedValueOnce([open]).mockResolvedValue([{ ...open, status: "closed" }])
+        vi.mocked(fetchBallotDetail).mockResolvedValue(detail() as never)
+        vi.mocked(fetchMembers).mockResolvedValue(members)
+        vi.mocked(fetchAllVotes).mockResolvedValue([vote("u1", "n1")])
+        vi.mocked(setBallotStatus).mockResolvedValue()
+        renderAdmin()
+        fireEvent.click(await screen.findByRole("button", { name: "Close now" }))
+        fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Close voting now" }))
+        await waitFor(() => expect(setBallotStatus).toHaveBeenCalledWith("b1", "closed"))
+        await waitFor(() => expect(recordResultsGuarded).toHaveBeenCalled())
+    })
+    it("committee round: enter the winner with a confirm naming the category and winner", async () => {
+        const main = ballot({ id: "b1", status: "closed" })
+        const cm = ballot({ id: "b3", round: "committee", parent_ballot_id: "b1", name: "Committee" })
+        vi.mocked(fetchBallotSummaries).mockResolvedValue([main, cm])
+        vi.mocked(fetchBallotDetail).mockImplementation(async (id: string) => (id === "b3" ? detail({ id: "b3", round: "committee", parent_ballot_id: "b1" }) : detail({ status: "closed" })) as never)
+        vi.mocked(fetchMembers).mockResolvedValue(members)
+        vi.mocked(fetchAllVotes).mockResolvedValue([])
+        vi.mocked(fetchResults).mockResolvedValue([{ category_id: "c1", decided_ballot_id: "b1", winner_nominee_id: null, nominee_ids: ["n1", "n2"], top3_nominee_ids: [], decided_by: null, places: [] }] as never)
         vi.mocked(upsertResults).mockResolvedValue()
-        wrap(<TallyPanel ballot={ballot({ status: "closed" })} />)
-        expect(await screen.findByRole("heading", { name: /Best Locs/ })).toBeTruthy()
-        expect(screen.getByText("decided")).toBeTruthy()
-        expect(screen.getAllByRole("columnheader").map((h) => h.textContent)).toEqual(["Rank", "Nominee", "Votes"])
-        expect(screen.getAllByRole("columnheader")[0].getAttribute("scope")).toBe("col")
-        expect(screen.getByText("Dakarai")).toBeTruthy()
-        fireEvent.click(screen.getByRole("button", { name: "Record results" }))
+        renderAdmin("/app/profile/ballots/b3")
+        expect(await screen.findByText("0 of 1 category decided")).toBeTruthy()
+        expect(screen.queryByText("Who voted")).toBeNull()
+        fireEvent.click(await screen.findByRole("radio", { name: /Dakarai/ }))
+        fireEvent.click(screen.getByRole("button", { name: /Save winner for Best Locs/ }))
+        const dlg = await screen.findByRole("alertdialog")
+        expect(dlg.textContent).toContain("Save Dakarai as the Best Locs winner?")
+        fireEvent.click(within(dlg).getByRole("button", { name: "Save winner" }))
         await waitFor(() => expect(upsertResults).toHaveBeenCalled())
-        expect(await screen.findByRole("status")).toBeTruthy()
-    })
-    it("not ended: waiting copy; load error: retry", async () => {
-        const { unmount } = wrap(<TallyPanel ballot={ballot()} />)
-        expect(screen.getByText(/appear here once voting closes/)).toBeTruthy()
-        unmount()
-        vi.mocked(fetchBallotDetail).mockRejectedValueOnce(new Error("raw")).mockResolvedValue(detail({ status: "closed" }) as never)
-        wrap(<TallyPanel ballot={ballot({ status: "closed" })} />)
-        const alert = await screen.findByRole("alert")
-        expect(alert.textContent).not.toContain("raw")
-        fireEvent.click(screen.getByRole("button", { name: "Try again" }))
-        expect(await screen.findByText("Dakarai")).toBeTruthy()
-    })
-    it("shows a loading skeleton first", () => {
-        vi.mocked(fetchBallotDetail).mockReturnValue(new Promise(() => {}))
-        wrap(<TallyPanel ballot={ballot({ status: "closed" })} />)
-        expect(screen.getByRole("status", { name: "Loading tally" })).toBeTruthy()
+        const row = vi.mocked(upsertResults).mock.calls[0][0][0]
+        expect(row.winner_nominee_id).toBe("n1")
+        expect(row.decided_ballot_id).toBe("b3")
+        expect(row.decided_by).toBe("manual")
     })
 })
 

@@ -12,7 +12,7 @@ vi.mock("../../context/UserContenxt", () => ({ useUserData: () => ({ member: { i
 import { MemberAvatar } from "../MemberAvatar"
 import { invalidateMemberDirectory } from "../useMemberDirectory"
 import MemberNamesPage from "../../pages/committee/MemberNamesPage"
-import CompletionPanel from "../../components/committee/CompletionPanel"
+import WhoVoted from "../../components/committee/WhoVoted"
 
 const DIR = [
     { id: "m-ann", name: "Ann", photo: "https://img.test/ann.jpg" },
@@ -74,8 +74,8 @@ describe("members everywhere use the same photo", () => {
         await screen.findByText("Ann")
         await waitFor(() => expect(container.querySelector("img")?.getAttribute("src")).toBe("https://img.test/ann.jpg"))
     })
-    it("Who has voted shows the profile photo", async () => {
-        const { container } = render(<CompletionPanel rows={[{ name: "Ann", voted: 1, total: 2, claimed: true }]} />)
+    it("Who voted shows the profile photo", async () => {
+        const { container } = render(<WhoVoted rows={[{ name: "Ann", voted: 1, total: 2, claimed: true }]} />)
         await waitFor(() => expect(container.querySelector("img")?.getAttribute("src")).toBe("https://img.test/ann.jpg"))
     })
 })
