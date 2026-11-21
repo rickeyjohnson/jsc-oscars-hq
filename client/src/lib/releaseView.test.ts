@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { releaseChecks } from "./release"
-import { failingLines, firstFailingBallotId, winnerCount } from "./releaseView"
+import { firstFailingBallotId, winnerCount } from "./releaseView"
 import type { Ballot } from "../types"
 
 const NOW = new Date("2026-12-01T12:00:00Z")
@@ -12,7 +12,6 @@ describe("releaseView", () => {
         const s = st([b({ id: "m1" }), b({ id: "m2", status: "open", closes_at: "2027-01-01T00:00:00Z", opens_at: "2026-11-05T00:00:00Z" })], { c1: { winner_nominee_id: "n" } })
         const { checks } = releaseChecks(s, NOW)
         expect(firstFailingBallotId(s, checks, NOW)).toBe("m2")
-        expect(failingLines(checks)).toEqual(["1 of 2 ballots closed"])
     })
     it("an open round points at its main ballot; a missing winner at the first main ballot", () => {
         const round = b({ id: "t1", round: "tiebreak", parent_ballot_id: "m1", status: "open", closes_at: "2027-01-01T00:00:00Z", opens_at: "2026-11-06T00:00:00Z" })

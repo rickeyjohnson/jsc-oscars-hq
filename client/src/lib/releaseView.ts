@@ -23,6 +23,3 @@ export function firstFailingBallotId(s: Omit<ReleaseStatus, "season">, checks: R
 
 export const winnerCount = (s: Pick<ReleaseStatus, "mainCategoryIds" | "results">): number =>
     s.mainCategoryIds.filter((id) => s.results[id]?.winner_nominee_id != null).length
-
-// "1 ballot still open" style lines for the expanded list (only the failing checks).
-export const failingLines = (checks: ReleaseCheck[]): string[] => checks.filter((c) => !c.ok).map((c) => c.label)

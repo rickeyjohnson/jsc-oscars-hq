@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react"
 import { Link } from "react-router-dom"
-import { Check, ChevronDown, ChevronLeft } from "lucide-react"
+import { Check, ChevronLeft } from "lucide-react"
 import { vibrate } from "../../ui/haptics"
 import { fetchCurrentSeason } from "../../api/ballots"
 import { fetchReleaseStatus, releaseSeasonResults } from "../../api/results"
 import { HOLD_IDLE, holdProgress, holdReducer, type HoldEvent, type HoldState } from "../../lib/hold"
 import { HoldButton } from "../../ui/HoldButton"
 import { releaseChecks, type ReleaseCheck } from "../../lib/release"
-import { failingLines, firstFailingBallotId, winnerCount } from "../../lib/releaseView"
-import { EnvelopeArt } from "../../ui/EnvelopeArt"
+import { firstFailingBallotId, winnerCount } from "../../lib/releaseView"
 
 const CHECK_REFRESH_MS = 30_000
 
@@ -21,7 +20,7 @@ const RELEASE_FAILED = "Couldn't open the envelope. Check your connection and ho
 
 const Page = ({ children }: { children: React.ReactNode }) => (
     <div className="min-h-dvh bg-bg text-label">
-        <main className="mx-auto flex min-h-dvh max-w-[420px] flex-col px-gutter pb-safe pt-safe">
+        <main className="mx-auto flex min-h-dvh w-full max-w-[520px] flex-col px-gutter pb-safe pt-safe">
             <Link to="/app/profile" className="-ml-2 inline-flex min-h-11 items-center gap-0.5 self-start rounded-control pl-1 pr-3 text-subhead font-bold">
                 <ChevronLeft aria-hidden className="size-6" />
                 <span>Back</span>
@@ -30,7 +29,25 @@ const Page = ({ children }: { children: React.ReactNode }) => (
         </main>
     </div>
 )
-const quietLink = "mt-0.5 flex min-h-11 items-center justify-center rounded-control text-subhead font-bold opacity-85"
+const quietLink = "flex min-h-11 items-center justify-center rounded-control text-subhead font-bold text-pebble-sky"
+
+type Tone = "ok" | "bad" | "info"
+const DOT: Record<Tone, string> = {
+    ok: "bg-pebble-lime text-on-pebble-lime",
+    bad: "bg-pebble-cherry text-on-pebble-cherry",
+    info: "bg-pebble-sky text-on-pebble-sky",
+}
+const Row = ({ tone, children }: { tone: Tone; children: React.ReactNode }) => (
+    <li className="flex items-start gap-3">
+        <span aria-hidden className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-full text-caption-1 font-bold ${DOT[tone]}`}>
+            {tone === "ok" ? <Check className="size-3.5" strokeWidth={3} /> : tone === "bad" ? "!" : "i"}
+        </span>
+        <span className="flex-1">
+            <span className="sr-only">{tone === "ok" ? "Ready: " : tone === "bad" ? "Not ready: " : ""}</span>
+            {children}
+        </span>
+    </li>
+)
 
 const ReleasePage = () => {
     const [load, setLoad] = useState<Load>({ state: "loading" })
@@ -39,7 +56,6 @@ const ReleasePage = () => {
     const [busy, setBusy] = useState(false)
     const [releaseError, setReleaseError] = useState<string | null>(null)
     const [opened, setOpened] = useState(false)
-    const [expanded, setExpanded] = useState(false)
     const fired = useRef(false)
 
     const refresh = useCallback(async (initial: boolean) => {
@@ -129,14 +145,17 @@ const ReleasePage = () => {
         const n = load.winners
         return (
             <Page>
-                <div role="status" className="my-auto space-y-3 text-center">
-                    <EnvelopeArt state="open" size={180} />
-                    <h1 className="pt-4 text-large-title font-display">The envelope is open</h1>
-                    <p className="text-callout text-label-2">
+                <div role="status" className="my-auto space-y-4">
+                    <span aria-hidden className={`grid size-12 place-items-center rounded-full ${DOT.ok}`}><Check className="size-7" strokeWidth={3} /></span>
+                    <h1 className="text-large-title font-display lg:text-display">The envelope is open</h1>
+                    <p className="text-body font-bold lg:text-headline">
                         {n > 0 ? `${n} ${n === 1 ? "winner is" : "winners are"} live for every member.` : "The winners are live for every member."}
                     </p>
                 </div>
-                <Link to="/app/results" className="mb-4 inline-flex h-14 items-center justify-center rounded-full bg-pebble-lemon text-headline text-on-pebble-lemon">See results</Link>
+                <div className="pb-4">
+                    <Link to="/app/results" className="flex h-14 items-center justify-center rounded-full bg-pebble-lemon text-headline text-on-pebble-lemon">See results</Link>
+                    <Link to="/app/profile" className={quietLink}>Back to You</Link>
+                </div>
             </Page>
         )
     }
@@ -144,48 +163,35 @@ const ReleasePage = () => {
     const ready = load.ready
     const progress = holdProgress(hold, now)
     const holding = hold.phase === "holding"
-    const lines = failingLines(load.checks)
+    const failing = load.checks.filter((c) => !c.ok)
 
     const down = (pointerId: number, x: number, y: number) => ready && !busy && dispatch({ type: "down", t: performance.now(), pointerId, x, y })
-    const hint = holding ? "Let go to cancel." : ready ? "Press and hold for 3 seconds." : `Finish the ${lines.length} ${lines.length === 1 ? "thing" : "things"} above to unlock.`
+    const hint = holding
+        ? "Let go to cancel."
+        : ready
+          ? "Press and hold for 3 seconds."
+          : `Locked until ${failing.length === 1 ? "this is" : "these are"} sorted: ${failing.map((c) => c.label.toLowerCase()).join("; ")}.`
 
     return (
         <Page>
-            <div className="my-auto space-y-3 py-6 text-center">
-                <EnvelopeArt state={holding ? "open" : ready ? "lit" : "dim"} />
-                <h1 className="pt-3 text-title-1 font-display">{holding ? "Opening…" : "Reveal the winners?"}</h1>
-                <p className="text-callout text-label-2">{holding ? "Keep your finger down until the bar fills." : "Every member will see every winner. This can't be undone."}</p>
+            <div className="my-auto space-y-5 py-6">
+                <h1 className="text-large-title font-display lg:text-display">Reveal the winners?</h1>
+                <p className="text-body font-bold lg:text-headline">Every member sees every winner. This cannot be undone.</p>
+                <ul className="space-y-3 text-callout lg:text-body">
+                    {load.checks.map((c) => <Row key={c.id} tone={c.ok ? "ok" : "bad"}>{c.label}</Row>)}
+                    <Row tone="info">Members never see vote counts</Row>
+                </ul>
+                {failing.length > 0 && (
+                    <Link to={load.failingId ? `/app/profile/ballots/${load.failingId}` : "/app/profile/ballots"} className="inline-flex min-h-11 items-center text-subhead font-bold underline underline-offset-4">
+                        Go to tally
+                    </Link>
+                )}
             </div>
-            {!holding && (
-                <div className="border-t border-sep">
-                    {ready ? (
-                        <div className="flex min-h-11 items-center gap-2 text-subhead font-bold">
-                            <Check aria-hidden className="size-5" />
-                            <span>Everything is ready</span>
-                        </div>
-                    ) : (
-                        <>
-                            <button type="button" aria-expanded={expanded} onClick={() => setExpanded((v) => !v)} className="flex min-h-11 w-full items-center justify-between text-subhead font-bold">
-                                <span>{lines.length} {lines.length === 1 ? "thing" : "things"} left</span>
-                                <ChevronDown aria-hidden className={`size-5 transition-transform motion-reduce:transition-none ${expanded ? "rotate-180" : ""}`} />
-                            </button>
-                            {expanded && (
-                                <ul className="space-y-1 pb-1 text-footnote text-label-2">
-                                    {lines.map((l) => <li key={l} className="flex gap-2"><span aria-hidden>•</span>{l}</li>)}
-                                </ul>
-                            )}
-                            <Link to={load.failingId ? `/app/profile/ballots/${load.failingId}` : "/app/profile/ballots"} className="inline-flex min-h-11 items-center text-footnote font-bold underline underline-offset-4">
-                                Go to tally
-                            </Link>
-                        </>
-                    )}
-                </div>
-            )}
-            <div className="mt-2 pb-4">
+            <div className="pb-4">
                 <HoldButton
                     ready={ready}
                     busy={busy}
-                    label={holding ? "Keep holding…" : "Hold to open the envelope"}
+                    label="Hold 3 seconds to reveal"
                     busyLabel="Opening…"
                     hint={hint}
                     progress={progress}
