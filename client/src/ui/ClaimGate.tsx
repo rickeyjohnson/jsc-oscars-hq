@@ -7,8 +7,8 @@ import { shouldClaimName } from "../lib/claimName"
 /** Inside UserDataProvider: a signed-in user with no linked member (e.g. after Google) is sent to /claim. */
 export function ClaimGate({ children }: { children: ReactNode }) {
     const { user } = useAuth()
-    const { member, loading, profile, memberFailed } = useUserData()
+    const { member, loading, memberFailed } = useUserData()
     const { pathname } = useLocation()
-    if (shouldClaimName({ user, member, loading, path: pathname, isCommittee: !!profile?.is_committee, memberFailed })) return <Navigate to="/claim" replace />
+    if (shouldClaimName({ user, member, loading, path: pathname, memberFailed })) return <Navigate to="/claim" replace />
     return <>{children}</>
 }

@@ -66,3 +66,12 @@ describe("expired session while voting (P1-5)", () => {
         expect(screen.queryByRole("button", { name: "Try again" })).toBeNull()
     })
 })
+
+describe("a signed-in account with no member (P1-8)", () => {
+    it("offers a Claim your name button", () => {
+        userState.value = { member: null, loading: false }
+        renderPage()
+        expect(screen.getByRole("link", { name: "Claim your name to vote" }).getAttribute("href")).toBe("/claim")
+        userState.value = { member: { id: "m-me", name: "Me", user_id: "u-me" }, loading: false }
+    })
+})

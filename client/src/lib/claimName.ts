@@ -23,16 +23,15 @@ export const clearPendingName = (): void => {
     }
 }
 
-/** A signed-in user with no linked member (e.g. after Google) is sent to /claim. Never while loading; committee/test accounts are exempt. */
+/** A signed-in user with no linked member (e.g. after Google) is sent to /claim. Never while loading; only @jsc-test.local test accounts are exempt (a real committee member without a name is prompted too). */
 export function shouldClaimName(a: {
     user: { id: string; email?: string | null } | null
     member: { id: string } | null
     loading: boolean
     path: string
-    isCommittee?: boolean
     memberFailed?: boolean
 }): boolean {
-    if (a.loading || !a.user || a.member || a.memberFailed || a.isCommittee) return false
+    if (a.loading || !a.user || a.member || a.memberFailed) return false
     if ((a.user.email ?? "").toLowerCase().endsWith(TEST_EMAIL_SUFFIX)) return false
     return a.path === "/app" || a.path.startsWith("/app/")
 }

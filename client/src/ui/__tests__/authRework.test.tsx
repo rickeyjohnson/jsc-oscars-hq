@@ -241,8 +241,8 @@ describe("shouldClaimName", () => {
         expect(shouldClaimName({ ...base, path: "/claim" })).toBe(false)
         expect(shouldClaimName({ ...base, path: "/login" })).toBe(false)
     })
-    it("leaves committee and test accounts alone", () => {
-        expect(shouldClaimName({ ...base, isCommittee: true })).toBe(false)
+    it("prompts real committee accounts too, and leaves only test accounts alone", () => {
+        expect(shouldClaimName({ ...base, isCommittee: true } as never)).toBe(true)
         expect(shouldClaimName({ ...base, user: { id: "u", email: "x@jsc-test.local" } })).toBe(false)
         expect(shouldClaimName({ ...base, memberFailed: true })).toBe(false)
     })

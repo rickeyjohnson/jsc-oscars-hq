@@ -184,7 +184,12 @@ const VotePage = () => {
     }
 
     if (userLoading || (!loadError && myMemberId && !ballot)) return <Shell><VoteSkeleton /></Shell>
-    if (!myMemberId) return <Shell><p className="text-callout">Your account isn't linked to a member name yet. Ask a committee member.</p></Shell>
+    if (!myMemberId) return <Shell>
+            <div className="space-y-3">
+                <p className="text-callout">Your account isn't linked to a member name yet.</p>
+                <Button to="/claim" variant="primary" size="md">Claim your name to vote</Button>
+            </div>
+        </Shell>
     if (loadError)
         return (
             <Shell>
