@@ -1,12 +1,13 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Calendar, KeyRound, Laugh, LogOut, Plus, Settings, SquareCheckBig, User, Users } from "lucide-react"
+import { Calendar, KeyRound, Laugh, Lock, LogOut, Plus, Settings, SquareCheckBig, User, Users } from "lucide-react"
 import { supabase } from "../supabaseClient"
 import { useUserData } from "../context/UserContenxt"
 import ManageOscarsModal from "../components/ManageOscarsModal"
 import JokeGeneratorModal from "../components/JokeGeneratorModal"
 import EditProfileModal from "../components/EditProfileModal"
 import { nomineeStats } from "../lib/stats"
+import { fetchBallotDetail } from "../api/ballots"
 import type { Nominee } from "../types"
 import { Avatar } from "../ui/Avatar"
 import { ColorBlock } from "../ui/ColorBlock"
@@ -30,6 +31,19 @@ const ProfilePage = () => {
     const [editOpen, setEditOpen] = useState(false)
 
     const d = state.data
+    // Nominations are known before the reveal (nominee lists are public to members); wins are not.
+    const [preNoms, setPreNoms] = useState<number | null>(null)
+    const mainIds = d && !d.released && member ? d.summaries.filter((b) => b.round === "main").map((b) => b.id).join(",") : ""
+    useEffect(() => {
+        if (!mainIds || !member) return
+        let live = true
+        Promise.all(mainIds.split(",").map((id) => fetchBallotDetail(id)))
+            .then((ds) => live && setPreNoms(ds.reduce((n, bd) => n + bd.categories.reduce((m, c) => m + c.nominees.filter((x) => x.member_ids.includes(member.id)).length, 0), 0)))
+            .catch(() => live && setPreNoms(null))
+        return () => {
+            live = false
+        }
+    }, [mainIds, member])
     const stats = useMemo(() => {
         if (!d) return null
         let tally: { wins: number; noms: number } | null = null
@@ -38,8 +52,8 @@ const ProfilePage = () => {
             for (const c of d.results.categories) for (const n of c.nominees) nominees[n.id] = n
             tally = nomineeStats(Object.values(d.results.results), nominees).members[member.id] ?? { wins: 0, noms: 0 }
         }
-        return youStats({ released: d.released, summaries: d.summaries, tally, ceremonyAt: d.season?.ceremony_at ? new Date(d.season.ceremony_at) : null, now: new Date() })
-    }, [d, member])
+        return youStats({ released: d.released, summaries: d.summaries, tally, noms: preNoms, ceremonyAt: d.season?.ceremony_at ? new Date(d.season.ceremony_at) : null, now: new Date() })
+    }, [d, member, preNoms])
 
     const name = profile?.username ?? ""
     return (
@@ -54,20 +68,30 @@ const ProfilePage = () => {
                         </div>
                     </div>
                     {stats ? (
-                        <div className="mb-6 grid grid-cols-3 gap-2 lg:grid-cols-1">
-                            {stats.map((s) => (
-                                s.pebble ? (
-                                    <ColorBlock key={s.label} pebble={s.pebble} className="!p-3 lg:!p-4">
-                                        <p className="font-display text-title-1 tabular-nums">{s.value}</p>
-                                        <p className="text-caption-1">{s.label}</p>
-                                    </ColorBlock>
-                                ) : (
+                        <div className="mb-6 space-y-2">
+                            <div className="grid grid-cols-3 gap-2 lg:grid-cols-1">
+                                {stats.tiles.map((s) =>
+                                    s.locked ? (
+                                        <div key={s.label} className="rounded-card bg-surface p-3 text-label lg:p-4">
+                                            <p className="flex items-center gap-1 text-headline"><Lock aria-hidden className="size-4 shrink-0" />{s.label}</p>
+                                            <p className="text-caption-1 text-label-2">{s.value}</p>
+                                        </div>
+                                    ) : (
+                                        <ColorBlock key={s.label} pebble={s.pebble!} className="!p-3 lg:!p-4">
+                                            <p className="font-display text-title-1 tabular-nums">{s.value}</p>
+                                            <p className="text-caption-1">{s.label}</p>
+                                        </ColorBlock>
+                                    ),
+                                )}
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 lg:grid-cols-1">
+                                {stats.plain.map((s) => (
                                     <div key={s.label} className="rounded-card bg-surface p-3 text-label lg:p-4">
                                         <p className="font-display text-title-1 tabular-nums">{s.value}</p>
                                         <p className="text-caption-1 text-label-2">{s.label}</p>
                                     </div>
-                                )
-                            ))}
+                                ))}
+                            </div>
                         </div>
                     ) : (
                         <div className="mb-6 grid grid-cols-3 gap-2 lg:grid-cols-1">
