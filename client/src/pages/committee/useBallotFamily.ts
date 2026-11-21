@@ -49,6 +49,9 @@ export async function loadFamily(ballotId: string): Promise<Family> {
 export function useBallotFamily(ballotId: string | undefined) {
     const [family, setFamily] = useState<Family | null>(null)
     const [error, setError] = useState(false)
+    // a failed refresh while a good copy is on screen: keep showing it and say so (not the load-error screen)
+    const [refreshFailed, setRefreshFailed] = useState(false)
+    const have = useRef(false)
     const alive = useRef(true)
     useEffect(() => {
         alive.current = true
@@ -63,13 +66,18 @@ export function useBallotFamily(ballotId: string | undefined) {
         try {
             const f = await loadFamily(ballotId)
             if (alive.current) {
+                have.current = true
                 setFamily(f)
                 setError(false)
+                setRefreshFailed(false)
             }
             return f
         } catch (e) {
             console.error(e)
-            if (alive.current) setError(true)
+            if (alive.current) {
+                if (have.current) setRefreshFailed(true)
+                else setError(true)
+            }
             return null
         }
     }, [ballotId])
@@ -80,8 +88,9 @@ export function useBallotFamily(ballotId: string | undefined) {
 
     const retry = () => {
         setError(false)
+        have.current = false
         setFamily(null)
         void reload()
     }
-    return { family, error, reload, retry }
+    return { family, error, refreshFailed, reload, retry }
 }

@@ -39,7 +39,7 @@ const BallotAdminPage = () => {
     const { ballotId } = useParams()
     const navigate = useNavigate()
     const confirm = useConfirm()
-    const { family, error, reload, retry } = useBallotFamily(ballotId)
+    const { family, error, refreshFailed, reload, retry } = useBallotFamily(ballotId)
     const [selectedId, setSelectedId] = useState<string | null>(null)
     const [busy, setBusy] = useState(false)
     const [actionError, setActionError] = useState<string | null>(null)
@@ -188,10 +188,17 @@ const BallotAdminPage = () => {
     const close = async () => {
         const ok = await run(async () => {
             await setBallotStatus(sel.id, "closed")
-            const fresh = await reload()
-            if (fresh) await autoRecord(fresh) // recording is part of closing
         }, UPDATE_FAILED)
-        if (ok) setSheet(null)
+        if (!ok) return
+        setSheet(null) // the ballot is closed now, whatever happens next
+        const fresh = await reload()
+        if (!fresh) return // the page shows "Couldn't refresh" with Retry
+        try {
+            await autoRecord(fresh) // recording is part of closing
+        } catch (e) {
+            console.error(e)
+            setRecordError(true) // its own message: "Couldn't record the results" with Try again
+        }
     }
 
     const publish = async () => {
@@ -276,6 +283,12 @@ const BallotAdminPage = () => {
     return (
         <Screen title={sel.name} back={{ to: "/app/profile/ballots", label: "Ballots" }} width="wide">
             <div className="grid gap-x-8 gap-y-5 lg:grid-cols-2 lg:grid-rows-[repeat(4,auto)_1fr] lg:items-start">
+                {refreshFailed && (
+                    <div role="status" className="flex items-center justify-between gap-3 rounded-card border-l-4 border-pebble-lemon bg-surface p-3 text-callout lg:col-span-2">
+                        <span>Couldn't refresh. What you see may be out of date.</span>
+                        <Button variant="secondary" size="sm" onClick={() => void reload()}>Retry</Button>
+                    </div>
+                )}
                 <div className="space-y-3 lg:col-start-1">
                     <div className="flex flex-wrap items-center gap-2">
                         <Chip tone={phasePebble === "grape" ? "neutral" : phasePebble}>{PHASE_LABEL[phase]}</Chip>
