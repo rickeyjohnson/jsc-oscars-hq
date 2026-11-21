@@ -11,7 +11,7 @@ describe("youStats", () => {
     it("before release", () => {
         const s = youStats({ released: false, summaries: [b("a", 20, 20), b("b", 21, 21), b("c", 10, 0)], tally: null, ceremonyAt: ceremony, now })
         expect(s.map((x) => [x.label, x.value])).toEqual([["Ballots voted", "2 of 3"], ["Categories voted", "41"], ["Days to Oscars", "13"]])
-        expect(new Set(s.map((x) => x.pebble)).size).toBe(3)
+        expect(s.every((x) => x.pebble === null)).toBe(true)
     })
     it("omits the days tile without a future date", () => {
         expect(youStats({ released: false, summaries: [], tally: null, ceremonyAt: null, now })).toHaveLength(2)

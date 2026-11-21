@@ -5,7 +5,6 @@ import { fetchCurrentSeason } from "../api/ballots"
 import { fetchSeasonResults } from "../api/results"
 import { fetchMemberAvatars, fetchMembers } from "../api/members"
 import { useUserData } from "../context/UserContenxt"
-import OscarLogo from "../components/OscarLogo"
 import { buildResultCards, type ResultCard } from "../lib/resultsView"
 import { nomineeStats } from "../lib/stats"
 import { leaderboard, myCategories, type LeaderRow } from "../lib/leaderboard"
@@ -144,7 +143,6 @@ const ResultsPage = () => {
                     {tab === "winners" ? (
                         <>
                             <div className="mb-4 flex flex-col items-center gap-3 text-center">
-                                <OscarLogo size="xsmall" decorative />
                                 <h2 className="font-display text-large-title">And the winners are…</h2>
                             </div>
                             <WinnersView cards={load.cards} avatars={load.avatars} />

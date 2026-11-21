@@ -1,9 +1,9 @@
 import type { BallotSummary } from "../../lib/voting"
 import { countdownParts } from "../../lib/time"
-import { HERO_EXCLUDE, RESULTS_EXCLUDE, pebbleAt } from "./pebble"
+import { RESULTS_EXCLUDE, pebbleAt } from "./pebble"
 import type { PebbleName } from "../tokens"
 
-export type YouStat = { label: string; value: string; pebble: PebbleName }
+export type YouStat = { label: string; value: string; pebble: PebbleName | null }
 
 export function youStats(i: { released: boolean; summaries: BallotSummary[]; tally: { wins: number; noms: number } | null; ceremonyAt: Date | null; now: Date }): YouStat[] {
     if (i.released) {
@@ -20,5 +20,5 @@ export function youStats(i: { released: boolean; summaries: BallotSummary[]; tal
     ]
     const left = i.ceremonyAt ? countdownParts(i.ceremonyAt, i.now) : null
     if (left) out.push(["Days to Oscars", String(left.days)])
-    return out.map(([label, value], k) => ({ label, value, pebble: pebbleAt(k, { exclude: HERO_EXCLUDE }) }))
+    return out.map(([label, value]) => ({ label, value, pebble: null }))
 }

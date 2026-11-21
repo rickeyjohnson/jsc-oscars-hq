@@ -55,10 +55,17 @@ const ProfilePage = () => {
                     {stats ? (
                         <div className="mb-6 grid grid-cols-3 gap-2 lg:grid-cols-1">
                             {stats.map((s) => (
-                                <ColorBlock key={s.label} pebble={s.pebble} className="!p-3 lg:!p-4">
-                                    <p className="font-display text-title-1 tabular-nums">{s.value}</p>
-                                    <p className="text-caption-1">{s.label}</p>
-                                </ColorBlock>
+                                s.pebble ? (
+                                    <ColorBlock key={s.label} pebble={s.pebble} className="!p-3 lg:!p-4">
+                                        <p className="font-display text-title-1 tabular-nums">{s.value}</p>
+                                        <p className="text-caption-1">{s.label}</p>
+                                    </ColorBlock>
+                                ) : (
+                                    <div key={s.label} className="rounded-card bg-surface p-3 text-label lg:p-4">
+                                        <p className="font-display text-title-1 tabular-nums">{s.value}</p>
+                                        <p className="text-caption-1 text-label-2">{s.label}</p>
+                                    </div>
+                                )
                             ))}
                         </div>
                     ) : (
