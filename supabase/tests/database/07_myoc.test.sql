@@ -1,4 +1,4 @@
--- MYOC tests. TAP lines are collected into public.__tap and printed by the final select. Helper tables live only
+-- MYOC tests (run after 20261124000200 AND 20261124000700: there is no idea limit). TAP lines are collected into public.__tap and printed by the final select. Helper tables live only
 -- inside this transaction (begin ... rollback); NOT temp tables.
 begin;
 
@@ -39,9 +39,9 @@ insert into public.__tap(line) select lives_ok($$ insert into myoc_ideas (window
 insert into public.__tap(line) select lives_ok($$ insert into myoc_ideas (window_id, name) values (public.__id('W'), 'Micah idea 3') $$, 'third idea');
 insert into public.__tap(line) select lives_ok($$ insert into myoc_ideas (window_id, name) values (public.__id('W'), 'Micah idea 4') $$, 'fourth idea');
 insert into public.__tap(line) select lives_ok($$ insert into myoc_ideas (window_id, name) values (public.__id('W'), 'Micah idea 5') $$, 'fifth idea');
-insert into public.__tap(line) select throws_ok($$ insert into myoc_ideas (window_id, name) values (public.__id('W'), 'Micah idea 6') $$, 'P0001', 'suggestion limit reached', 'a sixth idea is refused');
+insert into public.__tap(line) select lives_ok($$ insert into myoc_ideas (window_id, name) values (public.__id('W'), 'Micah idea 6') $$, 'a member can add a 6th idea while open');
+insert into public.__tap(line) select lives_ok($$ insert into myoc_ideas (window_id, name) select public.__id('W'), 'Bulk ' || g from generate_series(7, 20) g $$, 'and up to a 20th idea');
 insert into public.__tap(line) select lives_ok($$ update myoc_ideas set status = 'withdrawn' where name = 'Micah idea 5' $$, 'member withdraws an idea');
-insert into public.__tap(line) select lives_ok($$ insert into myoc_ideas (window_id, name) values (public.__id('W'), 'Micah idea 6') $$, 'withdrawing freed a slot');
 insert into public.__tap(line) select throws_ok($$ update myoc_ideas set status = 'accepted' where name = 'Micah idea 1' $$, '42501', 'status is read-only', 'member cannot self-accept');
 insert into public.__tap(line) select throws_ok($$ update myoc_ideas set status = 'rejected' where name = 'Micah idea 1' $$, '42501', 'status is read-only', 'member cannot self-reject');
 insert into public.__tap(line) select throws_ok($$ update myoc_ideas set merged_into = public.__id('I_nick') where name = 'Micah idea 1' $$, '42501', 'committee-only field', 'member cannot merge');
@@ -64,7 +64,7 @@ insert into public.__tap(line) select throws_ok($$ insert into myoc_ideas (windo
 -- ---------------------------------------------------------------- as Rickey (committee)
 select tests.clear_authentication();
 select tests.authenticate_as(public.__id('rickey'));
-insert into public.__tap(line) select is((select count(*)::int from myoc_ideas), 8, 'committee reads every idea');
+insert into public.__tap(line) select is((select count(*)::int from myoc_ideas), 22, 'committee reads every idea');
 insert into public.__tap(line) select is((select name from myoc_ideas where id = public.__id('I_nick')), 'Nick idea', 'the other member''s idea was not changed');
 insert into public.__tap(line) select lives_ok($$ update myoc_ideas set status = 'accepted', assigned_category = 'Superlatives' where name = 'Micah idea 1b' $$, 'committee accepts and assigns a category');
 insert into public.__tap(line) select lives_ok($$ update myoc_ideas set status = 'rejected', name = 'Micah idea 2 (reworded)' where name = 'Micah idea 2' $$, 'committee rejects and edits wording');
