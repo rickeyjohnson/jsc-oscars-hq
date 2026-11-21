@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useUserData } from "../context/UserContenxt"
+import { displayName } from "../lib/displayName"
 import { Avatar } from "../ui/Avatar"
 import { Button } from "../ui/Button"
 import { SheetActions } from "../ui/SheetActions"
@@ -10,7 +11,7 @@ import ProfileSetup from "./ProfileSetup"
 const EditProfileModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
     const { profile, member, refetch } = useUserData()
     const [photoOpen, setPhotoOpen] = useState(false)
-    const name = profile?.username ?? ""
+    const name = displayName(member, profile)
     return (
         <>
             <Sheet open={isOpen} onClose={onClose} title="Edit profile" fit footer={<SheetActions><Button variant="primary" fullWidth onClick={onClose}>Done</Button></SheetActions>}>

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { Calendar, KeyRound, Laugh, Lock, LogOut, Plus, Settings, SquareCheckBig, User, Users } from "lucide-react"
 import { supabase } from "../supabaseClient"
 import { useUserData } from "../context/UserContenxt"
+import { displayName } from "../lib/displayName"
 import { SeasonSheet } from "../components/committee/SeasonSheet"
 import JokeGeneratorModal from "../components/JokeGeneratorModal"
 import EditProfileModal from "../components/EditProfileModal"
@@ -54,7 +55,7 @@ const ProfilePage = () => {
         return youStats({ released: d.released, summaries: d.summaries, tally, noms: preNoms, ceremonyAt: d.season?.ceremony_at ? new Date(d.season.ceremony_at) : null, now: new Date() })
     }, [d, member, preNoms])
 
-    const name = profile?.username ?? ""
+    const name = displayName(member, profile)
     return (
         <Screen title="You" width="wide">
             <div className="lg:grid lg:grid-cols-[320px_1fr] lg:items-start lg:gap-8">
