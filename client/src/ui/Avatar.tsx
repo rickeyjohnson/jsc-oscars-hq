@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { avatarFallback, initials } from "./logic/avatar"
+import { avatarFallback, avatarSrc, initials } from "./logic/avatar"
 import { AVATAR_RING, PEBBLE_RING, avatarSizeClass, type AvatarRing, type AvatarSize } from "./logic/variants"
 import { PEBBLE_CLASS, PEBBLE_INK_FACE } from "./logic/pebble"
 import { COPY } from "./copy"
@@ -29,6 +29,7 @@ export function Avatar({
     onPebble?: boolean
 }) {
     const [failed, setFailed] = useState(false)
+    const [loaded, setLoaded] = useState(false)
     const pebbleName = pebble ?? avatarFallback(id)
     const peb = PEBBLE_CLASS[pebbleName]
     const showImg = !!src && !failed
@@ -38,7 +39,17 @@ export function Avatar({
             {...a11y}
             className={`relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-bold ${avatarSizeClass(size)} ${showImg ? "bg-surface-2" : onPebble ? PEBBLE_INK_FACE[pebbleName] : `${peb.bg} ${peb.text}`} ${ring && !onPebble ? AVATAR_RING[ring] : ""} ${ring === "pebble" && !onPebble ? PEBBLE_RING[pebbleName] : ""} ${struck ? "opacity-60" : ""}`}
         >
-            {showImg ? <img src={src!} alt="" className="size-full object-cover" onError={() => setFailed(true)} /> : <span aria-hidden>{initials(name)}</span>}
+            {showImg ? <img
+                    src={avatarSrc(src!, size)}
+                    alt=""
+                    width={size}
+                    height={size}
+                    loading="lazy"
+                    decoding="async"
+                    className={`size-full object-cover transition-opacity duration-200 ${loaded ? "opacity-100" : "opacity-0"}`}
+                    onLoad={() => setLoaded(true)}
+                    onError={() => setFailed(true)}
+                /> : <span aria-hidden>{initials(name)}</span>}
             {struck && <span aria-hidden className="absolute inset-x-0 top-1/2 h-0.5 -rotate-45 bg-label" />}
         </span>
     )

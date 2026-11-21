@@ -1,3 +1,5 @@
+import { shrinkImage } from "../lib/imageResize"
+import { safeUploadName } from "../ui/logic/avatar"
 import { useState } from "react"
 import { supabase } from "../supabaseClient"
 import { useAuth } from "../context/AuthContext"
@@ -29,12 +31,12 @@ const ProfileSetup = ({ open, onComplete, onSkip, title = "Add your photo" }: Pr
     }
 
     const uploadImage = async (file: File): Promise<string | null> => {
-        const fileName = file.name.split(".")[0]
-        const filePath = `${fileName}-${Date.now()}`
+        const small = await shrinkImage(file)
+        const filePath = `${safeUploadName(file.name)}-${Date.now()}`
 
         const { error } = await supabase.storage
             .from("profile-pics")
-            .upload(filePath, file)
+            .upload(filePath, small, { cacheControl: "31536000", contentType: small.type || undefined })
 
         if (error) {
             console.error("Error uploading image: ", error.message)
