@@ -429,6 +429,21 @@ describe("VotePage group category", () => {
         expect(await within(section(C1)).findByText(/already exists/i)).toBeTruthy()
     })
 
+    it("group sheet shows a live preview and a one-more hint", async () => {
+        await loaded(ballot({ categories: groupCats() }))
+        fireEvent.click(within(section(C1)).getByRole("button", { name: /add a group/i }))
+        expect(screen.queryByTestId("group-preview")).toBeNull()
+        fireEvent.click(await screen.findByRole("button", { name: "Cy" }))
+        expect(screen.getByText(/pick one more person/i)).toBeTruthy()
+        expect((screen.getByRole("button", { name: /pick 2 or 3 people/i }) as HTMLButtonElement).disabled).toBe(true)
+        fireEvent.click(screen.getByRole("button", { name: "Ann" }))
+        const preview = screen.getByTestId("group-preview")
+        expect(within(preview).getByText("Ann & Cy")).toBeTruthy()
+        expect(within(preview).getByText("2 people")).toBeTruthy()
+        expect(screen.queryByText(/pick one more person/i)).toBeNull()
+        expect(screen.getByRole("button", { name: "Ann" }).querySelector("svg")).toBeTruthy()
+    })
+
     it("the footer Add a group button (desktop) opens the same sheet", async () => {
         await loaded(ballot({ categories: groupCats() }))
         const footer = screen.getAllByRole("button", { name: /add a group/i }).find((b) => !section(C1).contains(b))!
