@@ -322,6 +322,17 @@ describe("VotePage one-per-page flow", () => {
         fireEvent.click(screen.getByRole("button", { name: /^jump to/i }))
         expect(screen.getByRole("button", { name: /go to first unvoted/i })).toBeTruthy()
     })
+    it("jump sheet marks the current row and flags unvoted ones", async () => {
+        await loaded(undefined, { c1: "n-ann" })
+        fireEvent.click(screen.getByRole("button", { name: /^jump to/i }))
+        const here = screen.getByRole("button", { name: /best picture/i })
+        expect(here.getAttribute("aria-current")).toBe("true")
+        expect(here.textContent).toMatch(/Voted \(here\)/)
+        expect(here.querySelector("svg")).toBeNull()
+        const other = screen.getByRole("button", { name: /best dressed/i })
+        expect(other.getAttribute("aria-current")).toBeNull()
+        expect(other.textContent).toMatch(/Not voted/)
+    })
     it("Skip moves to the next category and shows it; Back returns", async () => {
         await loaded()
         expect(section(C1).className).not.toMatch(/\bhidden\b/)

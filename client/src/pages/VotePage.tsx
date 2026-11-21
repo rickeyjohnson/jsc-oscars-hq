@@ -363,9 +363,22 @@ const VotePage = () => {
                     {ballot.categories.map((c, i) => (
                         <ListRow
                             key={c.id}
-                            title={c.name}
-                            subtitle={failedIds.has(c.id) ? "Couldn't save" : myVotes[c.id] ? "Voted" : "Not voted"}
-                            selected={i === idx && !reviewing}
+                            title={
+                                <>
+                                    {i === idx && !reviewing && <span aria-hidden>→ </span>}
+                                    {c.name}
+                                </>
+                            }
+                            subtitle={
+                                failedIds.has(c.id) ? (
+                                    <span className="font-bold text-pebble-cherry">Couldn't save</span>
+                                ) : myVotes[c.id] ? (
+                                    `Voted${i === idx && !reviewing ? " (here)" : ""}`
+                                ) : (
+                                    <span className="font-bold text-pebble-lemon">Not voted{i === idx && !reviewing ? " (here)" : ""}</span>
+                                )
+                            }
+                            current={i === idx && !reviewing}
                             onClick={() => {
                                 setJumpOpen(false)
                                 jump(i)

@@ -12,6 +12,7 @@ export function ListRow({
     onClick,
     chevron,
     selected,
+    current,
     destructive,
 }: {
     title: ReactNode
@@ -22,6 +23,8 @@ export function ListRow({
     onClick?: () => void
     chevron?: boolean
     selected?: boolean
+    /** The row you are on: announced as current, bold title. */
+    current?: boolean
     destructive?: boolean
 }) {
     const interactive = !!(to || onClick)
@@ -30,7 +33,7 @@ export function ListRow({
         <>
             {leading}
             <span className="min-w-0 flex-1">
-                <span className={`block text-body truncate ${destructive ? "text-danger" : "text-label"}`}>{title}</span>
+                <span className={`block text-body truncate ${current ? "font-bold" : ""} ${destructive ? "text-danger" : "text-label"}`}>{title}</span>
                 {subtitle && <span className="block text-footnote text-label-2 truncate">{subtitle}</span>}
             </span>
             {trailing}
@@ -46,11 +49,11 @@ export function ListRow({
     return (
         <li>
             {to ? (
-                <Link to={to} className={cls}>
+                <Link to={to} className={cls} aria-current={current ? "true" : undefined}>
                     {body}
                 </Link>
             ) : onClick ? (
-                <button type="button" onClick={onClick} className={cls}>
+                <button type="button" onClick={onClick} className={cls} aria-current={current ? "true" : undefined}>
                     {body}
                 </button>
             ) : (
