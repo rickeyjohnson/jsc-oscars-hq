@@ -2,6 +2,7 @@ import { useId, useRef } from "react"
 import { createPortal } from "react-dom"
 import { AnimatePresence, motion, useReducedMotion } from "motion/react"
 import { Button } from "./Button"
+import { SheetActions } from "./SheetActions"
 import { fade, spring } from "./motion"
 import { trapTab, useDialogLifecycle, useInitialFocus, useIsDesktop } from "./useDialog"
 
@@ -10,12 +11,14 @@ export type ConfirmSheetProps = {
     title: string
     message?: string
     confirmLabel: string
+    /** Label for the dismiss button (default "Cancel"). */
+    cancelLabel?: string
     destructive?: boolean
     onConfirm(): void
     onCancel(): void
 }
 
-function Panel({ title, message, confirmLabel, destructive, onConfirm, onCancel }: Omit<ConfirmSheetProps, "open">) {
+function Panel({ title, message, confirmLabel, cancelLabel = "Cancel", destructive, onConfirm, onCancel }: Omit<ConfirmSheetProps, "open">) {
     const desktop = useIsDesktop()
     const reduce = useReducedMotion()
     const ref = useRef<HTMLDivElement>(null)
@@ -50,7 +53,7 @@ function Panel({ title, message, confirmLabel, destructive, onConfirm, onCancel 
                     className={`material-sheet pointer-events-auto flex max-h-[92dvh] w-full flex-col overflow-y-auto outline-none ${desktop ? "max-w-[400px] rounded-sheet" : "rounded-t-[30px]"}`}
                     {...motionProps}
                 >
-                    <div className="px-6 pt-7 text-center">
+                    <div className="px-6 pt-7">
                         <h2 id={titleId} className="text-title-3">
                             {title}
                         </h2>
@@ -60,13 +63,15 @@ function Panel({ title, message, confirmLabel, destructive, onConfirm, onCancel 
                             </p>
                         )}
                     </div>
-                    <div className="flex flex-col gap-3 px-6 pt-6 [padding-bottom:max(env(safe-area-inset-bottom),24px)] sm:flex-row-reverse">
-                        <Button variant={destructive ? "destructive" : "primary"} size="md" fullWidth onClick={onConfirm}>
-                            {confirmLabel}
-                        </Button>
-                        <Button variant="tinted" size="md" fullWidth onClick={onCancel} data-autofocus>
-                            Cancel
-                        </Button>
+                    <div className="px-6 pt-6 [padding-bottom:max(env(safe-area-inset-bottom),24px)]">
+                        <SheetActions>
+                            <Button variant={destructive ? "destructive" : "primary"} size="md" fullWidth onClick={onConfirm}>
+                                {confirmLabel}
+                            </Button>
+                            <Button variant="tinted" size="md" fullWidth onClick={onCancel} data-autofocus>
+                                {cancelLabel}
+                            </Button>
+                        </SheetActions>
                     </div>
                 </motion.div>
             </div>

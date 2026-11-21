@@ -4,6 +4,7 @@ import type { Category, Member } from "../../types"
 import { groupCandidates, lockedNominees, nomineeKey, nomineePebbles, selectableNominees, type VoteMessage } from "../../lib/voting"
 import { Avatar } from "../../ui/Avatar"
 import { Button, Spinner } from "../../ui/Button"
+import { SheetActions } from "../../ui/SheetActions"
 import { Sheet } from "../../ui/Sheet"
 import { PEBBLE_CLASS, selectedSmallTextClass } from "../../ui/logic/pebble"
 import { VoteBanner } from "./VoteBanner"
@@ -209,9 +210,11 @@ const CategoryVoteCard = (p: Props) => {
                 title="Why can't I pick this one?"
                 fit
                 footer={
-                    <Button fullWidth onClick={() => setLockedPick(null)}>
-                        Got it
-                    </Button>
+                    <SheetActions>
+                        <Button fullWidth onClick={() => setLockedPick(null)}>
+                            Got it
+                        </Button>
+                    </SheetActions>
                 }
             >
                 <p className="text-body">You're in "{lockedPick}", and you can't vote for yourself or a group you belong to. Pick another group.</p>

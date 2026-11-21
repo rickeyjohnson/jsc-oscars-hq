@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { SheetActions } from "../../ui/SheetActions"
 import { Sheet } from "../../ui/Sheet"
 import { Button } from "../../ui/Button"
 import { TextField } from "../../ui/TextField"
@@ -57,14 +58,11 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({ isOpen, onClose, o
             detents={["large"]}
             width="wide"
             footer={
-                <div className="flex gap-3">
-                    <Button variant="tinted" onClick={onClose}>
-                        Cancel
-                    </Button>
+                <SheetActions>
                     <Button variant="primary" fullWidth onClick={handleSave} disabled={!name.trim()}>
                         {initialData ? "Save changes" : "Add category"}
                     </Button>
-                </div>
+                </SheetActions>
             }
         >
             <div className="space-y-4">

@@ -4,6 +4,7 @@ import { useState } from "react"
 import { supabase } from "../supabaseClient"
 import { useAuth } from "../context/AuthContext"
 import { Sheet } from "../ui/Sheet"
+import { SheetActions } from "../ui/SheetActions"
 import { invalidateMemberDirectory } from "../ui/useMemberDirectory"
 import { Button } from "../ui/Button"
 import { Avatar } from "../ui/Avatar"
@@ -88,14 +89,14 @@ const ProfileSetup = ({ open, onComplete, onSkip, title = "Add your photo" }: Pr
             title={title}
             fit
             footer={
-                <div className="flex flex-col gap-2">
+                <SheetActions>
                     <Button variant="primary" fullWidth disabled={!image} loading={loading} loadingLabel="Saving…" onClick={handleImageSubmission}>
                         Continue
                     </Button>
-                    <Button variant="plain" fullWidth onClick={onSkip}>
+                    <Button variant="tinted" fullWidth onClick={onSkip}>
                         Not now
                     </Button>
-                </div>
+                </SheetActions>
             }
         >
             <div className="flex flex-col items-center gap-4 pt-2 text-center">

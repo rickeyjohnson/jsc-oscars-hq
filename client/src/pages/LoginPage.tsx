@@ -5,6 +5,7 @@ import { supabase } from "../supabaseClient"
 import { useAuth } from "../context/AuthContext"
 import { authRedirectUrl } from "../lib/siteUrl"
 import { loginErrorText } from "../lib/authErrors"
+import { SheetActions } from "../ui/SheetActions"
 import { Sheet } from "../ui/Sheet"
 import { Button } from "../ui/Button"
 import { AuthLayout } from "../ui/AuthLayout"
@@ -52,14 +53,11 @@ const ForgotPasswordModal = ({ open, closeModal }: { open: boolean; closeModal: 
             title="Reset password"
             detents={["medium"]}
             footer={
-                <div className="flex gap-3">
-                    <Button variant="tinted" fullWidth onClick={closeModal}>
-                        Cancel
-                    </Button>
+                <SheetActions>
                     <Button type="submit" form="forgot-password-form" variant="primary" fullWidth loading={loading} loadingLabel="Sending…">
                         Send reset link
                     </Button>
-                </div>
+                </SheetActions>
             }
         >
             <form id="forgot-password-form" onSubmit={handleForgotPassword}>

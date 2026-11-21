@@ -100,7 +100,7 @@ describe("Home widgets", () => {
         fireEvent.click(sw)
         expect(screen.getByRole("switch", { name: "Countdown" }).getAttribute("aria-checked")).toBe("false")
         expect(JSON.parse(mem.get("jsc.home.v1.u1")!).hidden).toContain("countdown")
-        fireEvent.click(screen.getByRole("button", { name: "Done" }))
+        fireEvent.click(screen.getByRole("button", { name: "Close" }))
         expect(screen.queryByRole("heading", { name: "Countdown", level: 2 })).toBeNull()
 
         fireEvent.click(screen.getByRole("button", { name: "Customize Home" }))

@@ -5,6 +5,7 @@ import { supabase } from "../supabaseClient"
 import { useAuth } from "../context/AuthContext"
 import { fetchMemberNameStatus, type MemberNameStatus } from "../api/members"
 import { authRedirectUrl } from "../lib/siteUrl"
+import { SheetActions } from "../ui/SheetActions"
 import { Sheet } from "../ui/Sheet"
 import { Button } from "../ui/Button"
 import { AuthLayout } from "../ui/AuthLayout"
@@ -32,9 +33,11 @@ const VerifyEmailModal = ({ open, onDone }: { open: boolean; onDone: () => void 
             title="Check your email"
             detents={["medium"]}
             footer={
-                <Button variant="primary" fullWidth onClick={onDone}>
-                    Done
-                </Button>
+                <SheetActions>
+                    <Button variant="primary" fullWidth onClick={onDone}>
+                        Done
+                    </Button>
+                </SheetActions>
             }
         >
             <p className="text-callout text-label-2">Please verify email to continue. Open the link we sent you, then come back and log in.</p>

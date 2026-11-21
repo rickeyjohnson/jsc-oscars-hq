@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react"
+import { SheetActions } from "../../ui/SheetActions"
 import { Sheet } from "../../ui/Sheet"
 import { Button } from "../../ui/Button"
 import { parseCategoryImport } from "../../lib/categoryImport"
@@ -75,17 +76,14 @@ const BulkImportPanel: React.FC<BulkImportPanelProps> = ({ isOpen, onClose, exis
             detents={["large"]}
             width="wide"
             footer={
-                <div className="flex gap-3">
-                    <Button variant="tinted" onClick={close}>
-                        Cancel
-                    </Button>
-                    <Button variant="secondary" onClick={() => fileRef.current?.click()}>
-                        Choose file
-                    </Button>
+                <SheetActions>
                     <Button variant="primary" fullWidth onClick={handleImport} disabled={count === 0}>
                         Import {count}
                     </Button>
-                </div>
+                    <Button variant="tinted" fullWidth onClick={() => fileRef.current?.click()}>
+                        Choose file
+                    </Button>
+                </SheetActions>
             }
         >
             <p className="text-footnote text-label-2 mb-3">One per line: Name | Description, or a CSV with name,description columns</p>

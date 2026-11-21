@@ -118,24 +118,25 @@ function Frame({ requestClose, title, detents = ["large"], initialDetent, leadin
                             {title}
                         </h2>
                         {trailing && <div data-chrome className="shrink-0">{trailing}</div>}
-                        {desktop && (
-                            <button
-                                type="button"
-                                data-chrome
-                                aria-label="Close"
-                                onClick={requestClose}
-                                className="grid size-9 shrink-0 place-items-center rounded-full bg-fill text-label"
-                            >
+                        {/* The one close control, always top-right: 44px target, 32px visual. */}
+                        <button
+                            type="button"
+                            data-chrome
+                            aria-label="Close"
+                            onClick={requestClose}
+                            className="-mr-2 grid size-11 shrink-0 cursor-pointer place-items-center rounded-full text-label"
+                        >
+                            <span aria-hidden className="grid size-8 place-items-center rounded-full bg-fill">
                                 <svg aria-hidden width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                                     <path d="M2 2l10 10M12 2L2 12" />
                                 </svg>
-                            </button>
-                        )}
+                            </span>
+                        </button>
                     </header>
                     <BodyScroll bodyRef={body} onPointerDown={(e) => !desktop && body.current?.scrollTop === 0 && controls.start(e)}>
                         {children}
                     </BodyScroll>
-                    {footer && <footer className="shrink-0 border-t border-sep px-6 pt-4 [padding-bottom:max(env(safe-area-inset-bottom),20px)] [&_.flex]:gap-3">{footer}</footer>}
+                    {footer && <footer className="shrink-0 border-t border-sep px-6 pt-4 [padding-bottom:max(env(safe-area-inset-bottom),20px)]">{footer}</footer>}
                 </motion.div>
             </div>
         </div>
@@ -160,6 +161,7 @@ export function Sheet({ open, onClose, dirty, ...rest }: SheetProps) {
             <ConfirmSheet
                 open={open && discarding}
                 title="Discard changes?"
+                cancelLabel="Keep editing"
                 confirmLabel="Discard"
                 destructive
                 onCancel={() => setDiscarding(false)}

@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Button } from "../../ui/Button"
+import { SheetActions } from "../../ui/SheetActions"
 import { Sheet, type SheetProps } from "../../ui/Sheet"
 import { ConfirmProvider, useConfirm } from "../../ui/ConfirmProvider"
 
@@ -39,13 +40,12 @@ function SheetDemo({ v }: { v: Variant }) {
                 open={open}
                 onClose={close}
                 title={v.label}
-                trailing={<Button variant="plain" size="sm" onClick={close}>Done</Button>}
                 footer={
-                    <div className="pb-3">
+                    <SheetActions>
                         <Button fullWidth size="md" onClick={close}>
                             Save
                         </Button>
-                    </div>
+                    </SheetActions>
                 }
                 {...v.props}
             >

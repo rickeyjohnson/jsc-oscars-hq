@@ -5,6 +5,7 @@ import { GROUP_MAX_SIZE, GROUP_MIN_SIZE, joinNames } from "../../lib/voting"
 import { MemberAvatar } from "../../ui/MemberAvatar"
 import { Button } from "../../ui/Button"
 import { Sheet } from "../../ui/Sheet"
+import { SheetActions } from "../../ui/SheetActions"
 import { avatarFallback } from "../../ui/logic/avatar"
 import { PEBBLE_CLASS } from "../../ui/logic/pebble"
 
@@ -28,7 +29,7 @@ const GroupSheet = ({ open, candidates, myName, onClose, onSubmit }: Props) => {
             title="Add a group"
             fit
             footer={
-                <div className="flex flex-col gap-2">
+                <SheetActions>
                     <Button
                         fullWidth
                         disabled={!ready}
@@ -39,10 +40,7 @@ const GroupSheet = ({ open, candidates, myName, onClose, onSubmit }: Props) => {
                     >
                         {ready ? `Vote for ${joinNames(names)}` : `Pick ${GROUP_MIN_SIZE} or ${GROUP_MAX_SIZE} people`}
                     </Button>
-                    <Button fullWidth variant="plain" onClick={close}>
-                        Cancel
-                    </Button>
-                </div>
+                </SheetActions>
             }
         >
             <p className="text-subhead text-label-2">

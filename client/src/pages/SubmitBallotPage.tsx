@@ -8,6 +8,7 @@ import { submissionIO } from "../api/submissions"
 import { useUserData } from "../context/UserContenxt"
 import { votedCount } from "../lib/voting"
 import { Button } from "../ui/Button"
+import { SheetActions } from "../ui/SheetActions"
 import { Sheet } from "../ui/Sheet"
 import { closesLabel, submitChecklist } from "../ui/logic/submit"
 import type { BallotDetail } from "../types"
@@ -145,14 +146,14 @@ const SubmitBallotPage = () => {
                 title="Submit your ballot?"
                 fit
                 footer={
-                    <div className="flex flex-col gap-3">
+                    <SheetActions>
                         <Button fullWidth loading={busy} loadingLabel="Submitting…" onClick={confirm}>
                             Submit ballot
                         </Button>
                         <Button fullWidth variant="tinted" disabled={busy} onClick={() => setConfirming(false)}>
                             Keep editing
                         </Button>
-                    </div>
+                    </SheetActions>
                 }
             >
                 <p className="text-body">

@@ -4,7 +4,6 @@ import { Button } from "../../ui/Button"
 import { Chip } from "../../ui/Chip"
 import { Sheet } from "../../ui/Sheet"
 import { Switch } from "../../ui/Switch"
-import { COPY } from "../../ui/copy"
 import { WIDGETS, type WidgetDef, type WidgetId } from "../../ui/logic/homeWidgets"
 import { defaultPrefs, moveWidget, toggleWidget, type HomePrefs } from "../../ui/logic/homePrefs"
 import { applyGroupOrder, dropIndex, edgeScrollSpeed, moveToGap } from "../../ui/logic/dragReorder"
@@ -212,7 +211,7 @@ export function CustomizeHomeSheet({ open, onClose, prefs, isCommittee, released
     const [message, setMessage] = useState("")
     const admin = isCommittee ? ordered.filter((w) => w.adminOnly) : []
     return (
-        <Sheet open={open} onClose={onClose} title="Customize Home" detents={["large"]} trailing={<Button variant="plain" size="md" onClick={onClose}>{COPY.done}</Button>}>
+        <Sheet open={open} onClose={onClose} title="Customize Home" detents={["large"]}>
             <p className="mb-3 text-callout text-label-2">Hold the handle and drag to reorder, or focus a handle and press Space, then the arrow keys. Switch widgets on or off.</p>
             <p id={HELP_ID} className="sr-only">
                 Press Space to pick up, the up and down arrow keys to move, Space to drop, Escape to cancel.

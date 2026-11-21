@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useUserData } from "../context/UserContenxt"
 import { Avatar } from "../ui/Avatar"
 import { Button } from "../ui/Button"
+import { SheetActions } from "../ui/SheetActions"
 import { Sheet } from "../ui/Sheet"
 import ProfileSetup from "./ProfileSetup"
 
@@ -12,7 +13,7 @@ const EditProfileModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
     const name = profile?.username ?? ""
     return (
         <>
-            <Sheet open={isOpen} onClose={onClose} title="Edit profile" fit footer={<Button variant="primary" fullWidth onClick={onClose}>Done</Button>}>
+            <Sheet open={isOpen} onClose={onClose} title="Edit profile" fit footer={<SheetActions><Button variant="primary" fullWidth onClick={onClose}>Done</Button></SheetActions>}>
                 <div className="flex flex-col items-center gap-2 pb-2 text-center">
                     <Avatar id={member?.id ?? profile?.user_id ?? name} name={name || "You"} src={profile?.image_url} size={96} ring="pebble" />
                     <Button variant="tinted" size="md" onClick={() => setPhotoOpen(true)}>
