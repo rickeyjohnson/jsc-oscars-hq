@@ -112,7 +112,7 @@ function Frame({ requestClose, title, detents = ["large"], initialDetent, leadin
                             </button>
                         </div>
                     )}
-                    <header className="flex shrink-0 items-center gap-3 px-5 pb-3 pt-2" style={{ touchAction: desktop ? undefined : "none" }} onPointerDown={startDrag}>
+                    <header className="flex shrink-0 items-center gap-3 px-6 pb-4 pt-3" style={{ touchAction: desktop ? undefined : "none" }} onPointerDown={startDrag}>
                         {leading && <div data-chrome className="shrink-0">{leading}</div>}
                         <h2 id={titleId} data-title tabIndex={-1} className={hideTitle ? "sr-only" : "text-title-3 min-w-0 flex-1 truncate outline-none"}>
                             {title}
@@ -135,7 +135,7 @@ function Frame({ requestClose, title, detents = ["large"], initialDetent, leadin
                     <BodyScroll bodyRef={body} onPointerDown={(e) => !desktop && body.current?.scrollTop === 0 && controls.start(e)}>
                         {children}
                     </BodyScroll>
-                    {footer && <footer className="shrink-0 border-t border-sep px-5 pb-safe pt-3 [padding-bottom:max(env(safe-area-inset-bottom),12px)]">{footer}</footer>}
+                    {footer && <footer className="shrink-0 border-t border-sep px-6 pt-4 [padding-bottom:max(env(safe-area-inset-bottom),20px)] [&_.flex]:gap-3">{footer}</footer>}
                 </motion.div>
             </div>
         </div>
@@ -144,7 +144,7 @@ function Frame({ requestClose, title, detents = ["large"], initialDetent, leadin
 
 function BodyScroll({ bodyRef, onPointerDown, children }: { bodyRef: React.RefObject<HTMLDivElement | null>; onPointerDown: (e: React.PointerEvent) => void; children: ReactNode }) {
     return (
-        <div ref={bodyRef} onPointerDown={onPointerDown} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-5">
+        <div ref={bodyRef} onPointerDown={onPointerDown} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6">
             {children}
         </div>
     )

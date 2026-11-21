@@ -50,17 +50,17 @@ function Panel({ title, message, confirmLabel, destructive, onConfirm, onCancel 
                     className={`material-sheet pointer-events-auto flex max-h-[92dvh] w-full flex-col overflow-y-auto outline-none ${desktop ? "max-w-[400px] rounded-sheet" : "rounded-t-[30px]"}`}
                     {...motionProps}
                 >
-                    <div className={`px-6 pt-6 text-center ${desktop ? "" : "pb-2"}`}>
+                    <div className="px-6 pt-7 text-center">
                         <h2 id={titleId} className="text-title-3">
                             {title}
                         </h2>
                         {message && (
-                            <p id={descId} className="text-callout text-label-2 mt-2">
+                            <p id={descId} className="text-callout text-label-2 mt-3">
                                 {message}
                             </p>
                         )}
                     </div>
-                    <div className="flex flex-col gap-2 px-6 pb-6 pt-4 pb-safe sm:flex-row-reverse">
+                    <div className="flex flex-col gap-3 px-6 pt-6 [padding-bottom:max(env(safe-area-inset-bottom),24px)] sm:flex-row-reverse">
                         <Button variant={destructive ? "destructive" : "primary"} size="md" fullWidth onClick={onConfirm}>
                             {confirmLabel}
                         </Button>

@@ -53,7 +53,7 @@ export const ModalBody = ({ children }: ModalBodyProps) => {
 }
 
 export const ModalFooter = ({ children }: ModalFooterProps) => {
-    return <div className="flex items-center justify-end gap-3">{children}</div>
+    return <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end [&>*]:w-full sm:[&>*]:w-auto">{children}</div>
 }
 
 const WIDE = /max-w-(xl|2xl|3xl|4xl|5xl|6xl|7xl)$/

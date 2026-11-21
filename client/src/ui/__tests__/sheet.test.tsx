@@ -29,6 +29,22 @@ afterEach(() => {
     document.body.style.overflow = ""
 })
 
+describe("Sheet spacing", () => {
+    it("header, body and footer use generous px-6 padding with a safe-area bottom", async () => {
+        render(
+            <Sheet open onClose={() => {}} title="Roomy" footer={<button>Go</button>}>
+                <p>Body</p>
+            </Sheet>,
+        )
+        const dlg = await screen.findByRole("dialog", { name: "Roomy" })
+        expect(dlg.querySelector("header")!.className).toMatch(/px-6/)
+        expect(dlg.querySelector("p")!.parentElement!.className).toMatch(/px-6 pb-6/)
+        const footer = dlg.querySelector("footer")!
+        expect(footer.className).toMatch(/px-6/)
+        expect(footer.className).toMatch(/safe-area-inset-bottom/)
+    })
+})
+
 describe("Sheet", () => {
     it("dialog semantics, focus in, Esc closes, focus returns to opener, scroll lock restored", async () => {
         document.body.style.overflow = "auto"
