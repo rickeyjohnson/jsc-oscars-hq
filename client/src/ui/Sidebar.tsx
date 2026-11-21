@@ -51,7 +51,7 @@ export function Sidebar({
                 })}
                 {committee && (
                     <div role="group" aria-label="Committee" className="pt-4">
-                        <p className="px-3 pb-1 text-footnote font-bold text-label-3">Committee</p>
+                        <p className="px-3 pb-1 text-footnote font-bold text-label-2">Committee</p>
                         {COMMITTEE.map(({ label, to, icon: Icon }) => (
                             <Link key={to} to={to} aria-current={pathname === to ? "page" : undefined} className={`${ITEM} ${pathname === to ? "bg-fill font-bold text-label" : "text-label-2"}`}>
                                 <Icon aria-hidden className="size-5" />

@@ -25,7 +25,7 @@ const FullScreenLoader = ({
                             ease: [0.22, 1, 0.36, 1],
                         },
                     }}
-                    className="fixed inset-0 z-50 flex items-center justify-center p-6 h-screen"
+                    className="fixed inset-0 z-50 flex items-center justify-center p-6"
                 >
                     <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
                     <motion.div

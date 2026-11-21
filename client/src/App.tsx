@@ -1,5 +1,6 @@
-import { lazy, Suspense } from "react"
-import { Navigate, Outlet, Route, Routes } from "react-router-dom"
+import { lazy, Suspense, useEffect } from "react"
+import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom"
+import { titleFor } from "./lib/routeTitle"
 import "./App.css"
 import LandingPage from "./pages/LandingPage"
 import SignupPage from "./pages/SignupPage"
@@ -29,6 +30,15 @@ import { ConfirmProvider } from "./ui/ConfirmProvider"
 
 // Dev-only: the constant folds to null in production builds, so the gallery is tree-shaken out.
 const DesignGallery = import.meta.env.DEV ? lazy(() => import("./dev/DesignGallery")) : null
+
+// Rendered after <Routes> so its effect runs last and wins over any tab-level title.
+const RouteTitle = () => {
+    const { pathname } = useLocation()
+    useEffect(() => {
+        document.title = titleFor(pathname)
+    }, [pathname])
+    return null
+}
 
 const App = () => {
     return (
@@ -122,6 +132,7 @@ const App = () => {
                 </Route>
                 <Route path="*" element={<NotFound />} />
             </Routes>
+            <RouteTitle />
         </ConfirmProvider>
     )
 }

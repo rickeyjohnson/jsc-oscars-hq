@@ -83,7 +83,7 @@ const JokeGeneratorModal = ({ isOpen, onClose }: JokeGeneratorProps) => {
                         filter: "blur(6px)",
                         transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] },
                     }}
-                    className="fixed inset-0 z-50 flex items-center justify-center p-6 h-screen"
+                    className="fixed inset-0 z-50 flex items-center justify-center p-6"
                 >
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
                     <div className="relative flex flex-col justify-items items-center w-[80%] text-[#fffadd]">

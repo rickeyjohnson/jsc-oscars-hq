@@ -16,11 +16,12 @@ const AnnouncementModal = ({ closeModal }: { closeModal: () => void }) => {
 
     return (
         <form
-            className="fixed inset-0 z-50 flex items-center justify-center p-6 h-screen"
+            className="fixed inset-0 z-50 flex items-center justify-center p-6"
             onSubmit={handleAnnouncementSubmit}
         >
             <div
                 className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+                aria-hidden="true"
                 onClick={closeModal}
             ></div>
             <div className="relative bg-zinc-900 border border-amber-100/20 rounded-3xl p-8 max-w-md w-full">

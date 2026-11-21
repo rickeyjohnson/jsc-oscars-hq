@@ -106,7 +106,7 @@ const NomineeModePicker: React.FC<Props> = ({ category, members, onChange }) => 
                             <li key={n.id} className="flex items-center justify-between bg-surface-2 rounded-control px-3 py-2 min-h-11 text-subhead text-label">
                                 <span>
                                     {n.display_name}
-                                    {n.secondary_text && <span className="text-label-3"> - {n.secondary_text}</span>}
+                                    {n.secondary_text && <span className="text-label-2"> - {n.secondary_text}</span>}
                                 </span>
                                 <button
                                     type="button"

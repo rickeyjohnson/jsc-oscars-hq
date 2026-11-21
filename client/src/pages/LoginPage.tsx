@@ -79,7 +79,7 @@ const ForgotPasswordModal = ({ open, closeModal }: { open: boolean; closeModal: 
                         {message.text}
                     </p>
                 )}
-                <p className="text-footnote text-label-3 mt-3">Not getting emails? Ask a committee member to reset your account.</p>
+                <p className="text-footnote text-label-2 mt-3">Not getting emails? Ask a committee member to reset your account.</p>
             </form>
         </Sheet>
     )
@@ -235,7 +235,7 @@ const LoginPage = () => {
                 <Button variant="plain" size="md" onClick={() => setShowForgotPasswordModal(true)}>
                     Forgot password?
                 </Button>
-                <p className="text-footnote text-label-3">Not getting emails? Ask a committee member to reset your account.</p>
+                <p className="text-footnote text-label-2">Not getting emails? Ask a committee member to reset your account.</p>
             </div>
             </div>
             )}

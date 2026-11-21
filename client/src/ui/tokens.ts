@@ -54,6 +54,13 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
     { fg: "accent", bg: "surface", min: 4.5, expect: 9.09 },
     { fg: "accent", bg: "surface-2", min: 4.5, expect: 6.37 },
     { fg: "on-inverse", bg: "inverse", min: 4.5, expect: 16.85 },
+    { fg: "on-accent", bg: "accent", min: 4.5, expect: 11.25 },
+    { fg: "accent", bg: "elevated", min: 4.5, expect: 8.48, note: "sheets" },
+    { fg: "danger", bg: "elevated", min: 4.5, expect: 5.48, note: "sheets" },
+    { fg: "success", bg: "bg", min: 4.5, expect: 8.76 },
+    { fg: "success", bg: "elevated", min: 4.5, expect: 6.87 },
+    { fg: "warn", bg: "bg", min: 4.5, expect: 9.93 },
+    { fg: "warn", bg: "elevated", min: 4.5, expect: 7.79 },
     { fg: "danger", bg: "bg", min: 4.5, expect: 6.99 },
     { fg: "danger", bg: "surface", min: 4.5, expect: 5.88 },
     { fg: "success", bg: "surface", min: 4.5, expect: 7.37 },
@@ -81,4 +88,11 @@ export const REJECTED_PAIRS = [
     { fg: "#FFFFFF", bg: "pebble:cherry", expect: 3.22 },
     { fg: "#FFFFFF", bg: "pebble:grape", expect: 4.23 },
 ]
-export const DECORATIVE_PAIRS = [{ fg: "strip-off", bg: "bg", expect: 1.85 }]
+// Below 4.5 on purpose: icons, chevrons, placeholders and disabled labels only. Never informational text.
+export const DECORATIVE_PAIRS = [
+    { fg: "strip-off", bg: "bg", expect: 1.85 },
+    { fg: "label-3", bg: "bg", expect: 3.69 },
+    { fg: "label-3", bg: "surface", expect: 3.53 },
+    { fg: "label-3", bg: "surface-2", expect: 3.01 },
+    { fg: "danger", bg: "surface-2", expect: 4.12 }, // do not place danger text on fields/option rows
+]
