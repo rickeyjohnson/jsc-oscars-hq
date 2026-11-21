@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest"
-import { pendingBallots, selectableNominees, groupCandidates, votedCount, dashStates, nextUnvotedIndex, findMatchingNominee, ballotCardStatus, completionByMember, chipStatus } from "./voting"
+import { pendingBallots, selectableNominees, groupCandidates, votedCount, dashStates, nextUnvotedIndex, findMatchingNominee, ballotCardStatus, completionByMember, chipStatus, lockedNominees, nomineePebbles, findGroupBySet, joinNames, classifySaveError, saveErrorMessage, reviewRows, firstUnvotedIndex } from "./voting"
+import { avatarFallback } from "../ui/logic/avatar"
 import type { Ballot, Member, Nominee } from "../types"
 
 const nom = (name: string, ids: string[], type: Nominee["type"] = "person"): Nominee => ({
@@ -134,5 +135,50 @@ describe("nextUnvotedIndex from before the first card", () => {
     it("reaches index 0 when nothing is active yet", () => {
         expect(nextUnvotedIndex(["a", "b", "c"], {}, -1)).toBe(0)
         expect(nextUnvotedIndex(["a", "b", "c"], { a: "x" }, -1)).toBe(1)
+    })
+})
+
+describe("group vote helpers", () => {
+    it("locks groups I'm in but hides me as a person", () => {
+        const me = nom("Me", ["m-me"])
+        const g = nom("Me, Nick", ["m-me", "m-Nick"], "group")
+        expect(lockedNominees([me, g, nick, groupMicahNick], "m-me").map((n) => n.display_name)).toEqual(["Me, Nick"])
+        expect(lockedNominees([g], null)).toEqual([])
+    })
+    it("people keep their member pebble; others take pebbles in list order, all seven before repeating", () => {
+        const others = Array.from({ length: 8 }, (_, i) => nom(`G${i}`, [`a${i}`, `b${i}`], "group"))
+        const p = nomineePebbles([micah, ...others])
+        expect(p[micah.id]).toBe(avatarFallback("m-Micah"))
+        expect(others.slice(0, 7).map((n) => p[n.id])).toEqual(["strawberry", "cherry", "tangerine", "lemon", "lime", "sky", "grape"])
+        expect(p[others[7].id]).toBe("strawberry")
+    })
+    it("finds an existing group by its set of people", () => {
+        expect(findGroupBySet([groupMicahNick], ["m-Nick", "m-Micah"])).toBe(groupMicahNick)
+        expect(findGroupBySet([groupMicahNick], ["m-Nick"])).toBeUndefined()
+    })
+    it("joins names", () => {
+        expect(joinNames(["A", "B"])).toBe("A & B")
+        expect(joinNames(["A", "B", "C"])).toBe("A, B & C")
+    })
+    it("classifies save errors", () => {
+        const open = new Date(Date.now() + 1000)
+        const now = new Date()
+        expect(classifySaveError(new Error("x"), new Date(Date.now() - 1), now)).toBe("closed")
+        expect(classifySaveError(new TypeError("Failed to fetch"), open, now)).toBe("network")
+        expect(classifySaveError(new Error("x"), open, now, false)).toBe("network")
+        expect(classifySaveError({ code: "42501", message: "new row violates row-level security" }, open, now)).toBe("rule")
+        expect(classifySaveError(new Error("x"), open, now)).toBe("generic")
+        expect(saveErrorMessage("closed").canRetry).toBe(false)
+        expect(saveErrorMessage("network").canRetry).toBe(true)
+    })
+    it("review rows show picks, pebbles, and skipped categories", () => {
+        const cats = [
+            { id: "c1", name: "One", description: "", order: 0, nominee_mode: "group" as const, allow_member_add: false, nominees: [groupMicahNick] },
+            { id: "c2", name: "Two", description: "", order: 1, nominee_mode: "preset" as const, allow_member_add: false, nominees: [nick] },
+        ]
+        const rows = reviewRows(cats, { c1: groupMicahNick.id }, "m-me")
+        expect(rows[0]).toMatchObject({ pick: "Micah, Nick", pebble: "strawberry" })
+        expect(rows[1]).toMatchObject({ pick: null, pebble: null })
+        expect(firstUnvotedIndex(["c1", "c2"], { c1: "x" })).toBe(1)
     })
 })

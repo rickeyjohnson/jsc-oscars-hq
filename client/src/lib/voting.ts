@@ -1,4 +1,7 @@
-import type { Ballot, Member, Nominee } from "../types"
+import type { Ballot, Category, Member, Nominee } from "../types"
+import type { PebbleName } from "../ui/tokens"
+import { avatarFallback } from "../ui/logic/avatar"
+import { pebbleAt } from "../ui/logic/pebble"
 
 // Members never see nominees linked to themselves (includes groups they are in).
 export const selectableNominees = (nominees: Nominee[], myMemberId: string | null): Nominee[] =>
@@ -64,3 +67,74 @@ export type ChipStatus = Ballot["status"] | "ended"
 // An open ballot whose close time has passed (never closed by hand) reads as "ended".
 export const chipStatus = (b: Pick<Ballot, "status" | "closes_at">, now: Date): ChipStatus =>
     b.status === "open" && new Date(b.closes_at).getTime() <= now.getTime() ? "ended" : b.status
+
+// Group votes: anyone may make a group of 2 to GROUP_MAX_SIZE other people (client-side cap; the DB only requires 2+).
+export const GROUP_MIN_SIZE = 2
+export const GROUP_MAX_SIZE = 3
+
+export const isGroupNominee = (n: Nominee): boolean => n.member_ids.length > 1
+
+/** Groups that include me: shown locked, never hidden. A single-person nominee that is me stays hidden. */
+export const lockedNominees = (nominees: Nominee[], myMemberId: string | null): Nominee[] =>
+    myMemberId ? nominees.filter((n) => isGroupNominee(n) && n.member_ids.includes(myMemberId)) : []
+
+/** The stable identity of a nominee: the member id for one person (so their color matches everywhere), else the nominee id. */
+export const nomineeKey = (n: Nominee): string => (n.member_ids.length === 1 ? n.member_ids[0] : n.id)
+
+/**
+ * Pebble per nominee. A person keeps their member pebble app-wide; every other option (group, noun, outsider)
+ * takes pebbles in list order from the top, so all seven are used before any repeats.
+ */
+export const nomineePebbles = (nominees: Nominee[]): Record<string, PebbleName> => {
+    const out: Record<string, PebbleName> = {}
+    let next = 0
+    for (const n of nominees) out[n.id] = n.member_ids.length === 1 ? avatarFallback(n.member_ids[0]) : pebbleAt(next++)
+    return out
+}
+
+export const joinNames = (names: string[]): string =>
+    names.length <= 1 ? (names[0] ?? "") : `${names.slice(0, -1).join(", ")} & ${names[names.length - 1]}`
+
+export const findGroupBySet = (nominees: Nominee[], memberIds: string[]): Nominee | undefined => {
+    const key = [...memberIds].sort().join("|")
+    return nominees.find((n) => isGroupNominee(n) && [...n.member_ids].sort().join("|") === key)
+}
+
+export type VoteMessage = { tone: "error" | "info"; title: string; detail: string; retry?: () => void }
+export type SaveErrorKind = "closed" | "network" | "rule" | "generic"
+
+/** Sort a failed save into the one message that tells the voter what to do. */
+export const classifySaveError = (e: unknown, closesAt: Date, now: Date, online = true): SaveErrorKind => {
+    if (now.getTime() >= closesAt.getTime()) return "closed"
+    const err = e as { code?: string; message?: string } | null
+    const msg = String(err?.message ?? "")
+    if (!online || e instanceof TypeError || /failed to fetch|network|load failed/i.test(msg)) return "network"
+    if (err?.code === "42501" || /row-level security|violates/i.test(msg)) return "rule"
+    return "generic"
+}
+
+export const saveErrorMessage = (kind: SaveErrorKind): Omit<VoteMessage, "retry" | "tone"> & { canRetry: boolean } => {
+    switch (kind) {
+        case "closed":
+            return { title: "Voting has closed", detail: "Your last saved vote stands.", canRetry: false }
+        case "network":
+            return { title: "Couldn't save your vote", detail: "No connection. Your previous vote is still saved.", canRetry: true }
+        case "rule":
+            return { title: "Couldn't save your vote", detail: "You can't vote for yourself or a group you're in.", canRetry: false }
+        default:
+            return { title: "Couldn't save your vote", detail: "Something went wrong. Try again.", canRetry: true }
+    }
+}
+
+export type ReviewRow = { index: number; category: string; pick: string | null; pebble: PebbleName | null }
+
+/** One row per category for the Review step: what I picked (with its pebble), or null when skipped. */
+export const reviewRows = (categories: Category[], myVotes: Record<string, string>, myMemberId: string | null): ReviewRow[] =>
+    categories.map((c, index) => {
+        const options = selectableNominees(c.nominees, myMemberId)
+        const picked = options.find((n) => n.id === myVotes[c.id])
+        return { index, category: c.name, pick: picked?.display_name ?? null, pebble: picked ? nomineePebbles(options)[picked.id] : null }
+    })
+
+/** First category with no vote, or -1 when all are voted. */
+export const firstUnvotedIndex = (categoryIds: string[], myVotes: Record<string, string>): number => categoryIds.findIndex((id) => !myVotes[id])
