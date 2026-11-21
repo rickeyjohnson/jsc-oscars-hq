@@ -10,7 +10,6 @@ import { nomineeStats } from "../lib/stats"
 import { fetchBallotDetail } from "../api/ballots"
 import type { Nominee } from "../types"
 import { Avatar } from "../ui/Avatar"
-import { ColorBlock } from "../ui/ColorBlock"
 import { GroupedSection } from "../ui/GroupedSection"
 import { ListRow } from "../ui/ListRow"
 import { Screen } from "../ui/Screen"
@@ -70,19 +69,16 @@ const ProfilePage = () => {
                     {stats ? (
                         <div className="mb-6 space-y-2">
                             <div className="grid grid-cols-3 gap-2 lg:grid-cols-1">
-                                {stats.tiles.map((s) =>
-                                    s.locked ? (
-                                        <div key={s.label} className="rounded-card bg-surface p-3 text-label lg:p-4">
+                                {stats.tiles.map((s) => (
+                                    <div key={s.label} className="rounded-card bg-surface p-3 text-label lg:p-4">
+                                        {s.locked ? (
                                             <p className="flex items-center gap-1 text-headline"><Lock aria-hidden className="size-4 shrink-0" />{s.label}</p>
-                                            <p className="text-caption-1 text-label-2">{s.value}</p>
-                                        </div>
-                                    ) : (
-                                        <ColorBlock key={s.label} pebble={s.pebble!} className="!p-3 lg:!p-4">
+                                        ) : (
                                             <p className="font-display text-title-1 tabular-nums">{s.value}</p>
-                                            <p className="text-caption-1">{s.label}</p>
-                                        </ColorBlock>
-                                    ),
-                                )}
+                                        )}
+                                        <p className="text-caption-1 text-label-2">{s.locked ? s.value : s.label}</p>
+                                    </div>
+                                ))}
                             </div>
                             <div className="grid grid-cols-3 gap-2 lg:grid-cols-1">
                                 {stats.plain.map((s) => (

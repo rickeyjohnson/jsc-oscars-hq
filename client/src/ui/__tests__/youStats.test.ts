@@ -11,7 +11,7 @@ describe("youStats", () => {
     it("before release: wins and win rate are locked, Noms shows, plain stats stay", () => {
         const s = youStats({ released: false, summaries: [b("a", 20, 20), b("b", 21, 21), b("c", 10, 0)], tally: null, noms: 4, ceremonyAt: ceremony, now })
         expect(s.tiles.map((x) => [x.label, x.value, Boolean(x.locked)])).toEqual([["Wins", "After the reveal", true], ["Noms", "4", false], ["Win rate", "After the reveal", true]])
-        expect(s.tiles[1].pebble).not.toBeNull()
+        expect(s.tiles.every((x) => x.pebble === null)).toBe(true)
         expect(s.plain.map((x) => [x.label, x.value])).toEqual([["Ballots voted", "2 of 3"], ["Categories voted", "41"], ["Days to Oscars", "13"]])
         expect(s.plain.every((x) => x.pebble === null)).toBe(true)
     })
