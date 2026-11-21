@@ -19,6 +19,8 @@ interface UserDataContextType {
     loading: boolean
     /** True when the member lookup errored (so "no member" is not trustworthy). */
     memberFailed?: boolean
+    /** True when the profile lookup errored (so "no profile" / "not committee" is not trustworthy). */
+    profileFailed?: boolean
     /** Re-run the profile + member lookup (e.g. after claiming a name). */
     refetch: () => Promise<void>
     fetchOscars: () => Promise<OscarsEvent[]>
@@ -44,6 +46,8 @@ export const UserDataProvider = ({
     const [member, setMember] = useState<Member | null>(null)
     const [loading, setLoading] = useState(true)
     const [memberFailed, setMemberFailed] = useState(false)
+    const [profileFailed, setProfileFailed] = useState(false)
+    const retried = useRef(false)
     const [tick, setTick] = useState(0)
     const pending = useRef<(() => void)[]>([])
 
@@ -88,7 +92,15 @@ export const UserDataProvider = ({
 
             if (profileRes.error) {
                 console.error("Error fetching profile:", profileRes.error)
+                setProfileFailed(true)
+                // a cold database often answers the second time: try once more on our own
+                if (!retried.current) {
+                    retried.current = true
+                    setTimeout(() => setTick((t) => t + 1), 1500)
+                }
             } else {
+                retried.current = false
+                setProfileFailed(false)
                 setProfile(profileRes.data as UserProfile)
             }
             if (memberRes.error) {
@@ -115,7 +127,7 @@ export const UserDataProvider = ({
     )
 
     return (
-        <UserDataContext.Provider value={{ profile, member, loading, memberFailed, refetch, fetchOscars }}>
+        <UserDataContext.Provider value={{ profile, member, loading, memberFailed, profileFailed, refetch, fetchOscars }}>
             {children}
         </UserDataContext.Provider>
     )

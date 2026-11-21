@@ -11,6 +11,11 @@ describe("committeeGate", () => {
     it("denies non-committee", () => {
         expect(committeeGate(false, { is_committee: false })).toBe("deny")
     })
+    it("a failed profile lookup is an error, not a denial (P1-9)", () => {
+        expect(committeeGate(false, null, true)).toBe("error")
+        expect(committeeGate(false, { is_committee: true }, true)).toBe("allow")
+        expect(committeeGate(false, null, false)).toBe("deny")
+    })
     it("allows committee", () => {
         expect(committeeGate(false, { is_committee: true })).toBe("allow")
     })
