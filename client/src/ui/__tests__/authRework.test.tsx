@@ -175,15 +175,44 @@ describe("shouldClaimName", () => {
 })
 
 describe("Claim name page", () => {
-    it("lists only available names and claims the picked one", async () => {
+    it("lists every name with taken ones crossed out and unselectable, and claims the picked one", async () => {
         wrap(<ClaimNamePage />)
         expect(await screen.findByRole("button", { name: "Ann" })).toBeTruthy()
-        expect(screen.queryByRole("button", { name: /Bo/ })).toBeNull()
+        const bo = screen.getByRole("button", { name: /Bo/ })
+        expect(bo.getAttribute("aria-disabled")).toBe("true")
+        expect(bo.className).toMatch(/line-through/)
+        fireEvent.click(bo)
+        expect((screen.getByRole("button", { name: "Continue" }) as HTMLButtonElement).disabled).toBe(true)
         fireEvent.click(screen.getByRole("button", { name: "Cy" }))
         fireEvent.click(screen.getByRole("button", { name: "Continue" }))
         await waitFor(() => expect(navigate).toHaveBeenCalledWith("/app", { replace: true }))
         expect(rpc).toHaveBeenCalledWith("claim_member_name", { p_name: "Cy" })
         expect(refetch).toHaveBeenCalled()
+    })
+    it("after a name-taken error it reloads the list and clears the pick", async () => {
+        rpc.mockResolvedValueOnce({ error: { code: "P0001", message: "name taken" } })
+        wrap(<ClaimNamePage />)
+        fireEvent.click(await screen.findByRole("button", { name: "Ann" }))
+        status.mockResolvedValue([{ name: "Ann", taken: true }, ...NAMES.slice(1)])
+        fireEvent.click(screen.getByRole("button", { name: "Continue" }))
+        expect((await screen.findByRole("alert")).textContent).toMatch(/isn't available/)
+        await waitFor(() => expect(status).toHaveBeenCalledTimes(2))
+        await waitFor(() => expect(screen.getByRole("button", { name: /Ann/ }).getAttribute("aria-disabled")).toBe("true"))
+        expect(screen.queryByRole("button", { name: /Ann/ })!.getAttribute("aria-pressed")).toBe("false")
+        expect((screen.getByRole("button", { name: "Continue" }) as HTMLButtonElement).disabled).toBe(true)
+    })
+    it("shows Claiming while a pending signup name is claimed, then chips and an error if it fails", async () => {
+        sessionStorage.setItem("jsc.pendingName", "Ann")
+        let fail!: (v: unknown) => void
+        rpc.mockReturnValueOnce(new Promise((r) => { fail = r }))
+        wrap(<ClaimNamePage />)
+        expect(screen.getByText(/claiming ann/i)).toBeTruthy()
+        await waitFor(() => expect(status).toHaveBeenCalled())
+        expect(screen.queryByRole("button", { name: "Cy" })).toBeNull() // no chip flash
+        fail({ error: { code: "P0001", message: "taken" } })
+        expect(await screen.findByRole("button", { name: "Cy" })).toBeTruthy()
+        expect((await screen.findByRole("alert")).textContent).toMatch(/isn't available/)
+        expect(screen.queryByText(/claiming ann/i)).toBeNull()
     })
     it("shows a clear error when the RPC is missing", async () => {
         rpc.mockResolvedValue({ error: { code: "PGRST202", message: "not found" } })
