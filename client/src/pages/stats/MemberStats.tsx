@@ -12,7 +12,7 @@ import {
 import { HowCalculatedSheet } from "./HowCalculatedSheet"
 
 const NOTE = "text-footnote text-label-2"
-const CARD = "rounded-card bg-surface p-4"
+const CARD = "min-w-0 rounded-card bg-surface p-3 sm:p-4"
 const PILL = { over: "bg-success text-bg", under: "bg-warn text-bg", par: "bg-inverse text-on-inverse" } as const
 
 function Card({ title, sub, children }: { title: string; sub?: string; children: ReactNode }) {
@@ -81,12 +81,12 @@ export function MemberStats({ model, memberId, viewer = true, pendingLabel }: { 
     return (
         <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
             <div className="lg:col-span-2">
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                     {tiles.map((x) => (
-                        <div key={x.label} role="group" aria-label={x.label} className="rounded-card bg-surface p-3">
-                            <p className="text-caption-1 uppercase tracking-wider text-label-2">{x.label}</p>
-                            <p className="font-display text-title-1 tabular-nums">{x.value}</p>
-                            <p className={`text-caption-1 font-bold ${PEBBLE_TEXT[pebble]}`}>{x.rank}</p>
+                        <div key={x.label} role="group" aria-label={x.label} className="min-w-0 rounded-card bg-surface p-2.5 sm:p-3">
+                            <p className="truncate text-caption-2 uppercase tracking-wide text-label-2 sm:text-caption-1 sm:tracking-wider">{x.label}</p>
+                            <p className="whitespace-nowrap font-display text-stat tabular-nums">{x.value}</p>
+                            <p className={`break-words text-caption-2 font-bold sm:text-caption-1 ${PEBBLE_TEXT[pebble]}`}>{x.rank}</p>
                         </div>
                     ))}
                 </div>

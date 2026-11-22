@@ -163,7 +163,7 @@ function Progress({ state, now }: Props) {
                 </>
             ) : (
                 <>
-                    <p className="text-title-2 sm:text-title-1 font-display tabular-nums">
+                    <p className="text-stat font-display tabular-nums">
                         {voted} / {total}
                     </p>
                     <p className="mt-1 text-footnote text-label-2">
@@ -373,7 +373,7 @@ function YourStats({ state, memberId }: Props) {
                         ["Win rate", `${rate}%`],
                     ].map(([k, v]) => (
                         <div key={k}>
-                            <dd className="text-title-2 sm:text-title-1 font-display tabular-nums">{v}</dd>
+                            <dd className="text-stat font-display tabular-nums">{v}</dd>
                             <dt className="text-footnote text-label-2">{k}</dt>
                         </div>
                     ))}
@@ -396,7 +396,7 @@ function BallotHealth({ state }: Props) {
                 <p className="text-callout text-label-2">There's no open main ballot right now.</p>
             ) : (
                 <>
-                    <p className="text-title-2 sm:text-title-1 font-display tabular-nums">
+                    <p className="text-stat font-display tabular-nums">
                         {votesIn} / {possible}
                     </p>
                     <p className="text-footnote text-label-2">votes in</p>
@@ -418,7 +418,7 @@ function Tiebreak({ state, now }: Props) {
                 <p className="text-callout text-label-2">No tiebreak rounds are open.</p>
             ) : (
                 <>
-                    <p className="text-title-2 sm:text-title-1 font-display tabular-nums">{rounds.length}</p>
+                    <p className="text-stat font-display tabular-nums">{rounds.length}</p>
                     <p className="text-footnote text-label-2">open {rounds.length === 1 ? "round" : "rounds"}</p>
                     <p className="mt-1 text-footnote text-label-2">
                         {left} {left === 1 ? "category" : "categories"} left
@@ -441,7 +441,7 @@ function RevealReadiness({ state }: Props) {
                 <p className="text-title-3">The envelope is open.</p>
             ) : (
                 <>
-                    <p className="text-title-2 sm:text-title-1 font-display tabular-nums">
+                    <p className="text-stat font-display tabular-nums">
                         {ok} / {checks.length}
                     </p>
                     <p className="text-footnote text-label-2">checks ready</p>

@@ -85,3 +85,12 @@ describe("CompareChart", () => {
         expect(within(screen.getByRole("table", { hidden: true })).getAllByRole("row", { hidden: true })).toHaveLength(5)
     })
 })
+
+describe("phone overflow guard", () => {
+    it("the hidden data table sits inside an .sr-only wrapper (a bare sr-only table ignores width/overflow and widens the page)", () => {
+        render(<NomsWinsChart sems={m.sems} cells={m.cells.a} pebble="sky" name="Ann" />)
+        const table = screen.getByRole("table", { hidden: true })
+        expect(table.className).not.toMatch(/sr-only/)
+        expect(table.parentElement?.className).toMatch(/sr-only/)
+    })
+})

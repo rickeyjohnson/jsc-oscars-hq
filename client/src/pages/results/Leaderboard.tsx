@@ -27,6 +27,8 @@ const BLOCK = [
 const rankText = (e: Entry) => (e.rank === null ? "·" : `${e.tied ? "T" : ""}${e.rank}`)
 const rankSr = (e: Entry) => (e.rank === null ? "Not ranked" : `${e.tied ? "Tied " : ""}rank ${e.rank}`)
 
+// Stat columns: explicit widths shared by the header and every row so labels sit over their numbers.
+const COL = "w-10 shrink-0 text-center sm:w-12"
 const memberPath = (id: string) => `/app/results/members/${id}`
 
 type Fmt = { main: string; wins: string; noms: string; rate: string }
@@ -136,11 +138,14 @@ export function Leaderboard({ model, pendingLabel, viewerId }: { model: StatsMod
             </div>
 
             {rest.length > 0 && (
-                <section aria-label={`Leaderboard, ${scopeName}`} className="rounded-card bg-surface p-4">
-                    <div aria-hidden className="mb-1 flex justify-end gap-0.5 text-caption-2 uppercase text-label-3">
-                        <span className="w-12 text-center">Wins</span>
-                        <span className="w-12 text-center">Noms</span>
-                        <span className="w-12 text-center">Win %</span>
+                <section aria-label={`Leaderboard, ${scopeName}`} className="min-w-0 rounded-card bg-surface p-2 sm:p-4">
+                    <div aria-hidden className="mb-1 flex items-center gap-2 px-2 text-caption-2 uppercase text-label-3">
+                        <span className="min-w-0 flex-1" />
+                        <span className="flex shrink-0 gap-0.5">
+                            <span className={COL}>Wins</span>
+                            <span className={COL}>Noms</span>
+                            <span className={COL}>Win %</span>
+                        </span>
                     </div>
                     <ol start={podium.length + 1} className="m-0 list-none divide-y divide-sep p-0">
                         {rest.map((e) => {
@@ -150,23 +155,21 @@ export function Leaderboard({ model, pendingLabel, viewerId }: { model: StatsMod
                             const col = (s: SortKey) => (sort === s ? "text-accent" : "")
                             return (
                                 <li key={e.id}>
-                                    <Link to={memberPath(e.id)} className={`flex min-h-14 items-center gap-2.5 rounded-control px-2 py-1.5 hover:bg-fill focus-visible:outline-2 focus-visible:outline-accent ${me ? "bg-fill outline outline-2 outline-accent" : ""}`}>
-                                        <span className="w-6 shrink-0 text-center text-subhead font-bold text-label-2"><span aria-hidden>{rankText(e)}</span><span className="sr-only">{rankSr(e)}: </span></span>
-                                        <MemberAvatar memberId={e.id} name={e.name} size={40} ring="pebble" decorative />
+                                    <Link to={memberPath(e.id)} className={`flex min-h-14 items-center gap-2 rounded-control px-2 py-1.5 hover:bg-fill focus-visible:outline-2 focus-visible:outline-accent ${me ? "bg-fill outline outline-2 outline-accent" : ""}`}>
+                                        <span className="w-7 shrink-0 text-center text-subhead font-bold tabular-nums text-label-2"><span aria-hidden>{rankText(e)}</span><span className="sr-only">{rankSr(e)}: </span></span>
+                                        <MemberAvatar memberId={e.id} name={e.name} size={32} ring="pebble" decorative />
                                         <span className="min-w-0 flex-1">
-                                            <span className="flex flex-wrap items-center gap-1.5 text-subhead font-bold">
-                                                <span className="break-words">{e.name}</span>
-                                                {me && <span className="rounded-full bg-inverse px-1.5 text-caption-2 font-bold text-on-inverse">You</span>}
-                                                {e.low && sort === "rate" && <span className="rounded-full bg-surface-2 px-1.5 text-caption-2 font-bold">few noms</span>}
-                                            </span>
-                                            <span className="mt-0.5 flex items-center text-caption-2 text-label-2">
+                                            <span className="block truncate text-subhead font-bold">{e.name}</span>
+                                            <span className="mt-0.5 flex min-w-0 items-center gap-1.5 overflow-hidden text-caption-2 text-label-2">
                                                 {e.none ? "No data yet" : <Sparkline series={series} pebble={pebbleOf(e.id, e.name)} label={`Win rate by semester: ${series.map((v) => fmtRate(v, 0)).join(", ")}`} />}
+                                                {me && <span className="shrink-0 rounded-full bg-inverse px-1.5 text-caption-2 font-bold text-on-inverse">You</span>}
+                                                {e.low && sort === "rate" && <span className="shrink-0 rounded-full bg-surface-2 px-1.5 text-caption-2 font-bold">few noms</span>}
                                             </span>
                                         </span>
                                         <span aria-hidden className="flex shrink-0 gap-0.5 text-subhead font-bold tabular-nums">
-                                            <span className={`w-12 text-center ${col("wins")}`}>{f.wins}</span>
-                                            <span className={`w-12 text-center ${col("noms")}`}>{f.noms}</span>
-                                            <span className={`w-12 text-center ${col("rate")}`}>{f.rate}</span>
+                                            <span className={`${COL} ${col("wins")}`}>{f.wins}</span>
+                                            <span className={`${COL} ${col("noms")}`}>{f.noms}</span>
+                                            <span className={`${COL} ${col("rate")}`}>{f.rate}</span>
                                         </span>
                                         <span className="sr-only">{e.none ? "No nominations yet" : `${f.wins} wins, ${f.noms} noms, ${f.rate} win rate`}</span>
                                     </Link>

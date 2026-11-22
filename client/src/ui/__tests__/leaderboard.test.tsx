@@ -61,7 +61,7 @@ describe("Leaderboard", () => {
     it("the viewer's row is marked You", () => {
         who = "m-Anthony"
         view(<Leaderboard model={model} pendingLabel={null} viewerId="m-Anthony" />)
-        expect(within(screen.getByText("Anthony", { selector: "span.break-words" }).closest("li")!).getByText("You")).toBeTruthy()
+        expect(within(screen.getByText("Anthony", { selector: "span.truncate" }).closest("li")!).getByText("You")).toBeTruthy()
     })
     it("each row has a small win-rate trend and rows link to the member's read-only stats", () => {
         view()

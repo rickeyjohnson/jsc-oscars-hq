@@ -15,11 +15,13 @@ export type ChartTable = { caption: string; head: string[]; rows: string[][] }
 
 function Chart({ h, summary, table, children }: { h: number; summary: string; table: ChartTable; children: ReactNode }) {
     return (
-        <figure className="m-0">
+        <figure className="relative m-0">
             <svg viewBox={`0 0 ${W} ${h}`} role="img" aria-label={summary} className="mx-auto block h-auto w-full max-w-[560px]">
                 {children}
             </svg>
-            <table className="sr-only">
+            {/* A bare <table className="sr-only"> ignores width/overflow (tables size to content), so it escaped the card and widened the page on phones. */}
+            <div className="sr-only">
+            <table>
                 <caption>{table.caption}</caption>
                 <thead>
                     <tr>
@@ -36,6 +38,7 @@ function Chart({ h, summary, table, children }: { h: number; summary: string; ta
                     ))}
                 </tbody>
             </table>
+            </div>
         </figure>
     )
 }

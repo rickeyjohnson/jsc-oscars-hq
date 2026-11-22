@@ -182,6 +182,13 @@
     backdrop-filter: none;
 }
 
+/* Fluid stat numbers: title-2 on the narrowest phones, up to title-1 by ~420px, tokens only. */
+@utility text-stat {
+    font-size: clamp(var(--text-title-2), 5.4vw, var(--text-title-1));
+    line-height: var(--text-title-1--line-height);
+    font-weight: var(--text-title-1--font-weight);
+}
+
 @utility pt-safe {
     padding-top: env(safe-area-inset-top);
 }
