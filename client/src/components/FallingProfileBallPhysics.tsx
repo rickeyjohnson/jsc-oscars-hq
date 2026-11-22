@@ -14,7 +14,7 @@ import {
 import { settledLayout } from "../ui/logic/settle"
 import { BALL_RADIUS_MAX, ballRadius, ballRingColor } from "../ui/logic/landingBalls"
 
-const BALL_COUNT = 13
+const BALL_COUNT = 14
 const WALL_THICKNESS = 200
 const RING_WIDTH = 3
 const RING_GAP = 2
