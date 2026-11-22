@@ -54,7 +54,7 @@ export function SuggestView({ window: w, phase, now }: { window: MyocWindow | nu
     const refresh = useCallback(() => setReload((k) => k + 1), [])
 
     if (!w || phase === "none") {
-        return <EmptyState icon={Lightbulb} title="MYOC isn't open" body="When the committee opens it, you can suggest categories for the next ballot here." />
+        return <EmptyState icon={Lightbulb} title="Make Your Own Categories isn't open" body="When the committee opens it, you can suggest categories for the next ballot here." />
     }
     if (load.status === "error") {
         if (load.unavailable) return <EmptyState icon={Lightbulb} title={MYOC_UNAVAILABLE} body="The committee is still setting it up." />
@@ -123,23 +123,23 @@ export function SuggestView({ window: w, phase, now }: { window: MyocWindow | nu
     return (
         <div className="space-y-6 lg:grid lg:grid-cols-2 lg:items-start lg:gap-8 lg:space-y-0">
             <div className="space-y-4">
-                <section aria-label="MYOC status" className={`rounded-card border-l-4 bg-surface p-4 ${PEBBLE_EDGE[open ? "lime" : phase === "upcoming" ? "sky" : "grape"]}`}>
-                    <p className="text-caption-2 font-bold uppercase tracking-wider text-label-2">MYOC</p>
+                <section aria-label="Make Your Own Categories status" className={`rounded-card border-l-4 bg-surface p-4 ${PEBBLE_EDGE[open ? "lime" : phase === "upcoming" ? "sky" : "grape"]}`}>
+                    <p className="text-caption-2 font-bold uppercase tracking-wider text-label-2">Make Your Own Categories</p>
                     {open && (
                         <>
-                            <h2 className="mt-1 text-headline">Suggest a category</h2>
+                            <h2 className="mt-1 text-balance text-headline">Suggest a category</h2>
                             <p className="mt-1 text-callout text-label-2">{closesLabel(w, now)}</p>
                         </>
                     )}
                     {phase === "upcoming" && (
                         <>
-                            <h2 className="mt-1 text-headline">MYOC isn't open yet</h2>
+                            <h2 className="mt-1 text-balance text-headline">Make Your Own Categories isn't open yet</h2>
                             <p className="mt-1 text-callout text-label-2">Opens {when(w.opens_at)}</p>
                         </>
                     )}
                     {phase === "closed" && (
                         <>
-                            <h2 className="mt-1 text-headline">MYOC is closed</h2>
+                            <h2 className="mt-1 text-balance text-headline">Make Your Own Categories is closed</h2>
                             <p className="mt-1 text-callout text-label-2">Thanks for your ideas. The committee is putting the ballot together.</p>
                         </>
                     )}

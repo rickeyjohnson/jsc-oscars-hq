@@ -38,7 +38,7 @@ function Widget({ id, status, retry, to, children }: { id: WidgetId; status: Sta
     const ready = status === "ready"
     return (
         <section aria-labelledby={hid} className={`@container relative min-w-0 break-words rounded-card border-l-4 bg-surface p-4 ${EDGE[widgetColor(id)]}`}>
-            <h2 id={hid} className="mb-2 text-caption-2 uppercase tracking-wider text-label-2">
+            <h2 id={hid} className="mb-2 text-balance text-caption-2 uppercase tracking-wider text-label-2">
                 {to && ready ? (
                     <Link to={to} className={STRETCH}>
                         {title}

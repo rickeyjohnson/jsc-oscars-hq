@@ -27,7 +27,7 @@ export const WIDGETS: readonly WidgetDef[] = [
     { id: "pending", title: "Your ballots", blurb: "Ballots you still need to vote on", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: true, span: 2, color: "lime" },
     { id: "ballotCloses", title: "Ballot closes", blurb: "When the next ballot closes", adminOnly: false, requiresRelease: false, defaultMember: false, defaultCommittee: false, span: 1, color: "cherry" },
     { id: "progress", title: "Your progress", blurb: "Votes you've cast so far", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: true, span: 1, color: "sky" },
-    { id: "myoc", title: "MYOC", blurb: "Suggest categories while MYOC is open", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: false, span: 1, color: "cherry" },
+    { id: "myoc", title: "Make Your Own Categories", blurb: "Suggest categories while the window is open", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: false, span: 1, color: "cherry" },
     { id: "yourStats", title: "Your stats", blurb: "Your picks and win rate", adminOnly: false, requiresRelease: true, defaultMember: false, defaultCommittee: false, span: 1, color: "grape" },
     { id: "latestWinners", title: "Latest winners", blurb: "Who just won", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: true, span: 2, color: "tangerine" },
     { id: "leaderboardPeek", title: "Leaderboard", blurb: "Top of the standings", adminOnly: false, requiresRelease: true, defaultMember: true, defaultCommittee: true, span: 2, color: "strawberry" },

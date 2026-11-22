@@ -96,7 +96,7 @@ const BallotBuilderPage = () => {
     }, [draftId])
 
     useEffect(() => {
-        if (seed.categories.length > 0) toast.show(`${seed.categories.length} ${seed.categories.length === 1 ? "category" : "categories"} added from MYOC`)
+        if (seed.categories.length > 0) toast.show(`${seed.categories.length} ${seed.categories.length === 1 ? "category" : "categories"} added from Make Your Own Categories`)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 

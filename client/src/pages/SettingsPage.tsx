@@ -88,7 +88,7 @@ const SettingsPage = () => {
                 <GroupedSection header="App">
                     <ListRow title="Customize Home" leading={icon(SlidersHorizontal)} chevron onClick={() => setCustomizing(true)} />
                     <ListRow title="Add Oscar night to your calendar" leading={icon(CalendarPlus)} onClick={addToCalendar} />
-                    <ListRow title="MYOC" subtitle="Suggest a category for the next ballot" leading={icon(Lightbulb)} chevron to="/app/profile/settings/myoc" />
+                    <ListRow title="Make Your Own Categories" subtitle="Suggest a category for the next ballot" leading={icon(Lightbulb)} chevron to="/app/profile/settings/myoc" />
                     <ListRow title="Reduce motion" subtitle="Turns off animations and transitions" leading={icon(Waves)} trailing={<Switch label="Reduce motion" checked={reduce} onChange={setReduce} />} />
                     <ListRow title="Install on your phone" subtitle="In your browser's share menu, choose Add to Home Screen" leading={icon(Smartphone)} />
                 </GroupedSection>

@@ -3,9 +3,9 @@ import { closesInLabel } from "./time"
 
 export const NAME_MAX = 80
 export const DESC_MAX = 300
-export const MYOC_UNAVAILABLE = "MYOC isn't available yet."
-export const MYOC_OLD_LIMIT = "MYOC still has the old limit; ask a committee member to apply the update."
-export const MYOC_LOAD_FAILED = "Couldn't load MYOC. Check your connection and try again."
+export const MYOC_UNAVAILABLE = "Make Your Own Categories isn't available yet."
+export const MYOC_OLD_LIMIT = "Make Your Own Categories still has the old limit; ask a committee member to apply the update."
+export const MYOC_LOAD_FAILED = "Couldn't load Make Your Own Categories. Check your connection and try again."
 
 export type MyocHint = "person" | "group" | "thing" | "other"
 export type MyocStatus = "submitted" | "withdrawn" | "accepted" | "rejected" | "merged"
@@ -71,8 +71,8 @@ export const closesLabel = (w: MyocWindow, now: Date): string => closesInLabel(n
 export function windowProblem(opens: string, closes: string, now: Date, opts: { requireFutureClose?: boolean } = { requireFutureClose: true }): string | null {
     const o = new Date(opens).getTime()
     const c = new Date(closes).getTime()
-    if (!opens || Number.isNaN(o)) return "Pick when MYOC opens"
-    if (!closes || Number.isNaN(c)) return "Pick when MYOC closes"
+    if (!opens || Number.isNaN(o)) return "Pick when it opens"
+    if (!closes || Number.isNaN(c)) return "Pick when it closes"
     if (c <= o) return "It has to close after it opens"
     if (opts.requireFutureClose && c <= now.getTime()) return "Pick a close time in the future"
     return null
@@ -114,7 +114,7 @@ export function myocMessage(e: unknown, fallback = "Couldn't save that. Check yo
     const k = myocErrorKind(e)
     if (k === "unavailable") return MYOC_UNAVAILABLE
     if (k === "old-limit") return MYOC_OLD_LIMIT
-    if (k === "closed") return "MYOC isn't open right now."
+    if (k === "closed") return "Make Your Own Categories isn't open right now."
     return fallback
 }
 

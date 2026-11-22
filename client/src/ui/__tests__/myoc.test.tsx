@@ -54,12 +54,12 @@ describe("member view", () => {
     it("says MYOC isn't available yet when the tables do not exist", async () => {
         vi.mocked(fetchMyocWindows).mockRejectedValue({ code: "PGRST205", message: "Could not find the table" })
         renderPage()
-        expect(await screen.findByText("MYOC isn't available yet.")).toBeTruthy()
+        expect(await screen.findByText("Make Your Own Categories isn't available yet.")).toBeTruthy()
     })
     it("shows not open when there is no window", async () => {
         vi.mocked(fetchMyocWindows).mockResolvedValue([])
         renderPage()
-        expect(await screen.findByText("MYOC isn't open")).toBeTruthy()
+        expect(await screen.findByText("Make Your Own Categories isn't open")).toBeTruthy()
     })
     it("members get no committee tabs", async () => {
         renderPage()
@@ -98,7 +98,7 @@ describe("member view", () => {
         vi.mocked(fetchMyocWindows).mockResolvedValue([win(-48, -1)])
         vi.mocked(fetchIdeas).mockResolvedValue([idea("a")])
         renderPage()
-        expect(await screen.findByText("MYOC is closed")).toBeTruthy()
+        expect(await screen.findByText("Make Your Own Categories is closed")).toBeTruthy()
         expect(screen.getByText("Idea a")).toBeTruthy()
         expect(screen.queryByRole("form", { name: "Suggest a category" })).toBeNull()
         expect(screen.queryByRole("button", { name: /^Edit/ })).toBeNull()
@@ -107,7 +107,7 @@ describe("member view", () => {
     it("upcoming shows when it opens", async () => {
         vi.mocked(fetchMyocWindows).mockResolvedValue([win(24, 96)])
         renderPage()
-        expect(await screen.findByText("MYOC isn't open yet")).toBeTruthy()
+        expect(await screen.findByText("Make Your Own Categories isn't open yet")).toBeTruthy()
         expect(screen.queryByRole("form", { name: "Suggest a category" })).toBeNull()
     })
     it("only ever labels ideas Submitted or Withdrawn", async () => {
@@ -242,21 +242,21 @@ describe("committee", () => {
         vi.mocked(fetchMyocWindows).mockResolvedValue([])
         vi.mocked(createMyocWindow).mockResolvedValue()
         renderPage("/app/profile/settings/myoc?tab=window")
-        const form = await screen.findByRole("form", { name: "MYOC window times" })
+        const form = await screen.findByRole("form", { name: "Make Your Own Categories window times" })
         fireEvent.change(within(form).getByLabelText("Closes"), { target: { value: "2020-01-01T10:00" } })
-        fireEvent.click(within(form).getByRole("button", { name: "Open MYOC window" }))
+        fireEvent.click(within(form).getByRole("button", { name: "Open the window" }))
         expect((await screen.findByRole("alert")).textContent).toMatch(/after it opens|future/)
         expect(createMyocWindow).not.toHaveBeenCalled()
         fireEvent.change(within(form).getByLabelText("Opens"), { target: { value: "2030-01-01T10:00" } })
         fireEvent.change(within(form).getByLabelText("Closes"), { target: { value: "2030-01-06T10:00" } })
-        fireEvent.click(within(form).getByRole("button", { name: "Open MYOC window" }))
+        fireEvent.click(within(form).getByRole("button", { name: "Open the window" }))
         await waitFor(() => expect(createMyocWindow).toHaveBeenCalledWith("S1", "2030-01-01T10:00", "2030-01-06T10:00"))
     })
     it("closes an open window now, after confirming", async () => {
         vi.mocked(updateMyocWindow).mockResolvedValue()
         renderPage("/app/profile/settings/myoc?tab=window")
         fireEvent.click(await screen.findByRole("button", { name: "Close now" }))
-        fireEvent.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Close MYOC" }))
+        fireEvent.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Close now" }))
         await waitFor(() => expect(updateMyocWindow).toHaveBeenCalledWith("W1", { closes_at: expect.any(String) }))
     })
     it("a member who guesses ?tab=review still gets the member view", async () => {
@@ -271,6 +271,6 @@ describe("builder", () => {
     it("tags categories that came from MYOC", () => {
         const base = { description: "", order: 0, nominee_mode: "everyone" as const, allow_member_add: false, nominees: [] }
         render(<CategoryList categories={[{ ...base, id: "1", name: "From MYOC", source: "myoc" }, { ...base, id: "2", name: "Typed by hand", order: 1 }]} onChange={() => {}} onEdit={() => {}} />)
-        expect(screen.getAllByText("MYOC")).toHaveLength(1)
+        expect(screen.getAllByText("Own categories")).toHaveLength(1)
     })
 })

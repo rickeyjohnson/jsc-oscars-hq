@@ -39,11 +39,11 @@ export function FirstRunGuide({ open, onClose, season }: { open: boolean; onClos
                     ),
                 },
                 {
-                    title: "Results and MYOC",
+                    title: "Results and Make Your Own Categories",
                     content: (
                         <>
                             <p>The committee reveals the winners on ceremony night. After that you can see your own stats.</p>
-                            <p>Got an idea for a category? Suggest it in Settings, under MYOC.</p>
+                            <p>Got an idea for a category? Suggest it in Settings, under Make Your Own Categories.</p>
                         </>
                     ),
                 },

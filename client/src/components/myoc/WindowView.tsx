@@ -31,7 +31,7 @@ export function WindowView({ season, window: w, phase, now, onChanged }: { seaso
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [key])
 
-    if (!season) return <p className="rounded-card bg-surface p-4 text-callout text-label-2">There is no season yet, so there is nothing to open MYOC for.</p>
+    if (!season) return <p className="rounded-card bg-surface p-4 text-callout text-label-2">There is no season yet, so there is nothing to open Make Your Own Categories for.</p>
 
     const save = async () => {
         const problem = windowProblem(times.opens, times.closes, new Date())
@@ -44,7 +44,7 @@ export function WindowView({ season, window: w, phase, now, onChanged }: { seaso
                 toast.show("Times saved")
             } else {
                 await createMyocWindow(season.id, times.opens, times.closes)
-                toast.show("MYOC window created")
+                toast.show("Make Your Own Categories window created")
             }
             onChanged()
         } catch (e) {
@@ -57,12 +57,12 @@ export function WindowView({ season, window: w, phase, now, onChanged }: { seaso
 
     const closeNow = async () => {
         if (!w) return
-        const ok = await confirm({ title: "Close MYOC now?", message: "Members can't send, edit or withdraw ideas after this. You can still review everything.", confirmLabel: "Close MYOC", destructive: true })
+        const ok = await confirm({ title: "Close Make Your Own Categories now?", message: "Members can't send, edit or withdraw ideas after this. You can still review everything.", confirmLabel: "Close now", destructive: true })
         if (!ok) return
         setBusy(true)
         try {
             await updateMyocWindow(w.id, { closes_at: new Date().toISOString() })
-            toast.show("MYOC closed")
+            toast.show("Make Your Own Categories closed")
             onChanged()
         } catch (e) {
             console.error(e)
@@ -76,11 +76,11 @@ export function WindowView({ season, window: w, phase, now, onChanged }: { seaso
         <div className="space-y-4 lg:max-w-[520px]">
             <section aria-label="Window status" className={`rounded-card border-l-4 bg-surface p-4 ${PEBBLE_EDGE[phase === "open" ? "lime" : phase === "upcoming" ? "sky" : "grape"]}`}>
                 <p className="text-caption-2 font-bold uppercase tracking-wider text-label-2">{season.name}</p>
-                <h2 className="mt-1 text-headline">{phase === "open" ? "MYOC is open" : phase === "upcoming" ? "MYOC is scheduled" : phase === "closed" ? "MYOC is closed" : "No MYOC window yet"}</h2>
+                <h2 className="mt-1 text-balance text-headline">{phase === "open" ? "Make Your Own Categories is open" : phase === "upcoming" ? "Make Your Own Categories is scheduled" : phase === "closed" ? "Make Your Own Categories is closed" : "No Make Your Own Categories window yet"}</h2>
                 {w && phase === "open" && <p className="mt-1 text-callout text-label-2">{closesLabel(w, now)}</p>}
             </section>
             <form
-                aria-label="MYOC window times"
+                aria-label="Make Your Own Categories window times"
                 className="space-y-4 rounded-card bg-surface p-4"
                 onSubmit={(e) => {
                     e.preventDefault()
@@ -95,7 +95,7 @@ export function WindowView({ season, window: w, phase, now, onChanged }: { seaso
                     </p>
                 )}
                 <Button type="submit" variant="primary" size="md" fullWidth loading={busy} loadingLabel="Saving…">
-                    {editing ? "Save times" : "Open MYOC window"}
+                    {editing ? "Save times" : "Open the window"}
                 </Button>
                 {phase === "open" && (
                     <Button variant="dangerOutline" size="md" fullWidth disabled={busy} onClick={() => void closeNow()}>

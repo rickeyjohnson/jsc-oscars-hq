@@ -12,7 +12,7 @@ describe("titleFor", () => {
         expect(titleFor("/app/ballots/abc/submit")).toBe("Submit ballot | JSC Oscars")
         expect(titleFor("/app/profile/release")).toBe("Release results | JSC Oscars")
         expect(titleFor("/app/profile/ballots/abc")).toBe("Manage ballot | JSC Oscars")
-        expect(titleFor("/app/profile/settings/myoc")).toBe("MYOC | JSC Oscars")
+        expect(titleFor("/app/profile/settings/myoc")).toBe("Make Your Own Categories | JSC Oscars")
         expect(titleFor("/app/profile/settings")).toBe("Settings | JSC Oscars")
         expect(titleFor("/app/results/members/abc")).toBe("Member stats | JSC Oscars")
         expect(titleFor("/nope")).toBe("Not found | JSC Oscars")

@@ -69,7 +69,7 @@ const MyocPage = () => {
     let body
     if (load.status === "loading") {
         body = (
-            <SkeletonScreen label="Loading MYOC">
+            <SkeletonScreen label="Loading Make Your Own Categories">
                 <div className="space-y-2">
                     <Skeleton shape="block" />
                     <Skeleton shape="row" />
@@ -94,7 +94,7 @@ const MyocPage = () => {
         const phase = windowPhase(w, now)
         body = (
             <div className="space-y-4">
-                {isCommittee && <SegmentedControl label="MYOC view" idPrefix="myoc" options={TABS} value={tab} onChange={setTab} />}
+                {isCommittee && <SegmentedControl label="Make Your Own Categories view" idPrefix="myoc" options={TABS} value={tab} onChange={setTab} />}
                 <AnimatePresence mode="wait" initial={false}>
                     <motion.div key={tab} role="tabpanel" aria-labelledby={isCommittee ? `myoc-tab-${tab}` : undefined} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={reduce ? { duration: 0 } : fade}>
                         {tab === "mine" && <SuggestView window={w} phase={phase} now={now} />}
@@ -107,7 +107,7 @@ const MyocPage = () => {
     }
 
     return (
-        <Screen title="MYOC" back={{ to: "/app/profile/settings", label: "Settings" }} width="wide">
+        <Screen title="Make Your Own Categories" back={{ to: "/app/profile/settings", label: "Settings" }} width="wide">
             {body}
         </Screen>
     )

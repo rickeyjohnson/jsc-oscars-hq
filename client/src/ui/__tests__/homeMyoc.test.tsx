@@ -37,16 +37,16 @@ afterEach(() => {
 
 const renderHome = () => render(<MemoryRouter><HomePage /></MemoryRouter>)
 
-describe("Home MYOC widget", () => {
+describe("Home Make Your Own Categories widget", () => {
     it("open window: title, 'Open · closes ...', own non-withdrawn idea count, whole card links to MYOC", async () => {
         vi.mocked(fetchMyocWindows).mockResolvedValue([win(-DAY, 2 * DAY + HOUR)])
         vi.mocked(fetchIdeas).mockResolvedValue([idea({ id: "a" }), idea({ id: "b", status: "accepted" }), idea({ id: "c", status: "withdrawn" }), idea({ id: "d", author_id: "someone-else" })])
         renderHome()
-        const card = await screen.findByRole("region", { name: "MYOC" })
+        const card = await screen.findByRole("region", { name: "Make Your Own Categories" })
         expect(card.textContent).toMatch(/Open · closes in 2d/)
         expect(card.textContent).toContain("2 ideas sent")
         expect(card.querySelector("button")).toBeNull()
-        const link = screen.getByRole("link", { name: "MYOC" })
+        const link = screen.getByRole("link", { name: "Make Your Own Categories" })
         expect(link.getAttribute("href")).toBe("/app/profile/settings/myoc")
         expect(card.contains(link)).toBe(true)
         expect(fetchIdeas).toHaveBeenCalledWith("w1")
@@ -55,7 +55,7 @@ describe("Home MYOC widget", () => {
     it("scheduled window: 'Opens <date>' and no idea fetch", async () => {
         vi.mocked(fetchMyocWindows).mockResolvedValue([win(3 * DAY, 6 * DAY)])
         renderHome()
-        const card = await screen.findByRole("region", { name: "MYOC" })
+        const card = await screen.findByRole("region", { name: "Make Your Own Categories" })
         expect(card.textContent).toMatch(/Opens \w{3}, \w{3} \d+/)
         expect(card.textContent).not.toMatch(/ideas? sent/)
         expect(fetchIdeas).not.toHaveBeenCalled()
@@ -68,21 +68,21 @@ describe("Home MYOC widget", () => {
         vi.mocked(fetchMyocWindows).mockResolvedValue(windows)
         renderHome()
         await waitFor(() => expect(fetchMyocWindows).toHaveBeenCalled())
-        expect(screen.queryByRole("region", { name: "MYOC" })).toBeNull()
-        expect(screen.queryByRole("heading", { name: "MYOC" })).toBeNull()
+        expect(screen.queryByRole("region", { name: "Make Your Own Categories" })).toBeNull()
+        expect(screen.queryByRole("heading", { name: "Make Your Own Categories" })).toBeNull()
     })
 
     it("hidden when MYOC fails to load (tables not set up) or before the season is known", async () => {
         vi.mocked(fetchMyocWindows).mockRejectedValue({ code: "PGRST205" })
         renderHome()
         await waitFor(() => expect(fetchMyocWindows).toHaveBeenCalled())
-        expect(screen.queryByRole("region", { name: "MYOC" })).toBeNull()
+        expect(screen.queryByRole("region", { name: "Make Your Own Categories" })).toBeNull()
         cleanup()
         vi.mocked(fetchMyocWindows).mockClear()
         hook.state = { ...state, data: null, loading: true }
         renderHome()
         expect(fetchMyocWindows).not.toHaveBeenCalled()
-        expect(screen.queryByRole("region", { name: "MYOC" })).toBeNull()
+        expect(screen.queryByRole("region", { name: "Make Your Own Categories" })).toBeNull()
     })
 })
 

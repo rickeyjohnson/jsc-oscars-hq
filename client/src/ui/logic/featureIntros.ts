@@ -63,13 +63,13 @@ export const INTROS: IntroDef[] = [
     },
     {
         id: "myoc",
-        title: "MYOC",
+        title: "Make Your Own Categories",
         audience: "member",
         match: (r) => r.path === "/app/profile/settings/myoc" && r.tab !== "review" && r.tab !== "window",
         cards: [
-            { title: "Suggest categories", body: ["Have an idea for a category? Send as many as you like while MYOC is open."] },
+            { title: "Suggest categories", body: ["Have an idea for a category? Send as many as you like while Make Your Own Categories is open."] },
             { title: "Your ideas are private", body: ["Other members can't see your ideas. Only the committee reads them."] },
-            { title: "What happens next", body: ["The committee reviews every idea and builds the next ballot from the ones they accept. You can edit or withdraw an idea until MYOC closes."] },
+            { title: "What happens next", body: ["The committee reviews every idea and builds the next ballot from the ones they accept. You can edit or withdraw an idea until it closes."] },
         ],
     },
     {
@@ -101,7 +101,7 @@ export const INTROS: IntroDef[] = [
         match: is("/app/profile/ballots/create"),
         cards: [
             { title: "Three steps", body: ["Details, Categories, then Review. Review lists anything you still need to fix."] },
-            { title: "Add categories fast", body: ["Tap Import to add many categories at once. Accepted MYOC ideas can arrive here as ready-made categories."] },
+            { title: "Add categories fast", body: ["Tap Import to add many categories at once. Accepted Make Your Own Categories ideas can arrive here as ready-made categories."] },
         ],
     },
     {
@@ -126,7 +126,7 @@ export const INTROS: IntroDef[] = [
     },
     {
         id: "myoc-review",
-        title: "Review MYOC ideas",
+        title: "Review Make Your Own Categories ideas",
         audience: "committee",
         match: (r) => r.path === "/app/profile/settings/myoc" && r.tab === "review",
         cards: [

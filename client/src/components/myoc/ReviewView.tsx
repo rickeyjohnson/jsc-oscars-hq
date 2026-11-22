@@ -47,7 +47,7 @@ export function ReviewView({ window: w, phase }: { window: MyocWindow | null; ph
         }
     }, [windowId, reload])
 
-    if (!w || phase === "none") return <EmptyState icon={Inbox} title="No MYOC window yet" body="Open one from the Window tab and ideas will land here." />
+    if (!w || phase === "none") return <EmptyState icon={Inbox} title="No window yet" body="Open one from the Window tab and ideas will land here." />
     if (load.status === "error") {
         if (load.unavailable) return <EmptyState icon={Lightbulb} title={MYOC_UNAVAILABLE} body="The database update for it hasn't been applied." />
         return (

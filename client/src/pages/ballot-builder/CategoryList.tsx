@@ -80,7 +80,7 @@ const CategoryList: React.FC<CategoryListProps> = ({ categories, onChange, onEdi
                         <button type="button" onClick={() => onEdit(i)} className="min-h-11 min-w-0 flex-1 text-left">
                             <span className="flex min-w-0 items-center gap-2">
                                 <span className="truncate text-headline">{category.name}</span>
-                                {category.source === "myoc" && <Chip tone="sky">MYOC</Chip>}
+                                {category.source === "myoc" && <span className="shrink-0 whitespace-nowrap"><Chip tone="sky">Own categories</Chip></span>}
                             </span>
                             <span className="block text-footnote text-label-2">
                                 {category.nominee_mode === "everyone" ? "Everyone" : `${category.nominees.length} ${category.nominees.length === 1 ? "option" : "options"}`}
