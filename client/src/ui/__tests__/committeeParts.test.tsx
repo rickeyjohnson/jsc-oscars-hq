@@ -54,10 +54,22 @@ describe("WhoVoted", () => {
     it("copies the names of who is left", async () => {
         const writeText = vi.fn().mockResolvedValue(undefined)
         Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true })
-        render(<WhoVoted rows={rows} />)
-        fireEvent.click(screen.getByRole("button", { name: "Copy names of who's left" }))
-        await waitFor(() => expect(writeText).toHaveBeenCalledWith("Dee"))
-        expect((await screen.findByRole("status")).textContent).toBe("Copied 1 name.")
+        render(<WhoVoted rows={rows} ballotName="Round 1" closesAt={new Date("2026-11-29T01:00:00Z")} />)
+        fireEvent.click(screen.getByRole("button", { name: "Copy reminder" }))
+        await waitFor(() => expect(writeText).toHaveBeenCalled())
+        const msg = writeText.mock.calls[0][0] as string
+        expect(msg).toContain("Dee, you haven't voted yet on Round 1")
+        expect(msg).toContain("8:00 PM ET")
+        expect((await screen.findByRole("status")).textContent).toBe("Copied")
+    })
+    it("falls back to execCommand when the clipboard API is missing", async () => {
+        Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true })
+        const exec = vi.fn().mockReturnValue(true)
+        ;(document as unknown as { execCommand: unknown }).execCommand = exec
+        render(<WhoVoted rows={rows} ballotName="Round 1" closesAt={new Date("2026-11-29T01:00:00Z")} />)
+        fireEvent.click(screen.getByRole("button", { name: "Copy reminder" }))
+        expect((await screen.findByRole("status")).textContent).toBe("Copied")
+        expect(exec).toHaveBeenCalledWith("copy")
     })
 })
 

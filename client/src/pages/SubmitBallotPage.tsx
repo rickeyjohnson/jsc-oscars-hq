@@ -8,6 +8,7 @@ import { submissionIO } from "../api/submissions"
 import { useUserData } from "../context/UserContenxt"
 import { dashStates, votedCount, type DashState } from "../lib/voting"
 import { Button } from "../ui/Button"
+import { OFFLINE_REASON, useOnline } from "../lib/online"
 import { ProgressStrip } from "../ui/ProgressStrip"
 import { closesLabel, submitChecklist } from "../ui/logic/submit"
 import type { BallotDetail } from "../types"
@@ -28,6 +29,7 @@ const SubmitBallotPage = () => {
     const navigate = useNavigate()
     const { profile } = useUserData()
     const userId = profile?.user_id ?? ""
+    const online = useOnline()
     const [load, setLoad] = useState<Load>({ state: "loading" })
     const [armed, setArmed] = useState(false)
     const [busy, setBusy] = useState(false)
@@ -127,8 +129,10 @@ const SubmitBallotPage = () => {
     const headline = submitError ? "Not saved" : !ready ? "Nothing voted yet" : skipped === 0 ? "All set?" : `${skipped} skipped`
     const sentence = !ready
         ? "Vote in at least one category to submit."
-        : submitError
-          ? "Your votes are safe. Only the done mark didn't save on this device."
+        : !online
+          ? OFFLINE_REASON
+          : submitError
+          ? "Couldn't submit your ballot. Your votes are safe. Check your connection and try again."
           : skipped === 0
             ? `All ${total} voted. Your votes are saved, and you can still change votes until ${until}.`
             : `Skipping is fine. Your votes are saved, and you can still change votes until ${until}.`
@@ -156,7 +160,7 @@ const SubmitBallotPage = () => {
                     fullWidth
                     size="md"
                     pebble={armed ? "strawberry" : undefined}
-                    disabled={!ready}
+                    disabled={!ready || !online}
                     loading={busy}
                     loadingLabel="Submitting…"
                     onClick={() => (submitError || armed ? submit() : setArmed(true))}

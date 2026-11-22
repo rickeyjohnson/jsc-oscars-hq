@@ -9,6 +9,7 @@ import { invalidateMemberDirectory } from "../ui/useMemberDirectory"
 import { Button } from "../ui/Button"
 import { Avatar } from "../ui/Avatar"
 import { useToast } from "../ui/Toast"
+import { OFFLINE_REASON, useOnline } from "../lib/online"
 
 type ProfileSetupProps = {
     open: boolean
@@ -20,6 +21,7 @@ type ProfileSetupProps = {
 const ProfileSetup = ({ open, onComplete, onSkip, title = "Add your photo" }: ProfileSetupProps) => {
     const { user } = useAuth()
     const toast = useToast()
+    const online = useOnline()
     const [image, setImage] = useState<File | null>(null)
     const [preview, setPreview] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
@@ -90,7 +92,8 @@ const ProfileSetup = ({ open, onComplete, onSkip, title = "Add your photo" }: Pr
             fit
             footer={
                 <SheetActions>
-                    <Button variant="primary" fullWidth disabled={!image} loading={loading} loadingLabel="Saving…" onClick={handleImageSubmission}>
+                    {!online && <p className="text-center text-footnote text-label-2">{OFFLINE_REASON}</p>}
+                    <Button variant="primary" fullWidth disabled={!image || !online} loading={loading} loadingLabel="Saving…" onClick={handleImageSubmission}>
                         Continue
                     </Button>
                     <Button variant="tinted" fullWidth onClick={onSkip}>

@@ -3,9 +3,12 @@ import { MemberAvatar } from "../../ui/MemberAvatar"
 import { Button } from "../../ui/Button"
 import { isFinished, leftNames, orderVoters, votedSummary } from "../../lib/ballotFlow"
 import type { MemberCompletion } from "../../lib/voting"
+import { copyText } from "../../lib/clipboard"
+import { reminderMessage } from "../../lib/reminder"
+import { resolveSiteBase } from "../../lib/siteUrl"
 
-// One list: ring face, name, progress bar, "n of N". One action: copy the names of who is left for the group chat.
-export default function WhoVoted({ rows, id }: { rows: MemberCompletion[]; id?: string }) {
+// One list: ring face, name, progress bar, "n of N". One action: copy a reminder message for the group chat.
+export default function WhoVoted({ rows, id, ballotName, closesAt }: { rows: MemberCompletion[]; id?: string; ballotName?: string; closesAt?: Date }) {
     const [filter, setFilter] = useState<"all" | "left">("all")
     const [notice, setNotice] = useState<string | null>(null)
     const sum = votedSummary(rows)
@@ -13,12 +16,9 @@ export default function WhoVoted({ rows, id }: { rows: MemberCompletion[]; id?: 
     const names = leftNames(rows)
 
     const copy = async () => {
-        try {
-            await navigator.clipboard.writeText(names.join(", "))
-            setNotice(`Copied ${names.length} ${names.length === 1 ? "name" : "names"}.`)
-        } catch {
-            setNotice("Couldn't copy. Select the names and copy them by hand.")
-        }
+        const text = ballotName && closesAt ? reminderMessage({ missing: names, ballotName, closesAt, siteUrl: resolveSiteBase() }) : names.join(", ")
+        const ok = await copyText(text)
+        setNotice(ok ? "Copied" : "Couldn't copy. Select the names and copy them by hand.")
     }
     const chip = (on: boolean) => `inline-flex min-h-11 items-center rounded-full px-4 text-subhead font-bold ${on ? "bg-inverse text-on-inverse" : "bg-surface-2 text-label"}`
 
@@ -58,7 +58,7 @@ export default function WhoVoted({ rows, id }: { rows: MemberCompletion[]; id?: 
             </ul>
             {names.length > 0 && (
                 <Button variant="secondary" size="md" fullWidth onClick={copy}>
-                    Copy names of who's left
+                    Copy reminder
                 </Button>
             )}
             {notice && <p role="status" className="text-footnote text-label-2">{notice}</p>}
