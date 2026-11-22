@@ -15,7 +15,7 @@ vi.mock("../../pages/home/useHomeData", () => ({
 }))
 const profile = vi.hoisted(() => ({ is_committee: false }))
 vi.mock("../../context/AuthContext", () => ({ useAuth: () => ({ user: { id: "u1" } }) }))
-vi.mock("../../context/UserContenxt", () => ({ useUserData: () => ({ profile: { ...profile, display_name: "Rico Johnson" }, member: { id: "m1", name: "Rico", user_id: "u1" }, loading: false }) }))
+vi.mock("../../context/UserContenxt", () => ({ useUserData: () => ({ profile: { ...profile, image_url: "x", display_name: "Rico Johnson" }, member: { id: "m1", name: "Rico", user_id: "u1" }, loading: false }) }))
 vi.mock("../../supabaseClient", () => ({
     supabase: { from: () => ({ select: () => ({ eq: () => ({ single: async () => ({ data: { image_url: "x" }, error: null }) }) }) }) },
 }))

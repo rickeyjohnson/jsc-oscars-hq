@@ -132,7 +132,9 @@ export const UserDataProvider = ({
     )
 
     const memberIdRef = useRef<string | undefined>(undefined)
-    memberIdRef.current = member?.id
+    useEffect(() => {
+        memberIdRef.current = member?.id
+    }, [member?.id])
     const applyPhoto = useCallback((url: string) => {
         setProfile((p) => (p ? { ...p, image_url: url } : p))
         if (memberIdRef.current) setPhotoOverride(memberIdRef.current, url)
