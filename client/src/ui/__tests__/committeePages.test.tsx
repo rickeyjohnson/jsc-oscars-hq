@@ -8,13 +8,15 @@ import MemberNamesPage from "../../pages/committee/MemberNamesPage"
 import StatusChip from "../../components/committee/StatusChip"
 import { Avatar } from "../Avatar"
 import { ConfirmProvider } from "../ConfirmProvider"
-import { fetchBallotDetail, fetchBallotSummaries, fetchRoundBallots, setBallotStatus } from "../../api/ballots"
+import { deleteBallot, fetchBallotDetail, fetchBallotSummaries, fetchRoundBallots, setBallotStatus } from "../../api/ballots"
+import { ToastProvider } from "../Toast"
+import { committeeGate } from "../../components/RequireCommittee"
 import { countVotesBy, fetchCommitteeMemberIds, fetchMembers, resetMemberClaim } from "../../api/members"
 import { fetchResults, recordResultsGuarded, updatePlaces, upsertResults } from "../../api/results"
 import { fetchAllVotes } from "../../api/votes"
 import type { BallotSummary } from "../../lib/voting"
 
-vi.mock("../../api/ballots", () => ({ fetchBallotSummaries: vi.fn(), fetchBallotDetail: vi.fn(), setBallotStatus: vi.fn(), fetchRoundBallots: vi.fn(), createRoundBallot: vi.fn(), fetchCurrentSeason: vi.fn(), reopenBallot: vi.fn() }))
+vi.mock("../../api/ballots", () => ({ fetchBallotSummaries: vi.fn(), fetchBallotDetail: vi.fn(), setBallotStatus: vi.fn(), fetchRoundBallots: vi.fn(), createRoundBallot: vi.fn(), fetchCurrentSeason: vi.fn(), reopenBallot: vi.fn(), deleteBallot: vi.fn(), DeleteRefusedError: class DeleteRefusedError extends Error {} }))
 vi.mock("../../api/members", () => ({ fetchMembers: vi.fn(), countVotesBy: vi.fn(), resetMemberClaim: vi.fn(), fetchCommitteeMemberIds: vi.fn() }))
 vi.mock("../../api/results", () => ({ fetchResults: vi.fn(), upsertResults: vi.fn(), updatePlaces: vi.fn(), recordResultsGuarded: vi.fn(), fetchReleaseStatus: vi.fn() }))
 vi.mock("../../api/votes", () => ({ fetchAllVotes: vi.fn() }))
@@ -334,5 +336,74 @@ describe("MemberNamesPage", () => {
         fireEvent.click(within(grp).getByRole("button", { name: "Reset claim" }))
         await waitFor(() => expect(within(grp).getByRole("alert").textContent).not.toContain("changed by someone else"))
         expect(within(grp).getByRole("alert").textContent).not.toContain("pg 500")
+    })
+})
+
+describe("Delete ballot", () => {
+    const members = [{ id: "m1", name: "Micah", user_id: "u1" }]
+    const setOnline = (v: boolean) => Object.defineProperty(navigator, "onLine", { value: v, configurable: true })
+    const open = async (o: Partial<BallotSummary> = {}) => {
+        vi.mocked(fetchBallotSummaries).mockResolvedValue([ballot(o)])
+        vi.mocked(fetchBallotDetail).mockResolvedValue(detail(o) as never)
+        vi.mocked(fetchMembers).mockResolvedValue(members)
+        vi.mocked(fetchAllVotes).mockResolvedValue([vote("u1", "n1"), vote("u2", "n2")])
+        vi.mocked(deleteBallot).mockReset()
+        render(
+            <MemoryRouter initialEntries={["/app/profile/ballots/b1"]}>
+                <ToastProvider>
+                    <ConfirmProvider>
+                        <Routes>
+                            <Route path="/app/profile/ballots/:ballotId" element={<BallotAdminPage />} />
+                            <Route path="/app/profile/ballots" element={<p>Ballot list</p>} />
+                        </Routes>
+                    </ConfirmProvider>
+                </ToastProvider>
+            </MemoryRouter>,
+        )
+        return screen.findByRole("button", { name: "Delete ballot" })
+    }
+    afterEach(() => setOnline(true))
+
+    it("confirm text names the ballot and what is erased; cancel deletes nothing", async () => {
+        fireEvent.click(await open({ status: "closed", closes_at: new Date(Date.now() - DAY).toISOString() }))
+        const dlg = await screen.findByRole("alertdialog")
+        expect(dlg.textContent).toContain("Delete Main Ballot?")
+        expect(dlg.textContent).toContain("1 category")
+        expect(dlg.textContent).toContain("2 nominees")
+        expect(dlg.textContent).toContain("votes (2)")
+        expect(dlg.textContent).toContain("recorded result")
+        expect(dlg.textContent).toContain("cannot be undone")
+        fireEvent.click(within(dlg).getByRole("button", { name: "Cancel" }))
+        await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull())
+        expect(deleteBallot).not.toHaveBeenCalled()
+    })
+    it("works for a draft too, and success toasts and returns to the list", async () => {
+        vi.mocked(fetchRoundBallots).mockResolvedValue([])
+        fireEvent.click(await open({ status: "draft" }))
+        vi.mocked(deleteBallot).mockResolvedValue()
+        fireEvent.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Delete ballot" }))
+        await waitFor(() => expect(deleteBallot).toHaveBeenCalledWith("b1"))
+        expect(await screen.findByText("Ballot list")).toBeTruthy()
+        expect(screen.getByText("Ballot deleted")).toBeTruthy()
+    })
+    it("a failure shows a specific message and stays on the page", async () => {
+        fireEvent.click(await open())
+        vi.mocked(deleteBallot).mockRejectedValue(new Error("permission denied for table ballots"))
+        fireEvent.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Delete ballot" }))
+        const alert = await screen.findByText(/Couldn't delete the ballot \(permission denied/)
+        expect(alert.textContent).toContain("Nothing was removed")
+        expect(screen.queryByText("Ballot list")).toBeNull()
+        expect(screen.queryByText("Ballot deleted")).toBeNull()
+        expect((screen.getByRole("button", { name: "Delete ballot" }) as HTMLButtonElement).disabled).toBe(false)
+    })
+    it("is disabled while offline", async () => {
+        setOnline(false)
+        const btn = (await open()) as HTMLButtonElement
+        expect(btn.disabled).toBe(true)
+        expect(screen.getByText(/offline/i)).toBeTruthy()
+    })
+    it("only committee members get in: the route gate denies everyone else", () => {
+        expect(committeeGate(false, { is_committee: false })).toBe("deny")
+        expect(committeeGate(false, { is_committee: true })).toBe("allow")
     })
 })

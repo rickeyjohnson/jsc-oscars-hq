@@ -8,7 +8,7 @@ import { dedupe } from "../lib/cache/dedup"
 import { cacheSet } from "../lib/cache/store"
 import { GLOBAL } from "../lib/cache/keys"
 import { cachedReleasedDetail, storeBallotDetail } from "../lib/cache/detail"
-import { cacheEpoch, invalidateBallots } from "../lib/cache/invalidate"
+import { cacheEpoch, invalidateBallots, invalidateResults } from "../lib/cache/invalidate"
 import { localUid } from "../lib/cache/uid"
 import { classifyReopenError, REOPEN_UNAVAILABLE } from "../lib/reopen"
 
@@ -278,6 +278,19 @@ export const reopenBallot = async (ballotId: string, closesAtIso: string): Promi
     if (kind === "unavailable") throw new ReopenUnavailableError(REOPEN_UNAVAILABLE)
     if (kind === "refused") throw new ReopenRefusedError(error.message)
     throw error
+}
+
+// Delete a ballot for good (committee only, enforced by RLS). Categories, nominees, votes, results and
+// round ballots go with it through ON DELETE CASCADE. Zero rows back means RLS refused it or it is already gone.
+export class DeleteRefusedError extends Error {}
+export const DELETE_REFUSED = "Couldn't delete this ballot. Only the committee can delete a ballot, or it was already deleted."
+
+export const deleteBallot = async (ballotId: string): Promise<void> => {
+    const { data, error } = await supabase.from("ballots").delete().eq("id", ballotId).select("id")
+    if (error) throw error
+    if ((data ?? []).length === 0) throw new DeleteRefusedError(DELETE_REFUSED)
+    invalidateBallots()
+    invalidateResults()
 }
 
 // Committee only (RLS). Returns false when no row changed, i.e. the caller has no right to edit the season.

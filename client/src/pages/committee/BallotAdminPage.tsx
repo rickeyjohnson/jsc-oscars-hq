@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { createRoundBallot, RoundExistsError, setBallotStatus } from "../../api/ballots"
+import { createRoundBallot, deleteBallot, RoundExistsError, setBallotStatus } from "../../api/ballots"
 import { recordResultsGuarded, updatePlaces, upsertResults } from "../../api/results"
 import ResultsSection, { type CsvEntry } from "../../components/committee/ResultsSection"
 import { ActionSheet, CloseTimeField } from "../../components/committee/ActionSheet"
@@ -16,6 +16,9 @@ import { manualResult, roundEntries } from "../../lib/rounds"
 import { manualBase, type CategoryView } from "../../lib/tallyView"
 import { toUtcIso } from "../../lib/time"
 import { completionByMember, type BallotSummary } from "../../lib/voting"
+import { deleteConfirm, deleteFailure } from "../../lib/deleteBallot"
+import { OFFLINE_REASON, useOnline } from "../../lib/online"
+import { useToast } from "../../ui/Toast"
 import { useConfirm } from "../../ui/ConfirmProvider"
 import { Screen } from "../../ui/Screen"
 import { Button } from "../../ui/Button"
@@ -40,10 +43,13 @@ const BallotAdminPage = () => {
     const { ballotId } = useParams()
     const navigate = useNavigate()
     const confirm = useConfirm()
+    const toast = useToast()
+    const online = useOnline()
     const { family, error, refreshFailed, reload, retry } = useBallotFamily(ballotId)
     const [selectedId, setSelectedId] = useState<string | null>(null)
     const [busy, setBusy] = useState(false)
     const [actionError, setActionError] = useState<string | null>(null)
+    const [deleteError, setDeleteError] = useState<string | null>(null)
     const [recordError, setRecordError] = useState(false)
     const [sheet, setSheet] = useState<null | "close" | "reopen" | "round">(null)
     const [closesAt, setClosesAt] = useState(() => localDateTimeInput(new Date()))
@@ -251,6 +257,32 @@ const BallotAdminPage = () => {
         })
     }
 
+    const removeBallot = async () => {
+        const cats = detail.categories
+        const ask = deleteConfirm({
+            name: sel.name,
+            round: sel.round,
+            categories: cats.length,
+            nominees: cats.reduce((n, c) => n + c.nominees.length, 0),
+            votes: (family.votes[sel.id] ?? []).length,
+            results: Object.values(family.results).filter((r) => r.decided_ballot_id === sel.id).length + (sel.round === "main" ? Object.values(family.results).filter((r) => r.decided_ballot_id !== sel.id && cats.some((c) => c.id === r.category_id)).length : 0),
+            childRounds: childRounds.length,
+        })
+        if (!(await confirm(ask))) return
+        setBusy(true)
+        setDeleteError(null)
+        try {
+            await deleteBallot(sel.id)
+        } catch (e) {
+            console.error(e)
+            setDeleteError(deleteFailure(e))
+            setBusy(false)
+            return
+        }
+        toast.show("Ballot deleted")
+        navigate("/app/profile/ballots")
+    }
+
     const goPrimary = (id: PrimaryId) => {
         if (id === "publish") return void publish()
         if (id === "see-left") return void document.getElementById("who-voted")?.scrollIntoView({ block: "start" })
@@ -360,6 +392,18 @@ const BallotAdminPage = () => {
                         <li className="flex min-h-12 items-center justify-between px-4 text-callout"><span className="text-label-2">Opens</span><span>{when(sel.opens_at)}</span></li>
                         <li className="flex min-h-12 items-center justify-between px-4 text-callout"><span className="text-label-2">Closes</span><span>{when(sel.closes_at)}</span></li>
                         <li className="flex min-h-12 items-center justify-between px-4 text-callout"><span className="text-label-2">Categories</span><span>{detail.categories.length}</span></li>
+                    </GroupedSection>
+                </div>
+
+                <div className="lg:col-start-1">
+                    <GroupedSection header="Danger zone">
+                        <li className="space-y-2 px-4 py-3">
+                            <Button variant="dangerOutline" size="md" fullWidth disabled={busy || !online} onClick={() => void removeBallot()}>
+                                Delete ballot
+                            </Button>
+                            {!online && <p className="text-footnote text-label-2">{OFFLINE_REASON}</p>}
+                            {deleteError && <p role="alert" className="text-callout text-danger">{deleteError}</p>}
+                        </li>
                     </GroupedSection>
                 </div>
             </div>
