@@ -30,9 +30,9 @@ describe("app icons", () => {
         expect(manifest.short_name).toBe("JSC Oscars")
     })
     it("ships the apple touch icon and favicon at the right size", () => {
-        expect(html).toContain('href="/icons/apple-touch-icon.png"')
-        expect(pngSize("icons/apple-touch-icon.png")).toBe("180x180")
-        expect(pngSize("icons/favicon-32.png")).toBe("32x32")
+        expect(html).toContain('href="/icons/apple-touch-icon-v2.png"')
+        expect(pngSize("icons/apple-touch-icon-v2.png")).toBe("180x180")
+        expect(pngSize("icons/favicon-32-v2.png")).toBe("32x32")
     })
 })
 

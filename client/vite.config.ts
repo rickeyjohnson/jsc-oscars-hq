@@ -21,7 +21,7 @@ function stampServiceWorker(): Plugin {
     writeBundle(options) {
       const sw = join(options.dir ?? 'dist', 'sw.js')
       if (!existsSync(sw)) return
-      ;['/fonts/CenturyGothic/CenturyGothicPaneuropeanLight.woff2', '/fonts/CenturyGothic/CenturyGothicPaneuropeanRegular.woff2', '/manifest.webmanifest', '/icons/icon-192.png'].forEach((f) => precache.add(f))
+      ;['/fonts/CenturyGothic/CenturyGothicPaneuropeanLight.woff2', '/fonts/CenturyGothic/CenturyGothicPaneuropeanRegular.woff2', '/manifest.webmanifest', '/icons/icon-192-v2.png'].forEach((f) => precache.add(f))
       const out = readFileSync(sw, 'utf8')
         .replace('"__BUILD_ID__"', JSON.stringify(Date.now().toString(36)))
         .replace('= __PRECACHE__', '= ' + JSON.stringify([...precache]))

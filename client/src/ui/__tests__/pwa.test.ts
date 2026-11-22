@@ -32,8 +32,8 @@ describe("manifest", () => {
 
 describe("icons", () => {
     it("has the expected PNG sizes, apple icon opaque", () => {
-        expect(png("icons/apple-touch-icon.png")).toMatchObject({ w: 180, h: 180 })
-        expect(png("icons/favicon-32.png")).toMatchObject({ w: 32, h: 32 })
+        expect(png("icons/apple-touch-icon-v2.png")).toMatchObject({ w: 180, h: 180 })
+        expect(png("icons/favicon-32-v2.png")).toMatchObject({ w: 32, h: 32 })
     })
     it("icon.svg only uses brand colors", () => {
         const allowed = [COLORS.bg, COLORS.label, PEBBLE_COLORS.lemon.bg].map((c) => c.toLowerCase())
