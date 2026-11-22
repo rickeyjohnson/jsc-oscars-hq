@@ -79,15 +79,15 @@ export function WinnersPane() {
     if (load.state === "none" || load.state === "sealed") {
         const at = load.state === "sealed" && load.season.ceremony_at ? new Date(load.season.ceremony_at) : null
         return (
-            <section className="rounded-card border-l-4 border-pebble-lemon bg-surface p-5">
+            <section className="rounded-card border-l-4 border-pebble-lemon bg-surface p-4 sm:p-5">
                 <Clapperboard aria-hidden className="size-10 text-pebble-lemon" />
-                <h2 className="mt-3 font-display text-title-1">Results are sealed.</h2>
-                <p className="mt-1 text-callout">
+                <h2 className="mt-3 font-display text-title-2 sm:text-title-1">Results are sealed.</h2>
+                <p className="mt-1 text-subhead sm:text-callout">
                     {at
                         ? `The winners are revealed at the ceremony on ${at.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} at ${at.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}.`
                         : "The winners are revealed at the ceremony."}
                 </p>
-                <p className="mt-2 text-callout text-label-2">Nothing to see yet. Cast your votes, then come back on ceremony night to find out who won and how you did.</p>
+                <p className="mt-2 text-subhead sm:text-callout text-label-2">Nothing to see yet. Cast your votes, then come back on ceremony night to find out who won and how you did.</p>
                 <div className="mt-4">
                     <Countdown target={at} />
                 </div>
@@ -110,7 +110,7 @@ export function WinnersPane() {
                 </p>
             )}
             <div className="mb-4 flex flex-col items-center gap-3 text-center">
-                <h2 className="font-display text-large-title">And the winners are…</h2>
+                <h2 className="font-display text-title-1 sm:text-large-title">And the winners are…</h2>
             </div>
             <WinnersView cards={load.cards} avatars={load.avatars} />
         </div>

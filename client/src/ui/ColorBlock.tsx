@@ -21,7 +21,7 @@ export function ColorBlock({
     className?: string
 }) {
     const p = PEBBLE_CLASS[pebble]
-    const base = `block rounded-card p-5 ${p.bg} ${p.text} ${className}`
+    const base = `block rounded-card p-4 sm:p-5 ${p.bg} ${p.text} ${className}`
     const inner = (
         <>
             {eyebrow && <p className="text-caption-2 uppercase tracking-wider mb-1">{eyebrow}</p>}

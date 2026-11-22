@@ -33,7 +33,7 @@ export function ListRow({
         <>
             {leading}
             <span className="min-w-0 flex-1">
-                <span className={`block text-body truncate ${current ? "font-bold" : ""} ${destructive ? "text-danger" : "text-label"}`}>{title}</span>
+                <span className={`block text-callout sm:text-body truncate ${current ? "font-bold" : ""} ${destructive ? "text-danger" : "text-label"}`}>{title}</span>
                 {subtitle && <span className="block text-footnote text-label-2 truncate">{subtitle}</span>}
             </span>
             {trailing}

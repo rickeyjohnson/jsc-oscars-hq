@@ -64,7 +64,7 @@ export function Screen({
     return (
         <div className={`min-h-dvh ${pebble ? `${pebble.bg} ${pebble.text}` : "text-label"}`}>
             <NavBar title={title} back={back} trailing={trailing} brandHeader={brandHeader} progress={progress} ceremony={ceremony} />
-            <div className={`px-gutter pb-[var(--content-pb,32px)] ${WIDTH[width]}`}>
+            <div className={`w-full min-w-0 px-gutter pb-[var(--content-pb,32px)] ${WIDTH[width]}`}>
                 <LargeTitle title={title} subtitle={subtitle} brandHeader={brandHeader} tone={ceremony === "lemon" ? "onLemon" : ceremony === "lime" ? "onLime" : undefined} />
                 {children}
             </div>

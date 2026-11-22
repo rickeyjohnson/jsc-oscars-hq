@@ -13,7 +13,7 @@ export function LargeTitle({ title, subtitle, brandHeader, tone }: { title: stri
                     </div>
                 </>
             ) : (
-                <h1 className="break-words text-large-title">{title}</h1>
+                <h1 className="break-words text-title-1 sm:text-large-title">{title}</h1>
             )}
             {subtitle && <div className="mt-1 text-callout opacity-80">{subtitle}</div>}
         </div>

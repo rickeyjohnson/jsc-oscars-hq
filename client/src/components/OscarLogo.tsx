@@ -41,7 +41,7 @@ const Logo: React.FC<LogoProps> = ({ size = "medium", as: Root = "div", decorati
                 JUST SIDECHATTING
             </div>
 
-            <div className="font-oscars-thin leading-none mb-[-0.5rem]" style={{ fontSize: `${oscarsSize}rem` }}>
+            <div className="font-oscars-thin leading-none mb-[-0.5rem]" style={{ fontSize: `min(${oscarsSize}rem, 16vw)` }}>
                 OSCARS
             </div>
         </Root>

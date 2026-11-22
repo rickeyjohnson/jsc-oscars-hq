@@ -259,6 +259,11 @@ html {
     }
 }
 
+html,
+body {
+    overflow-x: clip;
+}
+
 body {
     min-height: 100dvh;
 }

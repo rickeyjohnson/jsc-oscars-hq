@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Outlet, useLocation } from "react-router-dom"
+import { Outlet, useLocation, useNavigationType } from "react-router-dom"
 import { ToastProvider } from "./Toast"
 import { IntroHost, IntroProvider } from "./IntroHost"
 import { TabBar } from "./TabBar"
@@ -64,6 +64,19 @@ function useTextFocus(enabled: boolean): boolean {
     return enabled && typing
 }
 
+// New pages open at the top (back/forward keep the browser's own scroll restoration).
+function ScrollToTop() {
+    const { pathname } = useLocation()
+    const type = useNavigationType()
+    useEffect(() => {
+        if (type === "POP") return
+        window.scrollTo(0, 0)
+        const main = document.getElementById("main-content")
+        if (main) main.scrollTop = 0
+    }, [pathname, type])
+    return null
+}
+
 export function AppShell() {
     const { pathname } = useLocation()
     const { profile, member } = useUserData()
@@ -108,9 +121,10 @@ export function AppShell() {
                 <IntroProvider>
                 <div
                     ref={root}
-                    className="min-h-dvh bg-bg text-label lg:pl-[260px]"
+                    className="min-h-dvh w-full max-w-full overflow-x-clip bg-bg text-label lg:pl-[260px]"
                     style={{ ["--content-pb" as string]: desktop ? "32px" : "calc(64px + 8px + env(safe-area-inset-bottom) + var(--accessory-h, 0px) + 16px)" }}
                 >
+                    <ScrollToTop />
                     <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-full focus:bg-inverse focus:px-4 focus:py-2 focus:text-on-inverse">
                         Skip to content
                     </a>
@@ -123,7 +137,7 @@ export function AppShell() {
                             onLogout={() => { clearAll(); void supabase.auth.signOut() }}
                         />
                     )}
-                    <div className="flex min-h-dvh flex-col">
+                    <div className="flex min-h-dvh min-w-0 flex-col">
                         <div id="main-content" tabIndex={-1} className="flex-1 outline-none" style={{ paddingBottom: "var(--content-pb)" }}>
                             {/* Keyed by tab: switching tabs replays a subtle fade/slide (no fill-forwards, so no lingering transform). */}
                             <div key={active} className="tab-enter">

@@ -141,7 +141,7 @@ const ReleasePage = () => {
             <Page>
                 <div role="status" className="my-auto space-y-4">
                     <span aria-hidden className={`grid size-12 place-items-center rounded-full ${DOT.ok}`}><Check className="size-7" strokeWidth={3} /></span>
-                    <h1 className="text-large-title font-display lg:text-display">The envelope is open</h1>
+                    <h1 className="text-title-1 font-display sm:text-large-title lg:text-display">The envelope is open</h1>
                     <p className="text-body font-bold lg:text-headline">
                         {n > 0 ? `${n} ${n === 1 ? "winner is" : "winners are"} live for every member.` : "The winners are live for every member."}
                     </p>
@@ -169,7 +169,7 @@ const ReleasePage = () => {
     return (
         <Page>
             <div className="my-auto space-y-5 py-4 [@media(max-height:640px)]:space-y-2 [@media(max-height:640px)]:py-2">
-                <h1 className="text-large-title font-display lg:text-display [@media(max-height:640px)]:text-title-1">Reveal the winners?</h1>
+                <h1 className="text-title-1 font-display sm:text-large-title lg:text-display [@media(max-height:640px)]:text-title-1">Reveal the winners?</h1>
                 <p className="text-body font-bold lg:text-headline">Every member sees every winner. This cannot be undone.</p>
                 <ul className="space-y-3 text-callout lg:text-body [@media(max-height:640px)]:space-y-1">
                     {load.checks.map((c) => <Row key={c.id} tone={c.ok ? "ok" : "bad"}>{c.label}</Row>)}

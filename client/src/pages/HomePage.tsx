@@ -72,7 +72,7 @@ const HomeBody = ({ userId, isCommittee, name, memberId, imageUrl, hold }: { use
             }
         >
             <div className="mx-auto max-w-[1280px]">
-                <p className="mb-4 text-large-title">{name ? `Hey ${name}.` : "Hey."}</p>
+                <p className="mb-4 text-title-1 sm:text-large-title">{name ? `Hey ${name}.` : "Hey."}</p>
                 {totalFailure && <ErrorState title="Couldn't load Home" body="Check your connection and try again." onRetry={state.reload} />}
                 <div className={GRID}>
                     {!totalFailure && memberWidgets.map((w) => (
