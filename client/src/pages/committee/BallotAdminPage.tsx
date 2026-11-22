@@ -332,7 +332,7 @@ const BallotAdminPage = () => {
 
                 {phase !== "draft" && phase !== "scheduled" && !committeeRound && (
                     <div className="lg:sticky lg:top-20 lg:col-start-2 lg:row-start-1 lg:row-span-5 lg:self-start">
-                        <WhoVoted id="who-voted" rows={rows} />
+                        <WhoVoted id="who-voted" rows={rows} ballotName={sel.name} closesAt={new Date(sel.closes_at)} />
                     </div>
                 )}
 

@@ -4,6 +4,7 @@ import { ToastProvider } from "./Toast"
 import { IntroHost, IntroProvider } from "./IntroHost"
 import { TabBar } from "./TabBar"
 import { Sidebar } from "./Sidebar"
+import { OfflineBanner } from "./OfflineBanner"
 import { ShellContext } from "./ShellContext"
 import { TABS, activeTab, isTextEntry } from "./logic/tabs"
 import { useUserData } from "../context/UserContenxt"
@@ -138,6 +139,7 @@ export function AppShell() {
                         />
                     )}
                     <div className="flex min-h-dvh min-w-0 flex-col">
+                        <OfflineBanner />
                         <div id="main-content" tabIndex={-1} className="flex-1 outline-none" style={{ paddingBottom: "var(--content-pb)" }}>
                             {/* Keyed by tab: switching tabs replays a subtle fade/slide (no fill-forwards, so no lingering transform). */}
                             <div key={active} className="tab-enter">

@@ -515,7 +515,7 @@ describe("VotePage save failures", () => {
         vi.mocked(castVote).mockRejectedValueOnce(new TypeError("Failed to fetch"))
         fireEvent.click(radio(ANN))
         const alert = await within(section(C1)).findByRole("alert")
-        expect(alert.textContent).toMatch(/no connection/i)
+        expect(alert.textContent).toMatch(/check your connection/i)
         expect(alert.className).toMatch(/border-pebble-cherry/)
         expect(within(alert).getByRole("button", { name: /try again/i }).className).toMatch(/bg-inverse/)
         fireEvent.click(within(alert).getByRole("button", { name: /try again/i }))

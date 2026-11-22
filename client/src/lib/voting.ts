@@ -126,7 +126,7 @@ export const saveErrorMessage = (kind: SaveErrorKind, closesAt?: Date): Omit<Vot
         case "closed":
             return { title: closesAt ? closedAtLabel(closesAt) : "Voting has closed", detail: "Your last saved vote stands. Cards are read-only.", canRetry: false }
         case "network":
-            return { title: "Couldn't save your vote", detail: "No connection. Your previous vote is still saved.", canRetry: true }
+            return { title: "Couldn't save your vote", detail: "Check your connection and try again. Your previous vote is still saved.", canRetry: true }
         case "rule":
             return { title: "Couldn't save your vote", detail: "You can't vote for yourself or a group you're in.", canRetry: false }
         case "groupSize":

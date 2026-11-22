@@ -16,6 +16,7 @@ import { COPY } from "../../ui/copy"
 import { PEBBLE_EDGE } from "../../ui/logic/pebble"
 import { EditIdeaSheet } from "./EditIdeaSheet"
 import { IdeaFields } from "./IdeaFields"
+import { OFFLINE_REASON, useOnline } from "../../lib/online"
 
 const EMPTY: IdeaDraft = { name: "", description: "", hint: null }
 const when = (iso: string) => new Date(iso).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
@@ -26,6 +27,7 @@ type Load = { status: "loading" } | { status: "error"; unavailable: boolean } | 
 export function SuggestView({ window: w, phase, now }: { window: MyocWindow | null; phase: WindowPhase; now: Date }) {
     const toast = useToast()
     const confirm = useConfirm()
+    const online = useOnline()
     const [load, setLoad] = useState<Load>({ status: "loading" })
     const [reload, setReload] = useState(0)
     const [draft, setDraft] = useState<IdeaDraft>(EMPTY)
@@ -159,7 +161,8 @@ export function SuggestView({ window: w, phase, now }: { window: MyocWindow | nu
                                 {formError}
                             </p>
                         )}
-                        <Button type="submit" variant="primary" size="md" fullWidth loading={busy} loadingLabel="Submitting…">
+                        {!online && <p className="text-footnote text-label-2">{OFFLINE_REASON}</p>}
+                        <Button type="submit" variant="primary" size="md" fullWidth loading={busy} loadingLabel="Submitting…" disabled={!online}>
                             Submit idea
                         </Button>
                     </form>

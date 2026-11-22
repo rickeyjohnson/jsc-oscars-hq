@@ -18,6 +18,8 @@ import BallotBasicInfo from "./BallotBasicInfo"
 import CategoryList from "./CategoryList"
 import CategoryModal from "./CategoryModal"
 import BulkImportPanel from "./BulkImportPanel"
+import { failureMessage } from "../../lib/failure"
+import { OFFLINE_REASON, useOnline } from "../../lib/online"
 
 function StepIndicator({ step }: { step: BuilderStep }) {
     const at = BUILDER_STEPS.findIndex((s) => s.id === step)
@@ -49,6 +51,7 @@ const BallotBuilderPage = () => {
     const [ballotId, setBallotId] = useState<string | undefined>()
     const [errors, setErrors] = useState<string[]>([])
     const [busy, setBusy] = useState(false)
+    const online = useOnline()
     const navigate = useNavigate()
     const toast = useToast()
     const confirm = useConfirm()
@@ -126,7 +129,8 @@ const BallotBuilderPage = () => {
                 toast.show("Draft saved")
             }
         } catch (e) {
-            setErrors([e instanceof Error ? e.message : "Save failed"])
+            console.error(e)
+            setErrors([failureMessage(publish ? "publish this ballot" : "save this ballot", e) + " Your changes are still here."])
         } finally {
             setBusy(false)
         }
@@ -226,6 +230,7 @@ const BallotBuilderPage = () => {
                             ))}
                         </ul>
                     )}
+                    {!online && step === "review" && <p className="text-footnote text-label-2">{OFFLINE_REASON}</p>}
                     {errors.length > 0 && (
                         <ul role="alert" className="list-none space-y-0.5 p-0 text-footnote text-danger">
                             {errors.map((e) => (
@@ -245,10 +250,10 @@ const BallotBuilderPage = () => {
                             </Button>
                         ) : (
                             <>
-                                <Button variant="secondary" disabled={busy} onClick={() => handleSave(false)}>
+                                <Button variant="secondary" disabled={busy || !online} onClick={() => handleSave(false)}>
                                     Save draft
                                 </Button>
-                                <Button variant="primary" fullWidth loading={busy} onClick={() => handleSave(true)}>
+                                <Button variant="primary" fullWidth loading={busy} disabled={!online} onClick={() => handleSave(true)}>
                                     Publish
                                 </Button>
                             </>
