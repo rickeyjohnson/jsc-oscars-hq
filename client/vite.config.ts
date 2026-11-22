@@ -1,5 +1,5 @@
 /// <reference types="vitest/config" />
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import type { Plugin } from 'vite'
@@ -30,9 +30,24 @@ function stampServiceWorker(): Plugin {
   }
 }
 
+// Link-preview scrapers ignore relative image URLs, so og tags need the absolute origin.
+// Set VITE_SITE_URL (and redeploy) when the domain changes.
+function siteUrl(): Plugin {
+  return {
+    name: 'site-url',
+    transformIndexHtml: {
+      order: 'pre',
+      handler(html) {
+        const origin = (process.env.VITE_SITE_URL || loadEnv(process.env.NODE_ENV ?? 'production', process.cwd(), 'VITE_').VITE_SITE_URL || 'https://jsc-oscars-hq.vercel.app').replace(/\/+$/, '')
+        return html.replaceAll('%SITE_URL%', origin)
+      },
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss(), stampServiceWorker()],
+  plugins: [react(), tailwindcss(), siteUrl(), stampServiceWorker()],
   test: {
     environment: "node",
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
