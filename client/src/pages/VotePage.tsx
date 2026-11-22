@@ -22,6 +22,7 @@ import { VoteBanner } from "../components/vote/VoteBanner"
 import { useRefetchOnFocus } from "../ui/useRefetchOnFocus"
 import { chipClasses } from "../ui/logic/variants"
 import { ErrorState } from "../ui/ErrorState"
+import { peekBallotDetail } from "../lib/cache/detail"
 import { Skeleton, SkeletonScreen } from "../ui/Skeleton"
 import { COPY } from "../ui/copy"
 import { withTimeout } from "../lib/timeout"
@@ -37,7 +38,11 @@ const VotePage = () => {
     const location = useLocation()
     const { member, loading: userLoading } = useUserData()
     const myMemberId = member?.id ?? null
+    const myUserId = member?.user_id ?? null
     const [ballot, setBallot] = useState<BallotDetail | null>(null)
+    // False while `ballot` is only the last-known copy from this device (first paint). Vote controls stay off until the server answers.
+    const [detailFresh, setDetailFresh] = useState(true)
+    const loaded = useRef(false) // detail AND my votes have both come from the server (a focus refresh alone must not unlock a seeded view)
     const [members, setMembers] = useState<Member[]>([])
     const [myVotes, setMyVotes] = useState<Record<string, string>>({})
     const [pending, setPending] = useState<Record<string, boolean>>({})
@@ -63,18 +68,29 @@ const VotePage = () => {
     // Detail only; never touches votes. Throws on failure so callers decide how to report it.
     const refreshDetail = useCallback(async () => {
         if (!ballotId) return
-        setBallot(await fetchBallotDetail(ballotId))
+        const fresh = await fetchBallotDetail(ballotId)
+        setBallot(fresh)
+        if (loaded.current) setDetailFresh(true)
     }, [ballotId])
 
     useEffect(() => {
         if (!ballotId || userLoading || !myMemberId) return
         let cancelled = false
+        loaded.current = false
+        // Last-known detail paints at once (read-only); the fresh read below replaces it and unlocks voting.
+        const seed = peekBallotDetail(myUserId, ballotId)
+        if (seed) {
+            setBallot((b) => b ?? seed)
+            setDetailFresh(false)
+        }
         ;(async () => {
             try {
                 const [detail, votes] = await Promise.all([withTimeout(fetchBallotDetail(ballotId)), fetchMyVotes(ballotId)])
                 if (cancelled) return
                 confirmed.current = { ...votes }
+                loaded.current = true
                 setBallot(detail)
+                setDetailFresh(true)
                 setMyVotes(votes)
                 const j = jumpToOnLoad.current
                 if (typeof j === "number" && j >= 0 && j < detail.categories.length) setIdx(j)
@@ -98,7 +114,7 @@ const VotePage = () => {
             }
         })()
         return () => { cancelled = true }
-    }, [ballotId, userLoading, myMemberId, attempt])
+    }, [ballotId, userLoading, myMemberId, myUserId, attempt])
 
     // Re-render when the window opens or closes while the page is open; also re-check the ballot on focus.
     const [, setTick] = useState(0)
@@ -138,6 +154,7 @@ const VotePage = () => {
             try {
                 b = await fetchBallotDetail(ballotId)
                 setBallot(b)
+                if (loaded.current) setDetailFresh(true)
                 kind = classifySaveError(e, new Date(b.closes_at), new Date(), online, b.status)
             } catch {
                 /* keep the rule message */
@@ -338,7 +355,7 @@ const VotePage = () => {
                         selectedId={myVotes[c.id]}
                         pending={Boolean(pending[c.id])}
                         current={i === idx && !reviewing}
-                        readOnly={readOnly}
+                        readOnly={readOnly || !detailFresh}
                         myMemberId={myMemberId}
                         members={members}
                         avatars={avatars}
@@ -358,7 +375,7 @@ const VotePage = () => {
             {reviewing && (
                 <ReviewStep
                     rows={reviewRows(ballot.categories, myVotes, myMemberId)}
-                    readOnly={readOnly}
+                    readOnly={readOnly || !detailFresh}
                     onEdit={jump}
                 />
             )}

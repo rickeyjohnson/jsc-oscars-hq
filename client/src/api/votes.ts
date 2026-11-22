@@ -1,6 +1,7 @@
 import { supabase } from "../supabaseClient"
 import type { VoteRow } from "../types"
 import { fetchAllPages } from "../lib/paging"
+import { invalidateBallots } from "../lib/cache/invalidate"
 import { withTimeout } from "../lib/timeout"
 
 // votes.voter_id is the auth user id (default auth.uid()); RLS enforces window, self-vote and claim.
@@ -46,6 +47,7 @@ export const addNominee = async (categoryId: string, displayName: string, member
         p_member_ids: memberIds,
     })
     if (error) throw error
+    invalidateBallots()
     return data as string
 }
 

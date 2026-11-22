@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { invalidateMembers } from "../lib/cache/invalidate"
 import { fetchMemberDirectory, type MemberDirectoryEntry } from "../api/members"
 
 const TTL_MS = 30_000
@@ -7,6 +8,7 @@ let cache: { at: number; p: Promise<MemberDirectoryEntry[] | null> } | null = nu
 /** Forget the cached directory (call after someone changes their photo). */
 export const invalidateMemberDirectory = (): void => {
     cache = null
+    invalidateMembers()
 }
 
 const load = (): Promise<MemberDirectoryEntry[] | null> => {

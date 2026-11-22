@@ -10,6 +10,7 @@ import { Button } from "../ui/Button"
 import { NameChips } from "../ui/NameChips"
 import { Skeleton, SkeletonScreen } from "../ui/Skeleton"
 import { clearAll } from "../lib/cache/clear"
+import { invalidateMembers } from "../lib/cache/invalidate"
 
 const NOT_SET_UP = "Name claiming isn't set up yet. Ask a committee member."
 const TAKEN = "That name isn't available. Pick another or ask a committee member."
@@ -54,6 +55,7 @@ const ClaimNamePage = () => {
                 if (!missing) load(true)
                 return
             }
+            invalidateMembers() // members.user_id just changed
             await refetch()
             navigate("/app", { replace: true })
         },

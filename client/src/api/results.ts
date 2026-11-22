@@ -1,12 +1,13 @@
 import { supabase } from "../supabaseClient"
 import { runRelease, type ReleaseIO, type ReleaseStatus } from "../lib/release"
 import type { Ballot, Category, Place, ResultRow, Season } from "../types"
-import { fetchBallotDetail as fetchBallotDetailRaw } from "./ballots"
-import { dedupe } from "../lib/cache/dedup"
+import { fetchBallotDetail } from "./ballots"
+import { readThrough } from "../lib/cache/swr"
+import { cacheGet } from "../lib/cache/store"
+import { GLOBAL, userScope } from "../lib/cache/keys"
+import { cacheEpoch, invalidateBallots, invalidateResults } from "../lib/cache/invalidate"
+import { localUid } from "../lib/cache/uid"
 import type { GuardedWrite } from "../lib/autoRecord"
-
-// Home reads each ballot detail twice (results + release status): collapse concurrent identical reads. VotePage uses the raw call.
-const fetchBallotDetail = (id: string) => dedupe("ballot-detail:" + id, () => fetchBallotDetailRaw(id))
 
 // Committee reads every result; members only after the season is released (RLS).
 export const fetchResults = async (categoryIds: string[]): Promise<ResultRow[]> => {
@@ -28,6 +29,7 @@ export const upsertResults = async (rows: ResultRow[]): Promise<void> => {
     const now = new Date().toISOString()
     const payload = rows.map(({ places, ...rest }) => (places === undefined ? { ...rest, updated_at: now } : { ...rest, places, updated_at: now }))
     const { error } = await supabase.from("results").upsert(payload, { onConflict: "category_id" })
+    invalidateResults()
     if (error) throw error
 }
 
@@ -37,6 +39,13 @@ export const upsertResults = async (rows: ResultRow[]): Promise<void> => {
 //  - expected <ballot id>: update only while the row is still decided by that ballot
 export const recordResultsGuarded = async (writes: GuardedWrite[]): Promise<void> => {
     if (writes.length === 0) return
+    try {
+        await recordResultsGuardedRaw(writes)
+    } finally {
+        invalidateResults()
+    }
+}
+const recordResultsGuardedRaw = async (writes: GuardedWrite[]): Promise<void> => {
     const now = new Date().toISOString()
     const payload = (row: GuardedWrite["row"]) => {
         const { places, ...rest } = row
@@ -64,6 +73,7 @@ export const updatePlaces = async (rows: { category_id: string; places: Place[] 
         if (error) throw error
         filled += data?.length ?? 0
     }
+    invalidateResults()
     return filled
 }
 
@@ -106,12 +116,34 @@ const realReleaseIO: ReleaseIO = {
 
 // Committee only. Checks first (no writes if any fail), marks finished ballots released,
 // then reveals the season's results to members last.
-export const releaseSeasonResults = (seasonId: string): Promise<void> => runRelease(realReleaseIO, seasonId, new Date())
+export const releaseSeasonResults = async (seasonId: string): Promise<void> => {
+    try {
+        await runRelease(realReleaseIO, seasonId, new Date())
+    } finally {
+        invalidateBallots()
+        invalidateResults()
+    }
+}
 
 export type SeasonResults = { categories: Category[]; results: Record<string, ResultRow> }
 
 // Main, non-draft ballots of the season by opens_at; their categories in ballot order, with recorded results.
+// Results are cached per user ONLY for a season whose release a fresh server response already confirmed
+// (the marker written by fetchCurrentSeason). Before release nothing is read from or written to the cache.
 export const fetchSeasonResults = async (seasonId: string): Promise<SeasonResults> => {
+    const releasedAt = cacheGet<string>(GLOBAL, `released:${seasonId}`)?.data
+    const uid = releasedAt ? await localUid() : null
+    if (!releasedAt || !uid) return fetchSeasonResultsRaw(seasonId)
+    const epoch = cacheEpoch()
+    const r = await readThrough(userScope(uid), `results:${seasonId}:${releasedAt}`, () => fetchSeasonResultsRaw(seasonId), {
+        fresh: 3600_000,
+        max: 7 * 24 * 3600_000,
+        shouldStore: () => epoch === cacheEpoch(), // a correction landed while this read was in flight: do not store it
+    })
+    return r.data
+}
+
+const fetchSeasonResultsRaw = async (seasonId: string): Promise<SeasonResults> => {
     const { data: ballots, error } = await supabase
         .from("ballots")
         .select("id")

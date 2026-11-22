@@ -31,7 +31,7 @@ const storage = (): Storage | null => {
 const GRID = "grid grid-flow-dense grid-cols-2 items-stretch gap-3 lg:grid-cols-2 min-[1400px]:grid-cols-3"
 
 const HomeBody = ({ userId, isCommittee, name, memberId, imageUrl, hold }: { userId: string; isCommittee: boolean; name: string; memberId?: string; imageUrl?: string | null; hold?: boolean }) => {
-    const base = useHomeData(isCommittee)
+    const base = useHomeData(isCommittee, userId || null)
     const myoc = useMyocHome(base.data?.season?.id, userId)
     const state = useMemo(() => ({ ...base, myoc }), [base, myoc])
     const toast = useToast()

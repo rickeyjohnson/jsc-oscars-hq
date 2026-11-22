@@ -109,6 +109,19 @@ export function cacheClearScope(scope: string): void {
     }
 }
 
+/** Remove every entry whose key (not scope) starts with keyPrefix, in every scope. Key prefixes must contain no dots, e.g. "ballotdetail:". */
+export function cacheDelKeyPrefix(keyPrefix: string): void {
+    const needle = `.${keyPrefix}`
+    for (const k of [...mem.keys()]) if (k.includes(needle)) mem.delete(k)
+    try {
+        const s = ls()
+        if (!s) return
+        for (const k of ourKeys(s)) if (k.includes(needle)) s.removeItem(k)
+    } catch {
+        // ignore
+    }
+}
+
 export function cacheClearAll(): void {
     mem.clear()
     try {

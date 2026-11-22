@@ -4,6 +4,12 @@ import { toUtcIso } from "../lib/time"
 import type { BallotSummary } from "../lib/voting"
 import type { Ballot, BallotDetail, BallotFormData, BallotStatus, Category, Member, Nominee, Season } from "../types"
 import type { RoundEntry } from "../lib/rounds"
+import { dedupe } from "../lib/cache/dedup"
+import { cacheSet } from "../lib/cache/store"
+import { GLOBAL } from "../lib/cache/keys"
+import { cachedReleasedDetail, storeBallotDetail } from "../lib/cache/detail"
+import { cacheEpoch, invalidateBallots } from "../lib/cache/invalidate"
+import { localUid } from "../lib/cache/uid"
 import { classifyReopenError, REOPEN_UNAVAILABLE } from "../lib/reopen"
 
 export const fetchSeasons = async (): Promise<Season[]> => {
@@ -31,9 +37,16 @@ export const saveBallotDraft = async (form: BallotFormData, members: Member[], b
             nominees: buildNomineeRows(c, members),
         })),
     })
-    if (!error) return data as string
+    if (!error) {
+        invalidateBallots()
+        return data as string
+    }
     if (error.code !== "PGRST202" && error.code !== "42883" && !/could not find the function/i.test(error.message ?? "")) throw error
-    return saveBallotDraftSteps(form, members, ballotId)
+    try {
+        return await saveBallotDraftSteps(form, members, ballotId)
+    } finally {
+        invalidateBallots() // the step-by-step path can half-finish
+    }
 }
 
 const saveBallotDraftSteps = async (form: BallotFormData, members: Member[], ballotId?: string): Promise<string> => {
@@ -86,10 +99,27 @@ const saveBallotDraftSteps = async (form: BallotFormData, members: Member[], bal
 export const setBallotStatus = async (ballotId: string, status: BallotStatus): Promise<void> => {
     const { error } = await supabase.from("ballots").update({ status }).eq("id", ballotId)
     if (error) throw error
+    invalidateBallots()
 }
 
 // Loads a ballot with its categories/nominees. Round ballots show only what is in round_nominees.
+// Only a RELEASED ballot is ever served from the per-user cache (release is one-way). Open/closed/draft always read the server
+// (a fresh copy is stored for display-only first paint, see lib/cache/detail.ts; drafts are never stored).
 export const fetchBallotDetail = async (ballotId: string): Promise<BallotDetail> => {
+    const uid = await localUid()
+    if (uid) {
+        const hit = cachedReleasedDetail(uid, ballotId)
+        if (hit) return hit
+    }
+    return dedupe(`bd:${ballotId}`, async () => {
+        const epoch = cacheEpoch()
+        const detail = await fetchBallotDetailRaw(ballotId)
+        if (uid && epoch === cacheEpoch()) storeBallotDetail(uid, detail)
+        return detail
+    })
+}
+
+const fetchBallotDetailRaw = async (ballotId: string): Promise<BallotDetail> => {
     const { data: ballot, error } = await supabase.from("ballots").select("*").eq("id", ballotId).single()
     if (error) throw error
     const isRound = ballot.round !== "main" && Boolean(ballot.parent_ballot_id)
@@ -132,7 +162,10 @@ export const fetchBallotDetail = async (ballotId: string): Promise<BallotDetail>
 export const fetchCurrentSeason = async (): Promise<Season | null> => {
     const { data, error } = await supabase.from("seasons").select("*").order("ceremony_at", { ascending: false, nullsFirst: false }).limit(1)
     if (error) throw error
-    return ((data ?? [])[0] as Season | undefined) ?? null
+    const season = ((data ?? [])[0] as Season | undefined) ?? null
+    // A fresh response that shows the release is the only thing allowed to unlock cached results (api/results.ts). Never cache "not released".
+    if (season?.results_released_at) cacheSet(GLOBAL, `released:${season.id}`, season.results_released_at)
+    return season
 }
 
 // Visible (RLS) non-draft ballots with category counts and the caller's own vote counts.
@@ -237,7 +270,10 @@ export class ReopenRefusedError extends Error {}
 
 export const reopenBallot = async (ballotId: string, closesAtIso: string): Promise<void> => {
     const { error } = await supabase.rpc("reopen_ballot", { p_ballot_id: ballotId, p_closes_at: closesAtIso })
-    if (!error) return
+    if (!error) {
+        invalidateBallots()
+        return
+    }
     const kind = classifyReopenError(error)
     if (kind === "unavailable") throw new ReopenUnavailableError(REOPEN_UNAVAILABLE)
     if (kind === "refused") throw new ReopenRefusedError(error.message)

@@ -17,4 +17,8 @@ export function forget(key: string): void {
     inflight.delete(key)
 }
 
+export function forgetPrefix(prefix: string): void {
+    for (const k of [...inflight.keys()]) if (k.startsWith(prefix)) inflight.delete(k)
+}
+
 export const clearInflight = (): void => inflight.clear()

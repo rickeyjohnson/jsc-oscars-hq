@@ -14,8 +14,8 @@ export type HomeState = HomeDataState & { directory: Directory | null; myoc?: My
  * (names + photos), fetched only once results are released (leaderboard, winners avatars).
  * Directory failures are silent: avatars fall back to initials and the leaderboard hides.
  */
-export function useHomeData(isCommittee: boolean): HomeState {
-    const base = useBaseHomeData(isCommittee)
+export function useHomeData(isCommittee: boolean, uid?: string | null): HomeState {
+    const base = useBaseHomeData(isCommittee, uid)
     const released = Boolean(base.data?.released)
     const [directory, setDirectory] = useState<Directory | null>(null)
     useEffect(() => {
