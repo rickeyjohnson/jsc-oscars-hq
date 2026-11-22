@@ -68,3 +68,26 @@ export async function loadHomeData(isCommittee: boolean, io: HomeIO, now: Date):
     await Promise.all(jobs)
     return data
 }
+
+// First-paint snapshot (per user, display-only). It never holds committee data (ballots, checks, completion, errors),
+// and results only when a fresh response said the season is released, so a sealed season can never leak into storage.
+export const HOME_SNAPSHOT_KEY = "home:snapshot"
+export const HOME_SNAPSHOT_MAX_MS = 24 * 3600_000
+export type HomeSnapshot = Pick<HomeData, "season" | "released" | "summaries" | "results">
+
+export function toHomeSnapshot(d: HomeData): HomeSnapshot | null {
+    if (!d.season) return null
+    const released = Boolean(d.season.results_released_at)
+    return { season: d.season, released, summaries: d.summaries, results: released ? d.results : null }
+}
+
+export const fromHomeSnapshot = (s: HomeSnapshot): HomeData => ({
+    season: s.season,
+    released: s.released,
+    summaries: s.summaries,
+    results: s.released ? s.results : null,
+    ballots: null,
+    checks: null,
+    completion: null,
+    errors: {},
+})

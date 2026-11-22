@@ -29,7 +29,7 @@ const storage = (): Storage | null => {
 const GRID = "grid grid-flow-dense grid-cols-2 items-stretch gap-3 lg:grid-cols-2 min-[1400px]:grid-cols-3"
 
 const HomeBody = ({ userId, isCommittee, name, memberId, imageUrl, hold }: { userId: string; isCommittee: boolean; name: string; memberId?: string; imageUrl?: string | null; hold?: boolean }) => {
-    const state = useHomeData(isCommittee)
+    const state = useHomeData(isCommittee, userId || null)
     const toast = useToast()
     const [prefs, setPrefs] = useState<HomePrefs>(() => loadHomePrefs(storage(), userId, isCommittee))
     const [customizing, setCustomizing] = useState(false)

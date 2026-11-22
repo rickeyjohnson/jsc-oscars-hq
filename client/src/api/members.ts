@@ -1,6 +1,8 @@
 import { supabase } from "../supabaseClient"
 import type { Member } from "../types"
-import { dedupe, forget } from "../lib/cache/dedup"
+import { readThrough } from "../lib/cache/swr"
+import { GLOBAL } from "../lib/cache/keys"
+import { cacheEpoch, invalidateMembers } from "../lib/cache/invalidate"
 
 export const fetchAvailableMemberNames = async (): Promise<string[]> => {
     const { data, error } = await supabase.rpc("available_member_names")
@@ -19,13 +21,18 @@ export const fetchMemberNameStatus = async (): Promise<MemberNameStatus[]> => {
     return names.map((name) => ({ name, taken: false }))
 }
 
-// Concurrent callers (Home alone used to fire this three times) share one request; nothing is kept once it settles.
-export const fetchMembers = (): Promise<Member[]> =>
-    dedupe("members", async () => {
-        const { data, error } = await supabase.from("members").select("id, name, user_id").order("name")
-        if (error) throw error
-        return (data ?? []) as Member[]
-    })
+// Names and claim links are the same for every signed-in member: global SWR cache (10 min fresh, 24 h max).
+// Concurrent callers share one request (Home used to fire this three times). Signup reads fetchMemberNameStatus instead, never this.
+const swr = <T>() => {
+    const epoch = cacheEpoch()
+    return { fresh: 10 * 60_000, max: 24 * 3600_000, shouldStore: (_: T) => epoch === cacheEpoch() } // not after an invalidation mid-flight
+}
+const fetchMembersRaw = async (): Promise<Member[]> => {
+    const { data, error } = await supabase.from("members").select("id, name, user_id").order("name")
+    if (error) throw error
+    return (data ?? []) as Member[]
+}
+export const fetchMembers = async (): Promise<Member[]> => (await readThrough(GLOBAL, "members", fetchMembersRaw, swr<Member[]>())).data
 
 // Member ids of the committee: members whose account has profiles.is_committee.
 export const fetchCommitteeMemberIds = async (): Promise<string[]> => {
@@ -42,7 +49,9 @@ export type MemberDirectoryEntry = { id: string; name: string; photo: string | n
 
 // One source of truth for a member's face: members.user_id -> profiles.image_url (the photo that user uploaded).
 // Null when the member has no claimed account or no photo (callers fall back to initials + pebble ring).
-export const fetchMemberDirectory = async (): Promise<MemberDirectoryEntry[]> => {
+export const fetchMemberDirectory = async (): Promise<MemberDirectoryEntry[]> =>
+    (await readThrough(GLOBAL, "directory", fetchMemberDirectoryRaw, swr<MemberDirectoryEntry[]>())).data
+const fetchMemberDirectoryRaw = async (): Promise<MemberDirectoryEntry[]> => {
     const [members, profiles] = await Promise.all([fetchMembers(), supabase.from("profiles").select("user_id, image_url")])
     if (profiles.error) throw profiles.error
     const byUser = new Map((profiles.data ?? []).map((p) => [p.user_id as string, (p.image_url as string | null) || null]))
@@ -59,9 +68,8 @@ export const fetchMemberAvatars = async (): Promise<Record<string, string | null
 // Committee-only RPC: unlinks the member and deletes that account's votes.
 // expectedUserId guards against a stale list: the DB refuses if the name's claim changed.
 export const resetMemberClaim = async (name: string, expectedUserId: string): Promise<void> => {
-    forget("members")
     const { error } = await supabase.rpc("reset_member_claim", { p_name: name, p_expected_user: expectedUserId })
-    forget("members")
+    invalidateMembers() // the claim may have changed even when the call failed
     if (error) {
         if (error.message.includes("member claim changed")) throw new Error("This name was changed by someone else — refresh the list.")
         throw error
