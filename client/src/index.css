@@ -189,6 +189,13 @@
     font-weight: var(--text-title-1--font-weight);
 }
 
+/* Fluid countdown digits: sized so "12d 14h 58m" fits one line in a half-width widget at 390px, tokens only. */
+@utility text-count {
+    font-size: clamp(var(--text-headline), 5vw, var(--text-title-1));
+    line-height: var(--text-title-1--line-height);
+    font-weight: var(--text-title-1--font-weight);
+}
+
 @utility pt-safe {
     padding-top: env(safe-area-inset-top);
 }
@@ -269,6 +276,13 @@ html {
 html,
 body {
     overflow-x: clip;
+}
+
+/* Screen-reader-only text must not widen the page: Tailwind's sr-only keeps white-space: nowrap, and iOS Safari counts that clipped
+   overflow toward the layout viewport (page shrinks to fit). Wrap it and paint-contain it. */
+.sr-only {
+    white-space: normal;
+    contain: paint;
 }
 
 body {

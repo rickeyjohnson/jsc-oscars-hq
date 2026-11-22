@@ -12,7 +12,7 @@ import {
 import { HowCalculatedSheet } from "./HowCalculatedSheet"
 
 const NOTE = "text-footnote text-label-2"
-const CARD = "min-w-0 rounded-card bg-surface p-3 sm:p-4"
+const CARD = "min-w-0 rounded-card bg-surface p-4"
 const PILL = { over: "bg-success text-bg", under: "bg-warn text-bg", par: "bg-inverse text-on-inverse" } as const
 
 function Card({ title, sub, children }: { title: string; sub?: string; children: ReactNode }) {
@@ -96,6 +96,7 @@ export function MemberStats({ model, memberId, viewer = true, pendingLabel }: { 
                 </p>
             </div>
 
+            <div className="grid grid-cols-1 auto-rows-fr gap-4 lg:col-span-2 lg:grid-cols-2">
             <Card title="Noms vs wins, by semester" sub="Light bar = times nominated. Color bar = times won.">
                 <Legend>
                     <span><Swatch className="bg-label-3" />Noms</span>
@@ -159,6 +160,8 @@ export function MemberStats({ model, memberId, viewer = true, pendingLabel }: { 
                     })}
                 </div>
             </Card>
+
+            </div>
 
             {pendingLabel && (
                 <div className="lg:col-span-2">

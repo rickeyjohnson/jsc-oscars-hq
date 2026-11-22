@@ -15,7 +15,7 @@ export type ChartTable = { caption: string; head: string[]; rows: string[][] }
 
 function Chart({ h, summary, table, children }: { h: number; summary: string; table: ChartTable; children: ReactNode }) {
     return (
-        <figure className="relative m-0">
+        <figure className="relative m-0 min-w-0 overflow-hidden">
             <svg viewBox={`0 0 ${W} ${h}`} role="img" aria-label={summary} className="mx-auto block h-auto w-full max-w-[560px]">
                 {children}
             </svg>

@@ -331,9 +331,9 @@ function LiveTimer({ target }: { target: Date }) {
     const pad = (n: number) => String(n).padStart(2, "0")
     const label = `${p.days}d ${p.hours}h ${p.minutes}m`
     return (
-        <p role="timer" aria-live="off" aria-label={`Closes in ${label}`} className="flex flex-wrap items-baseline gap-x-2 font-display tabular-nums">
-            <span className="text-title-2 sm:text-title-1">{label}</span>
-            <span className="text-title-3 text-label-2">{pad(p.seconds)}</span>
+        <p role="timer" aria-live="off" aria-label={`Closes in ${label}`} className="flex flex-nowrap items-baseline gap-x-2 whitespace-nowrap font-display tabular-nums">
+            <span className="text-count sm:text-title-1">{label}</span>
+            <span className="hidden text-title-3 text-label-2 sm:inline">{pad(p.seconds)}</span>
         </p>
     )
 }

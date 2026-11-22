@@ -20,9 +20,9 @@ export function Countdown({ target, onColor = false }: { target: Date | null; on
     if (view.state === "today") return <p className="text-title-2 sm:text-title-1 font-display">Tonight at {view.timeLabel}</p>
     return (
         <div role="timer" aria-live="off" aria-label={view.ariaLabel}>
-            <p aria-hidden className="flex flex-wrap items-baseline gap-x-2 font-display tabular-nums">
-                <span className={onColor ? "text-title-1" : "text-title-2 sm:text-title-1 lg:text-display"}>{view.main}</span>
-                <span className={onColor ? "text-title-3" : "text-title-2 text-label-2"}>{view.seconds}</span>
+            <p aria-hidden className="flex flex-nowrap items-baseline gap-x-2 whitespace-nowrap font-display tabular-nums">
+                <span className={onColor ? "text-title-1" : "text-count sm:text-title-1 lg:text-display"}>{view.main}</span>
+                <span className={`hidden sm:inline ${onColor ? "text-title-3" : "text-title-2 text-label-2"}`}>{view.seconds}</span>
             </p>
             <p aria-hidden className={`mt-1 text-footnote ${onColor ? "" : "text-label-2"}`}>{view.dateLabel}</p>
         </div>
