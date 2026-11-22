@@ -2,13 +2,16 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { useAuth } from "./AuthContext"
 import { supabase } from "../supabaseClient"
 import type { Member } from "../types"
+import { invalidateMemberDirectory } from "../ui/useMemberDirectory"
+import { invalidateBallots } from "../lib/cache/invalidate"
+import { setPhotoOverride } from "../lib/photoOverrides"
 
 interface UserProfile {
     user_id: string
     username: string
     display_name: string
     email: string
-    image_url: string
+    image_url: string | null
     created_at: string
     is_committee: boolean
 }
@@ -23,6 +26,8 @@ interface UserDataContextType {
     profileFailed?: boolean
     /** Re-run the profile + member lookup (e.g. after claiming a name). */
     refetch: () => Promise<void>
+    /** Show a freshly saved photo everywhere right now (patches the in-memory profile and the member directory). */
+    applyPhoto: (url: string) => void
     fetchOscars: () => Promise<OscarsEvent[]>
 }
 
@@ -126,8 +131,17 @@ export const UserDataProvider = ({
         []
     )
 
+    const memberIdRef = useRef<string | undefined>(undefined)
+    memberIdRef.current = member?.id
+    const applyPhoto = useCallback((url: string) => {
+        setProfile((p) => (p ? { ...p, image_url: url } : p))
+        if (memberIdRef.current) setPhotoOverride(memberIdRef.current, url)
+        invalidateMemberDirectory()
+        invalidateBallots() // drops the Home snapshot too
+    }, [])
+
     return (
-        <UserDataContext.Provider value={{ profile, member, loading, memberFailed, profileFailed, refetch, fetchOscars }}>
+        <UserDataContext.Provider value={{ profile, member, loading, memberFailed, profileFailed, refetch, applyPhoto, fetchOscars }}>
             {children}
         </UserDataContext.Provider>
     )

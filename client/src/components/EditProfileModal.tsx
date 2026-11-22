@@ -9,7 +9,7 @@ import ProfileSetup from "./ProfileSetup"
 
 /** Your profile: change your photo here; names are claimed once and changed by the committee. */
 const EditProfileModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
-    const { profile, member, refetch } = useUserData()
+    const { profile, member } = useUserData()
     const [photoOpen, setPhotoOpen] = useState(false)
     const name = displayName(member, profile)
     return (
@@ -29,10 +29,7 @@ const EditProfileModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
                 open={photoOpen}
                 title="Change photo"
                 onSkip={() => setPhotoOpen(false)}
-                onComplete={() => {
-                    setPhotoOpen(false)
-                    void refetch()
-                }}
+                onComplete={() => setPhotoOpen(false)}
             />
         </>
     )

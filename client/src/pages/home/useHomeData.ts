@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { useAvatarOverrides } from "../../lib/photoOverrides"
 import { fetchMemberAvatars, fetchMembers } from "../../api/members"
 import { useHomeData as useBaseHomeData, type HomeDataState } from "../../ui/useHomeData"
 import type { MyocWindow } from "../../lib/myoc"
@@ -32,5 +33,9 @@ export function useHomeData(isCommittee: boolean, uid?: string | null): HomeStat
             live = false
         }
     }, [released])
-    return { ...base, directory }
+    const avatars = useAvatarOverrides(directory?.avatars ?? EMPTY)
+    const merged = useMemo(() => (directory ? { ...directory, avatars } : directory), [directory, avatars])
+    return { ...base, directory: merged }
 }
+
+const EMPTY: Record<string, string | null> = {}

@@ -2,6 +2,7 @@ import { supabase } from "../supabaseClient"
 import type { Member } from "../types"
 import { readThrough } from "../lib/cache/swr"
 import { GLOBAL } from "../lib/cache/keys"
+import { applyOverridesToMap } from "../lib/photoOverrides"
 import { cacheEpoch, invalidateMembers } from "../lib/cache/invalidate"
 
 export const fetchAvailableMemberNames = async (): Promise<string[]> => {
@@ -62,7 +63,7 @@ const fetchMemberDirectoryRaw = async (): Promise<MemberDirectoryEntry[]> => {
 export const fetchMemberAvatars = async (): Promise<Record<string, string | null>> => {
     const out: Record<string, string | null> = {}
     for (const m of await fetchMemberDirectory()) out[m.id] = m.photo
-    return out
+    return applyOverridesToMap(out)
 }
 
 // Committee-only RPC: unlinks the member and deletes that account's votes.

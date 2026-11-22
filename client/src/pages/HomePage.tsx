@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import { SlidersHorizontal } from "lucide-react"
 import { Avatar } from "../ui/Avatar"
 import { ErrorState } from "../ui/ErrorState"
+import { shouldAskForPhoto } from "../lib/photoPrompt"
 import ProfileSetup from "../components/ProfileSetup"
 import { useAuth } from "../context/AuthContext"
 import { useUserData } from "../context/UserContenxt"
@@ -109,37 +110,33 @@ const HomeBody = ({ userId, isCommittee, name, memberId, imageUrl, hold }: { use
 const HomePage = () => {
     const { user } = useAuth()
     const { profile, member, loading } = useUserData()
-    const [profileSetupComplete, setProfileSetupComplete] = useState<boolean | null>(true)
-
     const skipKey = `jsc.profileSetupSkipped.${user?.id ?? ""}`
+    const [skipped, setSkipped] = useState(() => {
+        try {
+            return localStorage.getItem(skipKey) === "1"
+        } catch {
+            return false
+        }
+    })
+    useEffect(() => {
+        try {
+            setSkipped(localStorage.getItem(skipKey) === "1")
+        } catch {
+            // ignore
+        }
+    }, [skipKey])
     const handleProfileSetupSkip = () => {
         try {
             localStorage.setItem(skipKey, "1")
         } catch {
             // storage unavailable; skip lasts this session only
         }
-        setProfileSetupComplete(true)
+        setSkipped(true)
     }
 
-    const handleProfileSetupComplete = () => {
-        setProfileSetupComplete(true)
-    }
-
-    // The profile is already loaded by UserDataProvider: no second query for image_url.
-    useEffect(() => {
-        if (loading) return
-        if (!profile) {
-            setProfileSetupComplete(true)
-            return
-        }
-        let skipped = false
-        try {
-            skipped = localStorage.getItem(`jsc.profileSetupSkipped.${user?.id ?? ""}`) === "1"
-        } catch {
-            // ignore
-        }
-        setProfileSetupComplete(skipped || profile.image_url !== null)
-    }, [user?.id, loading, profile])
+    // Derived, never stored: the prompt shows only while the loaded profile has no photo and it was not skipped.
+    const needsPhoto = shouldAskForPhoto(loading, profile, skipped)
+    const profileSetupComplete = !needsPhoto
 
     return (
         <>
@@ -155,7 +152,7 @@ const HomePage = () => {
             ) : (
                 <HomeBody userId={user?.id ?? ""} isCommittee={Boolean(profile?.is_committee)} name={firstName(member?.name ?? profile?.display_name)} memberId={member?.id} imageUrl={profile?.image_url} hold={!profileSetupComplete} />
             )}
-            <ProfileSetup open={!profileSetupComplete} onComplete={handleProfileSetupComplete} onSkip={handleProfileSetupSkip} />
+            <ProfileSetup open={!profileSetupComplete} onComplete={() => {}} onSkip={handleProfileSetupSkip} />
         </>
     )
 }

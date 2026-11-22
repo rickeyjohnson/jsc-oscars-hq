@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom"
 import { useIntroGate } from "../ui/introContext"
 import CategoryVoteCard from "../components/vote/CategoryVoteCard"
 import { fetchBallotDetail } from "../api/ballots"
+import { useAvatarOverrides } from "../lib/photoOverrides"
 import { fetchMemberAvatars, fetchMembers } from "../api/members"
 import { addNominee, castVote, clearVote, fetchMyVotes } from "../api/votes"
 import { useUserData } from "../context/UserContenxt"
@@ -58,6 +59,7 @@ const VotePage = () => {
     useIntroGate(ballot && ballot.categories.length > 0 && ballot.status === "open" && Date.now() >= new Date(ballot.opens_at).getTime() && Date.now() < new Date(ballot.closes_at).getTime() && !Object.values(pending).some(Boolean) ? "vote" : null)
     const [groupOpenFor, setGroupOpenFor] = useState<string | null>(null)
     const [avatars, setAvatars] = useState<Record<string, string | null>>({})
+    const liveAvatars = useAvatarOverrides(avatars)
     const scrollOnChange = useRef(false)
     // Per-category save queue: saves run in tap order; confirmed holds the last value the DB accepted.
     const chains = useRef<Record<string, Promise<void>>>({})
@@ -358,7 +360,7 @@ const VotePage = () => {
                         readOnly={readOnly || !detailFresh}
                         myMemberId={myMemberId}
                         members={members}
-                        avatars={avatars}
+                        avatars={liveAvatars}
                         message={messages[c.id] ?? null}
                         myName={member?.name}
                         registerRef={(el) => { cardEls.current[c.id] = el }}

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { Clapperboard } from "lucide-react"
 import { fetchCurrentSeason } from "../../api/ballots"
 import { fetchSeasonResults } from "../../api/results"
+import { useAvatarOverrides } from "../../lib/photoOverrides"
 import { fetchMemberAvatars } from "../../api/members"
 import { useUserData } from "../../context/UserContenxt"
 import { buildResultCards, type ResultCard } from "../../lib/resultsView"
@@ -23,10 +24,13 @@ type Load =
     | { state: "ready"; season: Season; released: boolean; cards: ResultCard[]; avatars: Record<string, string | null> }
 
 /** Winners: this season's results. Sealed for members until the committee releases them; nothing is requested before that. */
+const NO_AVATARS: Record<string, string | null> = {}
+
 export function WinnersPane() {
     const { profile, loading: userLoading } = useUserData()
     const isCommittee = Boolean(profile?.is_committee)
     const [load, setLoad] = useState<Load>({ state: "loading" })
+    const liveAvatars = useAvatarOverrides(load.state === "ready" ? load.avatars : NO_AVATARS)
     const [envelopeDone, setEnvelopeDone] = useState(false)
     const seq = useRef(0)
 
@@ -112,7 +116,7 @@ export function WinnersPane() {
             <div className="mb-4 flex flex-col items-center gap-3 text-center">
                 <h2 className="font-display text-title-1 sm:text-large-title">And the winners are…</h2>
             </div>
-            <WinnersView cards={load.cards} avatars={load.avatars} />
+            <WinnersView cards={load.cards} avatars={liveAvatars} />
         </div>
     )
 }

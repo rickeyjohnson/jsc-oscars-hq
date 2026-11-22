@@ -8,11 +8,13 @@ const upload = vi.fn()
 const update = vi.fn()
 vi.mock("../../supabaseClient", () => ({
     supabase: {
-        storage: { from: () => ({ upload, getPublicUrl: async () => ({ data: { publicUrl: "https://x/p.png" } }) }) },
-        from: () => ({ update: (...a: unknown[]) => { update(...a); return { eq: async () => ({ error: null }) } } }),
+        storage: { from: () => ({ upload, getPublicUrl: (path: string) => ({ data: { publicUrl: `https://x/${path}` } }) }) },
+        from: () => ({ update: (...a: unknown[]) => { update(...a); return { eq: () => ({ select: () => ({ maybeSingle: async () => ({ data: { image_url: `https://x/${upload.mock.calls[0][0]}` }, error: null }) }) }) } } }),
     },
 }))
 vi.mock("../../context/AuthContext", () => ({ useAuth: () => ({ user: { id: "u1" } }) }))
+const applyPhoto = vi.fn()
+vi.mock("../../context/UserContenxt", () => ({ useUserData: () => ({ applyPhoto }) }))
 
 import ProfileSetup from "../../components/ProfileSetup"
 import BulkImportPanel from "../../pages/ballot-builder/BulkImportPanel"
@@ -22,6 +24,7 @@ beforeEach(() => {
     URL.createObjectURL = () => "blob:x"
     upload.mockReset().mockResolvedValue({ error: null })
     update.mockReset()
+    applyPhoto.mockReset()
 })
 afterEach(() => {
     cleanup()
@@ -61,7 +64,8 @@ describe("ProfileSetup sheet", () => {
         await waitFor(() => expect((screen.getByRole("button", { name: "Continue" }) as HTMLButtonElement).disabled).toBe(false))
         fireEvent.click(screen.getByRole("button", { name: "Continue" }))
         await waitFor(() => expect(onComplete).toHaveBeenCalledTimes(1))
-        expect(update).toHaveBeenCalledWith({ image_url: "https://x/p.png" })
+        expect(update).toHaveBeenCalledWith({ image_url: expect.stringMatching(/^https:\/\/x\/u1\/\d+\.png$/) })
+        expect(applyPhoto).toHaveBeenCalledTimes(1)
     })
 
     it("shows the upload error and stays open", async () => {

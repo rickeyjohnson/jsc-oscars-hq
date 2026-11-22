@@ -1,11 +1,9 @@
-import { shrinkImage } from "../lib/imageResize"
-import { safeUploadName } from "../ui/logic/avatar"
+import { saveProfilePhoto } from "../api/profile"
+import { useUserData } from "../context/UserContenxt"
 import { useState } from "react"
-import { supabase } from "../supabaseClient"
 import { useAuth } from "../context/AuthContext"
 import { Sheet } from "../ui/Sheet"
 import { SheetActions } from "../ui/SheetActions"
-import { invalidateMemberDirectory } from "../ui/useMemberDirectory"
 import { Button } from "../ui/Button"
 import { Avatar } from "../ui/Avatar"
 import { useToast } from "../ui/Toast"
@@ -20,6 +18,7 @@ type ProfileSetupProps = {
 
 const ProfileSetup = ({ open, onComplete, onSkip, title = "Add your photo" }: ProfileSetupProps) => {
     const { user } = useAuth()
+    const { applyPhoto } = useUserData()
     const toast = useToast()
     const online = useOnline()
     const [image, setImage] = useState<File | null>(null)
@@ -33,52 +32,18 @@ const ProfileSetup = ({ open, onComplete, onSkip, title = "Add your photo" }: Pr
         setPreview(URL.createObjectURL(file))
     }
 
-    const uploadImage = async (file: File): Promise<string | null> => {
-        const small = await shrinkImage(file)
-        const filePath = `${safeUploadName(file.name)}-${Date.now()}`
-
-        const { error } = await supabase.storage
-            .from("profile-pics")
-            .upload(filePath, small, { cacheControl: "31536000", contentType: small.type || undefined })
-
-        if (error) {
-            console.error("Error uploading image: ", error.message)
-            setUploadError("Couldn't upload your photo. Try again, or skip for now.")
-            setLoading(false)
-            return null
-        }
-
-        const { data } = await supabase.storage
-            .from("profile-pics")
-            .getPublicUrl(filePath)
-
-        return data.publicUrl
-    }
-
     const handleImageSubmission = async () => {
+        if (!image || !user) return
         setLoading(true)
         setUploadError("")
-
         try {
-            const url = await uploadImage(image!)
-            if (!url) return
-
-            const { error } = await supabase
-                .from("profiles")
-                .update({ image_url: url })
-                .eq("user_id", user?.id ?? "")
-
-            if (error) {
-                console.error("error inserting profile image: ", error.message)
-                setUploadError("Couldn't save your photo. Try again, or skip for now.")
-                return
-            }
-
-            invalidateMemberDirectory()
+            const url = await saveProfilePhoto(user.id, image)
+            applyPhoto(url)
             toast.show("Photo updated")
             onComplete()
-        } catch {
-            setUploadError("Couldn't save your photo. Try again, or skip for now.")
+        } catch (e) {
+            console.error("profile photo save failed: ", e)
+            setUploadError(e instanceof Error && e.message ? e.message : "Couldn't save your photo. Try again, or skip for now.")
         } finally {
             setLoading(false)
         }
