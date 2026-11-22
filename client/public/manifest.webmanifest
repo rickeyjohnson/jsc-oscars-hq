@@ -1,6 +1,6 @@
 {
-  "name": "JSC Oscars",
-  "short_name": "Oscars",
+  "name": "Just Sidechatting Oscars",
+  "short_name": "JSC Oscars",
   "description": "Vote for the Just Sidechatting Oscars.",
   "start_url": "/app",
   "scope": "/",

@@ -1,6 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <rect width="512" height="512" fill="#18181B"/>
-  <text x="256" y="196.64" text-anchor="middle" font-family="Century Gothic, CenturyGothic, sans-serif" font-size="21" letter-spacing="3" fill="#FFFADD">JUST SIDECHATTING</text>
-  <text x="256" y="298" text-anchor="middle" font-family="Century Gothic, CenturyGothic, sans-serif" font-size="112" fill="#FFFADD">OSCARS</text>
-  <rect x="186" y="324" width="140" height="4" rx="2" fill="#FFD23F"/>
+  <text x="256" y="208" text-anchor="middle" font-family="CG, Century Gothic, sans-serif" font-weight="400" font-size="22" fill="#FFFADD">JUST SIDECHATTING</text>
+  <text x="256" y="300" text-anchor="middle" font-family="CG, Century Gothic, sans-serif" font-weight="300" font-size="96" fill="#FFFADD" textLength="430" lengthAdjust="spacingAndGlyphs">OSCARS</text>
 </svg>

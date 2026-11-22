@@ -14,7 +14,7 @@ const png = (f: string) => {
 describe("manifest", () => {
     const m = JSON.parse(read("manifest.webmanifest").toString())
     it("matches the brand and tokens", () => {
-        expect(m.name).toBe("JSC Oscars")
+        expect(m.name).toBe("Just Sidechatting Oscars")
         expect(m.display).toBe("standalone")
         expect(m.start_url).toBe("/app")
         expect(m.theme_color).toBe(COLORS.bg)
