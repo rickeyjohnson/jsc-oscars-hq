@@ -14,6 +14,8 @@ import { resolveWidgets } from "../ui/logic/homeWidgets"
 import { CustomizeHomeSheet } from "./home/CustomizeHomeSheet"
 import { firstName } from "./home/format"
 import { useHomeData } from "./home/useHomeData"
+import { useMyocHome } from "./home/useMyocHome"
+import { myocHomeView } from "../lib/myoc"
 import { HomeWidget } from "./home/widgets"
 import { FirstRunGuide } from "./FirstRunGuide"
 import { hasSeenGuide, markGuideSeen } from "../ui/logic/firstRun"
@@ -29,7 +31,9 @@ const storage = (): Storage | null => {
 const GRID = "grid grid-flow-dense grid-cols-2 items-stretch gap-3 lg:grid-cols-2 min-[1400px]:grid-cols-3"
 
 const HomeBody = ({ userId, isCommittee, name, memberId, imageUrl, hold }: { userId: string; isCommittee: boolean; name: string; memberId?: string; imageUrl?: string | null; hold?: boolean }) => {
-    const state = useHomeData(isCommittee)
+    const base = useHomeData(isCommittee)
+    const myoc = useMyocHome(base.data?.season?.id, userId)
+    const state = useMemo(() => ({ ...base, myoc }), [base, myoc])
     const toast = useToast()
     const [prefs, setPrefs] = useState<HomePrefs>(() => loadHomePrefs(storage(), userId, isCommittee))
     const [customizing, setCustomizing] = useState(false)
@@ -46,7 +50,9 @@ const HomeBody = ({ userId, isCommittee, name, memberId, imageUrl, hold }: { use
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const now = useMemo(() => new Date(), [state.data])
 
-    const memberWidgets = widgets.filter((w) => !w.adminOnly)
+    // The MYOC card only exists while there is a window to show: no placeholder cell otherwise.
+    const showMyoc = myoc !== null && myocHomeView(myoc.window, myoc.sent, now) !== null
+    const memberWidgets = widgets.filter((w) => !w.adminOnly && (w.id !== "myoc" || showMyoc))
     const committeeWidgets = isCommittee ? widgets.filter((w) => w.adminOnly) : []
 
     const change = (next: HomePrefs) => {

@@ -10,9 +10,9 @@ describe("widget blurbs", () => {
 })
 
 describe("resolveWidgets", () => {
-    it("member defaults: 5 before release, 6 after", () => {
-        expect(ids(resolveWidgets(null, { isCommittee: false, released: false }))).toEqual(["ceremony", "countdown", "pending", "progress", "latestWinners"])
-        expect(resolveWidgets(null, { isCommittee: false, released: true })).toHaveLength(6)
+    it("member defaults: 6 before release (incl. MYOC, hidden by Home until a window exists), 7 after", () => {
+        expect(ids(resolveWidgets(null, { isCommittee: false, released: false }))).toEqual(["ceremony", "countdown", "pending", "progress", "myoc", "latestWinners"])
+        expect(resolveWidgets(null, { isCommittee: false, released: true })).toHaveLength(7)
     })
     it("committee defaults: 7", () => {
         expect(ids(resolveWidgets(null, { isCommittee: true, released: false }))).toEqual(["ceremony", "pending", "progress", "latestWinners", "notVoted", "attention", "ballotHealth"])

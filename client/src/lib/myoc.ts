@@ -54,6 +54,17 @@ export function pickWindow(windows: MyocWindow[], now: Date): MyocWindow | null 
     return by("closed").sort((a, b) => b.closes_at.localeCompare(a.closes_at))[0] ?? null
 }
 
+export type MyocHomeView = { kind: "open"; closes: Date; sent: number } | { kind: "upcoming"; opens: Date }
+
+/** What the Home card shows: an open window (with the member's idea count), a scheduled one, or null (hide the card). */
+export function myocHomeView(w: MyocWindow | null, sent: number, now: Date): MyocHomeView | null {
+    const phase = windowPhase(w, now)
+    if (!w) return null
+    if (phase === "open") return { kind: "open", closes: new Date(w.closes_at), sent }
+    if (phase === "upcoming") return { kind: "upcoming", opens: new Date(w.opens_at) }
+    return null
+}
+
 export const closesLabel = (w: MyocWindow, now: Date): string => closesInLabel(new Date(w.closes_at), now)
 
 /** null when fine, else why the picked times cannot make a window (datetime-local strings). */

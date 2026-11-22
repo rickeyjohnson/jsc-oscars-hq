@@ -15,6 +15,7 @@ import { WIDGETS, widgetColor, type WidgetId } from "../../ui/logic/homeWidgets"
 import { buildResultCards } from "../../lib/resultsView"
 import { leaderboard } from "../../lib/leaderboard"
 import { nomineeStats } from "../../lib/stats"
+import { myocHomeView } from "../../lib/myoc"
 import { closesShort, countdownParts, urgency } from "../../lib/time"
 import type { Nominee } from "../../types"
 import { PEBBLE_EDGE as EDGE } from "../../ui/logic/pebble"
@@ -456,12 +457,32 @@ function RevealReadiness({ state }: Props) {
     )
 }
 
+function Myoc({ state, now }: Props) {
+    const view = state.myoc ? myocHomeView(state.myoc.window, state.myoc.sent, now) : null
+    if (!view) return null
+    return (
+        <Widget id="myoc" status="ready" retry={state.reload} to="/app/profile/settings/myoc">
+            {view.kind === "open" ? (
+                <>
+                    <p className="text-title-3">Open · {closesShort(view.closes, now).replace(/^Closes/, "closes")}</p>
+                    <p className="mt-1 text-footnote text-label-2">
+                        {view.sent} {view.sent === 1 ? "idea" : "ideas"} sent
+                    </p>
+                </>
+            ) : (
+                <p className="text-title-3">Opens {ceremonyDate(view.opens)}</p>
+            )}
+        </Widget>
+    )
+}
+
 const RENDER: Record<WidgetId, (p: Props) => ReactNode> = {
     ceremony: (p) => <Ceremony {...p} />,
     countdown: (p) => <CountdownWidget {...p} />,
     pending: (p) => <Pending {...p} />,
     ballotCloses: (p) => <BallotCloses {...p} />,
     progress: (p) => <Progress {...p} />,
+    myoc: (p) => <Myoc {...p} />,
     yourStats: (p) => <YourStats {...p} />,
     latestWinners: (p) => <LatestWinners {...p} />,
     leaderboardPeek: (p) => <LeaderboardPeek {...p} />,

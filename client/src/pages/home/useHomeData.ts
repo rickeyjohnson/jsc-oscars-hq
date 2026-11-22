@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react"
 import { fetchMemberAvatars, fetchMembers } from "../../api/members"
 import { useHomeData as useBaseHomeData, type HomeDataState } from "../../ui/useHomeData"
+import type { MyocWindow } from "../../lib/myoc"
 import type { Member } from "../../types"
 
 export type Directory = { members: Member[]; avatars: Record<string, string | null> }
-export type HomeState = HomeDataState & { directory: Directory | null }
+/** The member's MYOC picture for Home; absent until it has loaded (and for good if MYOC fails or is not set up). */
+export type MyocHome = { window: MyocWindow; sent: number }
+export type HomeState = HomeDataState & { directory: Directory | null; myoc?: MyocHome | null }
 
 /**
  * The Home screen's loader: the shared season/ballots/committee load plus the member directory

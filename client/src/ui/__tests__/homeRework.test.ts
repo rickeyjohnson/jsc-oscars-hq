@@ -46,8 +46,8 @@ describe("widget registry rework", () => {
         expect(byId.yourStats.requiresRelease).toBe(true)
     })
     it("default layouts stay 5 / 6 / 7", () => {
-        expect(resolveWidgets(null, { isCommittee: false, released: false })).toHaveLength(5)
-        expect(resolveWidgets(null, { isCommittee: false, released: true })).toHaveLength(6)
+        expect(resolveWidgets(null, { isCommittee: false, released: false })).toHaveLength(6)
+        expect(resolveWidgets(null, { isCommittee: false, released: true })).toHaveLength(7)
         expect(resolveWidgets(null, { isCommittee: true, released: false })).toHaveLength(7)
         expect(resolveWidgets(defaultPrefs(true), { isCommittee: true, released: false })).toHaveLength(7)
     })
@@ -70,6 +70,7 @@ describe("widget colors", () => {
             "countdown": "grape",
             "latestWinners": "tangerine",
             "leaderboardPeek": "strawberry",
+            "myoc": "cherry",
             "notVoted": "grape",
             "pending": "lime",
             "progress": "sky",
