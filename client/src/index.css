@@ -356,3 +356,19 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
 }
+
+/* iOS sizes date/time inputs from their content and ignores width:100%, so they poke out of their card. */
+input[type="datetime-local"],
+input[type="date"],
+input[type="time"] {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    appearance: none;
+    text-align: left;
+}
+input[type="datetime-local"]::-webkit-date-and-time-value {
+    text-align: left;
+    min-height: 1.2em;
+}
