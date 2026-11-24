@@ -20,6 +20,7 @@ vi.mock("../../api/ballots", () => ({ fetchBallotSummaries: vi.fn(), fetchBallot
 vi.mock("../../api/members", () => ({ fetchMembers: vi.fn(), countVotesBy: vi.fn(), resetMemberClaim: vi.fn(), fetchCommitteeMemberIds: vi.fn() }))
 vi.mock("../../api/results", () => ({ fetchResults: vi.fn(), upsertResults: vi.fn(), updatePlaces: vi.fn(), recordResultsGuarded: vi.fn(), fetchReleaseStatus: vi.fn() }))
 vi.mock("../../api/votes", () => ({ fetchAllVotes: vi.fn() }))
+vi.mock("../../context/AuthContext", () => ({ useAuth: () => ({ user: { id: "u-me" } }) }))
 vi.mock("../../context/UserContenxt", () => ({ useUserData: () => ({ member: { user_id: "u-me" } }) }))
 
 const DAY = 86_400_000
@@ -109,21 +110,21 @@ describe("ManageBallotsPage", () => {
         wrap(<ManageBallotsPage />)
         const link = (await screen.findByText("Main Ballot")).closest("a")!
         expect(link.getAttribute("href")).toBe("/app/profile/ballots/b1")
-        expect(screen.getAllByRole("region").map((r) => r.getAttribute("aria-label"))).toEqual(["Needs you", "Open", "Drafts", "Closed ballots"])
-        // closed/released sit in a collapsed disclosure, remembered per session
-        const toggle = screen.getByRole("button", { name: /Closed ballots \(1\)/ })
-        expect(toggle.getAttribute("aria-expanded")).toBe("false")
+        // tabs: Active (needs + open), Drafts, Closed
+        expect(screen.getAllByRole("region").map((r) => r.getAttribute("aria-label"))).toEqual(["Needs you", "Open"])
+        expect(screen.getByRole("tab", { name: "Active (2)" })).toBeTruthy()
+        expect(screen.getByRole("tab", { name: "Drafts (1)" })).toBeTruthy()
         expect(screen.queryByText("Old Ballot")).toBeNull()
-        fireEvent.click(toggle)
-        expect(screen.getByText("Old Ballot")).toBeTruthy()
-        expect(sessionStorage.getItem("jsc.manage.closedOpen")).toBe("1")
-        fireEvent.click(toggle)
-        expect(sessionStorage.getItem("jsc.manage.closedOpen")).toBe("0")
+        expect(screen.queryByText("Fall Bonus")).toBeNull()
         const needs = screen.getByRole("region", { name: "Needs you" })
         expect(within(needs).getByText("Tie")).toBeTruthy()
         expect(screen.getByText("Next: check the rounds")).toBeTruthy()
         expect(screen.getByRole("link", { name: /New ballot/ }).getAttribute("href")).toBe("/app/profile/ballots/create")
         expect(screen.queryByRole("link", { name: /Reveal results/ })).toBeNull()
+        fireEvent.click(screen.getByRole("tab", { name: "Drafts (1)" }))
+        expect(screen.getByText("Fall Bonus").closest("a")!.getAttribute("href")).toBe("/app/profile/ballots/create?draft=b4")
+        fireEvent.click(screen.getByRole("tab", { name: "Closed (1)" }))
+        expect(screen.getByText("Old Ballot")).toBeTruthy()
         expect(vi.mocked(fetchBallotSummaries)).toHaveBeenCalledWith(true)
     })
 })

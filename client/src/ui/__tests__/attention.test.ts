@@ -19,9 +19,15 @@ describe("attentionItems", () => {
     it("pluralises close", () => {
         expect(attentionItems({ ballots: [ballot({ id: "1" }), ballot({ id: "2" })], checks: null, released: false, now })[0].label).toBe("2 ballots ended but are still open")
     })
-    it("ignores still-running, closed and draft ballots", () => {
-        const bs = [ballot({ closes_at: "2026-12-05T00:00:00Z" }), ballot({ status: "closed" }), ballot({ status: "draft" })]
+    it("ignores still-running and closed ballots", () => {
+        const bs = [ballot({ closes_at: "2026-12-05T00:00:00Z" }), ballot({ status: "closed" })]
         expect(attentionItems({ ballots: bs, checks: null, released: false, now })).toEqual([])
+    })
+    it("draft ballots are listed last and link to the Drafts tab, even after release", () => {
+        const bs = [ballot({ status: "draft" }), ballot({ status: "draft", id: "d2" })]
+        const out = attentionItems({ ballots: bs, checks: null, released: false, now })
+        expect(out).toEqual([{ id: "drafts", label: "2 draft ballots in progress", to: "/app/profile/ballots?tab=drafts", tone: "warn" }])
+        expect(attentionItems({ ballots: [ballot({ status: "draft" })], checks: null, released: true, now })[0].label).toBe("1 draft ballot in progress")
     })
     it("release item for other failing checks", () => {
         const out = attentionItems({ ballots: [], checks: [bad("ballots_closed", "1 of 2 ballots closed"), ok("no_round_open"), ok("winners")], released: false, now })

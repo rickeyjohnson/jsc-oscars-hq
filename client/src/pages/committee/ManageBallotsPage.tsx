@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react"
-import { Link } from "react-router-dom"
-import { ChevronDown, Inbox, Plus } from "lucide-react"
+import { Link, useSearchParams } from "react-router-dom"
+import { Inbox, Plus } from "lucide-react"
 import { fetchBallotSummaries, fetchCurrentSeason } from "../../api/ballots"
 import { fetchReleaseStatus } from "../../api/results"
 import { releaseChecks } from "../../lib/release"
-import { groupBallots, phaseOf, type ManageItem } from "../../lib/ballotFlow"
+import { groupBallots, phaseOf, type GroupKey, type ManageItem } from "../../lib/ballotFlow"
 import type { BallotSummary } from "../../lib/voting"
 import { Screen } from "../../ui/Screen"
 import { Button } from "../../ui/Button"
@@ -14,6 +14,12 @@ import { EmptyState } from "../../ui/EmptyState"
 import { ErrorState } from "../../ui/ErrorState"
 import { COPY } from "../../ui/copy"
 import { PEBBLE_EDGE } from "../../ui/logic/pebble"
+import { SegmentedControl } from "../../ui/SegmentedControl"
+import { useAuth } from "../../context/AuthContext"
+import { hasWork, readAutosave } from "../../lib/builderAutosave"
+
+type Tab = "active" | "drafts" | "closed"
+const TAB_OF: Record<GroupKey, Tab> = { needs: "active", open: "active", scheduled: "active", drafts: "drafts", finished: "closed" }
 
 const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" })
 const plural = (n: number, one: string, many = one + "s") => `${n} ${n === 1 ? one : many}`
@@ -43,15 +49,6 @@ const Row = ({ b, hint, child, now }: { b: BallotSummary; hint?: string | null; 
     )
 }
 
-const FINISHED_KEY = "jsc.manage.closedOpen"
-const readOpen = (): boolean => {
-    try {
-        return sessionStorage.getItem(FINISHED_KEY) === "1"
-    } catch {
-        return false
-    }
-}
-
 type Reveal = { released: boolean; passed: number; total: number } | null
 
 const ManageBallotsPage = () => {
@@ -59,17 +56,20 @@ const ManageBallotsPage = () => {
     const [error, setError] = useState(false)
     const [reload, setReload] = useState(0)
     const [reveal, setReveal] = useState<Reveal>(null)
-    // closed/released ballots sit in a collapsed section; the choice is remembered for this session
-    const [closedOpen, setClosedOpen] = useState(readOpen)
-    const toggleClosed = () =>
-        setClosedOpen((o) => {
-            try {
-                sessionStorage.setItem(FINISHED_KEY, o ? "0" : "1")
-            } catch {
-                /* not remembered */
-            }
-            return !o
-        })
+    const [params, setParams] = useSearchParams()
+    const tabParam = params.get("tab")
+    const tab: Tab = tabParam === "drafts" || tabParam === "closed" ? tabParam : "active"
+    const setTab = (t: Tab) => setParams(t === "active" ? {} : { tab: t }, { replace: true })
+    const { user } = useAuth()
+    // A ballot that was started in the builder but never saved as a draft (kept on this device).
+    const unsaved = (() => {
+        try {
+            const a = readAutosave(window.localStorage, user?.id ?? "", "new")
+            return a && hasWork(a.form) ? a : null
+        } catch {
+            return null
+        }
+    })()
 
     useEffect(() => {
         let cancelled = false
@@ -105,6 +105,8 @@ const ManageBallotsPage = () => {
 
     const now = new Date()
     const groups = ballots ? groupBallots(ballots, now) : []
+    const visible = groups.filter((g) => TAB_OF[g.key] === tab)
+    const count = (t: Tab) => groups.filter((g) => TAB_OF[g.key] === t).reduce((n, g) => n + g.items.length, 0)
     const item = (it: ManageItem) => (
         <div key={it.ballot.id}>
             <Row b={it.ballot} hint={it.hint} now={now} />
@@ -139,27 +141,50 @@ const ManageBallotsPage = () => {
                 </SkeletonScreen>
             )}
             {!error && ballots?.length === 0 && <EmptyState icon={Inbox} title="No ballots yet" />}
-            {!error && ballots && ballots.length > 0 && (
+            {!error && ballots && (ballots.length > 0 || unsaved) && (
+                <div className="mb-4 max-w-md">
+                    <SegmentedControl<Tab>
+                        label="Ballot lists"
+                        idPrefix="manage-tab"
+                        value={tab}
+                        onChange={setTab}
+                        options={[
+                            { value: "active", label: `Active (${count("active")})`, muted: count("active") === 0 },
+                            { value: "drafts", label: `Drafts (${count("drafts") + (unsaved ? 1 : 0)})`, muted: count("drafts") + (unsaved ? 1 : 0) === 0 },
+                            { value: "closed", label: `Closed (${count("closed")})`, muted: count("closed") === 0 },
+                        ]}
+                    />
+                </div>
+            )}
+            {!error && ballots && (ballots.length > 0 || unsaved) && (
                 <div className="grid gap-x-8 gap-y-5 lg:grid-cols-2 lg:items-start">
                     <div className="space-y-5">
-                        {groups.map((g) =>
-                            g.key === "finished" ? (
-                                <section key={g.key} aria-label="Closed ballots">
-                                    <button type="button" aria-expanded={closedOpen} onClick={toggleClosed} className="flex min-h-11 w-full items-center justify-between rounded-card bg-surface px-4 text-callout font-bold">
-                                        <span>Closed ballots ({g.items.length})</span>
-                                        <ChevronDown aria-hidden className={`size-5 transition-transform motion-reduce:transition-none ${closedOpen ? "rotate-180" : ""}`} />
-                                    </button>
-                                    {closedOpen && <ul className="mt-2 list-none divide-y divide-sep overflow-hidden rounded-card bg-surface p-0">{g.items.map(item)}</ul>}
-                                </section>
-                            ) : (
+                        {tab === "drafts" && unsaved && (
+                            <section aria-label="Unsaved work">
+                                <h2 className="mb-1.5 px-1 text-caption-2 font-bold uppercase tracking-wider text-label-2">Not saved yet</h2>
+                                <ul className="list-none overflow-hidden rounded-card bg-surface p-0">
+                                    <li>
+                                        <Link to="/app/profile/ballots/create" className="flex min-h-16 w-full items-center gap-3 py-3 pl-4 pr-4 hover:bg-fill active:bg-fill">
+                                            <span className="min-w-0 flex-1">
+                                                <span className="block truncate text-body font-bold">{unsaved.form.name.trim() || "Untitled ballot"}</span>
+                                                <span className="block truncate text-footnote text-label-2">Resume unsaved work · {plural(unsaved.form.categories.length, "category", "categories")}</span>
+                                            </span>
+                                        </Link>
+                                    </li>
+                                </ul>
+                            </section>
+                        )}
+                        {visible.map((g) => (
                             <section key={g.key} aria-label={g.title}>
-                                <h2 className="mb-1.5 px-1 text-caption-2 font-bold uppercase tracking-wider text-label-2">{g.title}</h2>
+                                {visible.length > 1 && <h2 className="mb-1.5 px-1 text-caption-2 font-bold uppercase tracking-wider text-label-2">{g.title}</h2>}
                                 <ul className="list-none divide-y divide-sep overflow-hidden rounded-card bg-surface p-0">{g.items.map(item)}</ul>
                             </section>
-                            ),
+                        ))}
+                        {visible.length === 0 && !(tab === "drafts" && unsaved) && (
+                            <EmptyState icon={Inbox} title={tab === "drafts" ? "No drafts" : tab === "closed" ? "No closed ballots" : "Nothing active"} />
                         )}
                     </div>
-                    {reveal && (
+                    {tab === "active" && reveal && (
                         <section aria-label="Reveal winners" className={`rounded-card border-l-4 bg-surface p-4 ${PEBBLE_EDGE.lemon}`}>
                             <p className="text-caption-2 font-bold tracking-wider text-label-2">REVEAL WINNERS</p>
                             <h2 className="mt-1 text-headline">{reveal.released ? "Winners are live" : reveal.passed === reveal.total ? "Ready to reveal" : `Not ready: ${reveal.passed} of ${reveal.total} checks`}</h2>
