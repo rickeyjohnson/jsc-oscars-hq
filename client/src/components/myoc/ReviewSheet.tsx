@@ -94,7 +94,7 @@ export function ReviewSheet({ idea, all, onClose, onSaved }: { idea: ReviewIdea 
                         </div>
                     ) : (
                         <>
-                            <IdeaFields value={draft} onChange={setDraft} errors={errors} />
+                            <IdeaFields value={draft} onChange={setDraft} errors={errors} readOnly />
                             <div>
                                 <TextField label="Category label (optional)" value={group} maxLength={80} placeholder="Superlatives" onChange={(e) => setGroup(e.target.value)} />
                                 <p className="mt-1.5 text-footnote text-label-2">Groups accepted ideas when they go to the ballot builder.</p>

@@ -2,10 +2,10 @@ import { useId } from "react"
 import { TextField } from "../../ui/TextField"
 import { DESC_MAX, HINTS, NAME_MAX, type IdeaDraft, type IdeaErrors, type MyocHint } from "../../lib/myoc"
 
-const CHIP = "min-h-11 cursor-pointer select-none rounded-full px-4 text-subhead font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+const CHIP = "min-h-11 disabled:cursor-default cursor-pointer select-none rounded-full px-4 text-subhead font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
 
 /** Optional "who gets nominated" hint. Tap the chosen one again to clear it. */
-export function HintPicker({ value, onChange }: { value: MyocHint | null; onChange: (h: MyocHint | null) => void }) {
+export function HintPicker({ value, onChange, readOnly = false }: { value: MyocHint | null; onChange: (h: MyocHint | null) => void; readOnly?: boolean }) {
     const id = useId()
     return (
         <div>
@@ -16,7 +16,7 @@ export function HintPicker({ value, onChange }: { value: MyocHint | null; onChan
                 {HINTS.map((h) => {
                     const on = value === h.value
                     return (
-                        <button key={h.value} type="button" role="radio" aria-checked={on} onClick={() => onChange(on ? null : h.value)} className={`${CHIP} ${on ? "bg-inverse text-on-inverse" : "bg-fill text-label"}`}>
+                        <button key={h.value} type="button" role="radio" aria-checked={on} disabled={readOnly} onClick={() => onChange(on ? null : h.value)} className={`${CHIP} ${on ? "bg-inverse text-on-inverse" : "bg-fill text-label"}`}>
                             {h.label}
                         </button>
                     )
@@ -27,12 +27,13 @@ export function HintPicker({ value, onChange }: { value: MyocHint | null; onChan
 }
 
 /** Name, description and hint: the same three fields in the suggest form, the member edit sheet and the committee sheet. */
-export function IdeaFields({ value, onChange, errors = {} }: { value: IdeaDraft; onChange: (v: IdeaDraft) => void; errors?: IdeaErrors }) {
+/** readOnly shows the same boxes but nothing can be typed or tapped (the committee reviewing someone else's idea: no keyboard). */
+export function IdeaFields({ value, onChange, errors = {}, readOnly = false }: { value: IdeaDraft; onChange: (v: IdeaDraft) => void; errors?: IdeaErrors; readOnly?: boolean }) {
     const descId = useId()
     return (
         <div className="space-y-4">
             <div>
-                <TextField label="Category name" value={value.name} maxLength={NAME_MAX} placeholder="Most likely to miss the flight" aria-invalid={errors.name ? true : undefined} onChange={(e) => onChange({ ...value, name: e.target.value })} />
+                <TextField label="Category name" value={value.name} maxLength={NAME_MAX} placeholder="Most likely to miss the flight" aria-invalid={errors.name ? true : undefined} readOnly={readOnly} inputMode={readOnly ? "none" : undefined} onChange={(e) => onChange({ ...value, name: e.target.value })} />
                 {errors.name && (
                     <p role="alert" className="mt-1.5 text-footnote text-danger">
                         {errors.name}
@@ -46,6 +47,8 @@ export function IdeaFields({ value, onChange, errors = {} }: { value: IdeaDraft;
                 <textarea
                     id={descId}
                     rows={3}
+                    readOnly={readOnly}
+                    inputMode={readOnly ? "none" : undefined}
                     value={value.description}
                     aria-invalid={errors.description ? true : undefined}
                     onChange={(e) => onChange({ ...value, description: e.target.value })}
@@ -60,7 +63,7 @@ export function IdeaFields({ value, onChange, errors = {} }: { value: IdeaDraft;
                     </span>
                 </div>
             </div>
-            <HintPicker value={value.hint} onChange={(hint) => onChange({ ...value, hint })} />
+            <HintPicker readOnly={readOnly} value={value.hint} onChange={(hint) => onChange({ ...value, hint })} />
         </div>
     )
 }
