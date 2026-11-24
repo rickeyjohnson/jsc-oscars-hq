@@ -1,10 +1,10 @@
-export type PatchNote = { version: string; /** Local ET label with the time, e.g. "Nov 24, 2026, 6:30 PM". */ date: string; title: string; changes: string[] }
+export type PatchNote = { version: string; date: string; title: string; changes: string[] }
 
 /** Newest first. Add an entry here whenever something ships; the newest one is the app's version. */
 export const PATCH_NOTES: readonly PatchNote[] = [
     {
         version: "1.3.0",
-        date: "Nov 24, 2026, 6:30 PM",
+        date: "Nov 24, 2026",
         title: "Your seasons",
         changes: [
             "Wrapped: swipe through a recap of any past season.",
@@ -15,7 +15,7 @@ export const PATCH_NOTES: readonly PatchNote[] = [
     },
     {
         version: "1.2.0",
-        date: "Nov 23, 2026, 4:15 PM",
+        date: "Nov 23, 2026",
         title: "Labs",
         changes: [
             "Higher or lower, with a count-up reveal and a share button for your streak.",
@@ -26,7 +26,7 @@ export const PATCH_NOTES: readonly PatchNote[] = [
     },
     {
         version: "1.1.0",
-        date: "Nov 22, 2026, 2:00 PM",
+        date: "Nov 22, 2026",
         title: "Ballots and feedback",
         changes: [
             "Draft ballots: your work is saved as you build, with a Drafts tab on Manage ballots.",
@@ -38,7 +38,7 @@ export const PATCH_NOTES: readonly PatchNote[] = [
     },
     {
         version: "1.0.0",
-        date: "Nov 21, 2026, 12:00 PM",
+        date: "Nov 21, 2026",
         title: "Launch",
         changes: ["Voting, results, the leaderboard, My stats and Make Your Own Categories."],
     },
