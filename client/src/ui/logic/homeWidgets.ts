@@ -29,7 +29,7 @@ export const WIDGETS: readonly WidgetDef[] = [
     { id: "ballotCloses", title: "Ballot closes", blurb: "When the next ballot closes", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: true, span: 1, color: "cherry" },
     { id: "progress", title: "Your progress", blurb: "Votes you've cast so far", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: true, span: 1, color: "sky" },
     { id: "myoc", title: "Make Your Own Categories", blurb: "Suggest categories while the window is open", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: true, span: 1, color: "cherry" },
-    { id: "yourStats", title: "Your stats", blurb: "Wins, noms and win rate, all time", adminOnly: false, requiresRelease: true, defaultMember: true, defaultCommittee: true, span: 1, color: "grape" },
+    { id: "yourStats", title: "Your stats", blurb: "Wins, noms and win rate, all time", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: true, span: 1, color: "grape" },
     { id: "trophyCase", title: "Trophy case", blurb: "A few of your wins on display", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: true, span: 2, color: "lemon" },
     { id: "careerLine", title: "Your career", blurb: "Nominations and wins, season by season", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: true, span: 2, color: "sky" },
     { id: "labRecords", title: "Lab records", blurb: "Your best streak and slot jackpots", adminOnly: false, requiresRelease: false, defaultMember: false, defaultCommittee: false, span: 1, color: "grape" },

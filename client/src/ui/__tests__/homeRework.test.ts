@@ -43,13 +43,14 @@ describe("widget registry rework", () => {
         }
         expect(byId.quickActions).toBeUndefined()
         expect(WIDGETS.filter((w) => w.adminOnly).map((w) => w.id).sort()).toEqual(["attention", "ballotHealth", "notVoted", "revealReadiness", "tiebreak"])
-        expect(byId.yourStats.requiresRelease).toBe(true)
+        expect(byId.yourStats.requiresRelease).toBe(false)
+        expect(byId.leaderboardPeek.requiresRelease).toBe(true)
     })
-    it("default layouts: 8 / 9 / 9", () => {
-        expect(resolveWidgets(null, { isCommittee: false, released: false })).toHaveLength(8)
+    it("default layouts: 9 / 9 / 10", () => {
+        expect(resolveWidgets(null, { isCommittee: false, released: false })).toHaveLength(9)
         expect(resolveWidgets(null, { isCommittee: false, released: true })).toHaveLength(9)
-        expect(resolveWidgets(null, { isCommittee: true, released: false })).toHaveLength(9)
-        expect(resolveWidgets(defaultPrefs(true), { isCommittee: true, released: false })).toHaveLength(9)
+        expect(resolveWidgets(null, { isCommittee: true, released: false })).toHaveLength(10)
+        expect(resolveWidgets(defaultPrefs(true), { isCommittee: true, released: false })).toHaveLength(10)
     })
     it("members never get admin-only widgets, even if every widget is saved on", () => {
         const all = WIDGETS.map((w) => w.id)

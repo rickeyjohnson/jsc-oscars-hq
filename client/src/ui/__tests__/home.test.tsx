@@ -59,12 +59,12 @@ afterEach(() => {
 })
 
 describe("Home widgets", () => {
-    it("member sees the 8 default widgets and no committee widgets, even with saved committee prefs", () => {
+    it("member sees the 9 default widgets and no committee widgets, even with saved committee prefs", () => {
         mem.set("jsc.home.v1.u1", JSON.stringify({ version: 1, order: ["notVoted", "attention", "ballotHealth", "ceremony", "countdown", "pending", "progress", "latestWinners", "leaderboardPeek"], hidden: [] }))
         renderHome()
         const h = headings()
         expect(h).toEqual(expect.arrayContaining(["Oscar night", "Countdown", "Your ballots", "Your progress", "Latest winners"]))
-        expect(h).toHaveLength(8)
+        expect(h).toHaveLength(9)
         expect(screen.queryByRole("heading", { name: /who hasn't voted/i })).toBeNull()
         expect(screen.getByText("Hey Rico.")).toBeTruthy()
     })
@@ -165,10 +165,11 @@ describe("Home widgets", () => {
     })
 
     it("a gated widget slot that is not released drops out once the load answers", () => {
+        allWidgetsOn()
         hook.state = ready(data({ released: false }))
         renderHome()
-        expect(screen.queryByRole("region", { name: "Your stats" })).toBeNull()
-        expect(screen.queryByRole("status", { name: /loading your stats/i })).toBeNull()
+        expect(screen.queryByRole("region", { name: "Leaderboard" })).toBeNull()
+        expect(screen.queryByRole("status", { name: /loading leaderboard/i })).toBeNull()
     })
 
     it("a whole-load failure shows exactly one Try again; partial failures stay per widget", () => {
@@ -278,7 +279,7 @@ describe("Home rework", () => {
         renderHome()
         fireEvent.click(screen.getByRole("button", { name: "Customize Home" }))
         expect(screen.getByText("Date, place, calendar")).toBeTruthy()
-        expect(screen.getAllByText(/appears after results are released/i)).toHaveLength(2) // Leaderboard, Your stats
+        expect(screen.getAllByText(/appears after results are released/i)).toHaveLength(1) // Leaderboard
     })
     it("phones lay half-width widgets two-up; full-width widgets span both columns", () => {
         const { container } = renderHome()
