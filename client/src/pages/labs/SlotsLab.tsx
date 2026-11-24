@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { Copy, Dices } from "lucide-react"
 import { fetchMemberAvatars, fetchMembers } from "../../api/members"
 import { copyText } from "../../lib/clipboard"
+import { recordSpin } from "../../lib/labs/records"
 import { MISS_LINES, PAIR_LINES, jackpotShare, outcomeOf, spinReels, type Outcome } from "../../lib/labs/slots"
 import { resolveSiteBase } from "../../lib/siteUrl"
 import { useToast } from "../../ui/Toast"
@@ -49,6 +50,7 @@ const SlotsLab = () => {
             const outcome = outcomeOf(target)
             setResult({ outcome, line: outcome === "jackpot" ? `JACKPOT! ${members[target[0]].name} x3` : outcome === "pair" ? pickLine(PAIR_LINES) : pickLine(MISS_LINES) })
             setStats((s) => ({ spins: s.spins + 1, jackpots: s.jackpots + (outcome === "jackpot" ? 1 : 0) }))
+            recordSpin(outcome === "jackpot")
         }
         if (reduced) return finish()
         setSpinning([true, true, true])

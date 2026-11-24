@@ -259,7 +259,7 @@ const BallotBuilderPage = () => {
             )}
 
             <BottomAccessory>
-                <div className="mx-auto w-full max-w-[720px] space-y-2 bg-bg px-gutter py-3">
+                <div className="mx-auto w-full max-w-[720px] space-y-2 px-gutter py-3">
                     {step !== "review" && issues.length > 0 && (
                         <ul aria-label="To continue" className="list-none space-y-0.5 p-0 text-footnote text-label-2">
                             {issues.map((e) => (

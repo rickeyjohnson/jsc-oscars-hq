@@ -18,10 +18,11 @@ export type StatsLoad =
  * Everything the stats screens need: past semesters (public), the member list and, only once the live season's results are
  * released, that season as the last column. Before release nothing about the live season is requested besides the season row.
  */
-export function useStatsData(): { load: StatsLoad; reload: () => void } {
+export function useStatsData(enabled = true): { load: StatsLoad; reload: () => void } {
     const [load, setLoad] = useState<StatsLoad>({ state: "loading" })
     const seq = useRef(0)
     const run = useCallback(async () => {
+        if (!enabled) return
         const mine = ++seq.current
         setLoad({ state: "loading" })
         try {
@@ -52,7 +53,7 @@ export function useStatsData(): { load: StatsLoad; reload: () => void } {
             console.error("Error loading stats: ", e)
             setLoad({ state: "error" })
         }
-    }, [])
+    }, [enabled])
     useEffect(() => {
         void run()
     }, [run])

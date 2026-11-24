@@ -132,7 +132,7 @@ export function ReviewView({ window: w, phase }: { window: MyocWindow | null; ph
             )}
 
             <BottomAccessory>
-                <div className="mx-auto w-full max-w-[720px] bg-bg px-gutter py-3">
+                <div className="mx-auto w-full max-w-[720px] px-gutter py-3">
                     <Button variant="primary" size="md" fullWidth disabled={accepted.length === 0} onClick={build}>
                         {accepted.length === 0 ? "Accept ideas to build a ballot" : `Build ballot from ${accepted.length} accepted`}
                     </Button>

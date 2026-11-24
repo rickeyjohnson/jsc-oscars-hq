@@ -301,7 +301,7 @@ const VotePage = () => {
     return (
         <Shell title={ballot.name}>
             {!reviewing && (
-                <div className="sticky top-[calc(env(safe-area-inset-top)+4rem)] z-20 -mx-gutter bg-bg px-gutter">
+                <div className="sticky top-[calc(env(safe-area-inset-top)+4rem)] z-20 -mx-gutter px-gutter">
                     <ProgressStrip states={states} labels={ballot.categories.map((c) => c.name)} onJump={jump} onOpenJump={() => setJumpOpen(true)} />
                 </div>
             )}
@@ -386,7 +386,7 @@ const VotePage = () => {
 
             <BottomAccessory>
                 {!readOnly && !reviewing && (
-                    <p aria-live="polite" className="mx-auto flex w-full max-w-[1040px] items-center justify-center gap-2 bg-bg px-gutter pt-2 text-footnote font-bold text-label-2 lg:justify-end">
+                    <p aria-live="polite" className="mx-auto flex w-full max-w-[1040px] items-center justify-center gap-2 px-gutter pt-2 text-footnote font-bold text-label-2 lg:justify-end">
                         {pending[ids[idx]] ? (
                             <>
                                 <Spinner />
@@ -402,7 +402,7 @@ const VotePage = () => {
                         )}
                     </p>
                 )}
-                <div className="mx-auto flex w-full max-w-[1040px] items-center gap-3 bg-bg px-gutter py-3 lg:justify-end">
+                <div className="mx-auto flex w-full max-w-[1040px] items-center gap-3 px-gutter py-3 lg:justify-end">
                     {!readOnly && !reviewing && ballot.categories[idx].nominee_mode === "group" && (
                         <Button size="md" variant="ghost" className="mr-auto hidden lg:inline-flex" onClick={() => setGroupOpenFor(ids[idx])}>
                             + Add a group

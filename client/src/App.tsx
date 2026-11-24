@@ -22,6 +22,8 @@ import FeedbackPage from "./pages/FeedbackPage"
 import BallsLab from "./pages/labs/BallsLab"
 import HigherLowerLab from "./pages/labs/HigherLowerLab"
 import SlotsLab from "./pages/labs/SlotsLab"
+import PatchNotesPage from "./pages/PatchNotesPage"
+import WrappedPage from "./pages/stats/WrappedPage"
 import TrophyShelf from "./pages/labs/TrophyShelf"
 import ManageBallotsPage from "./pages/committee/ManageBallotsPage"
 import BallotAdminPage from "./pages/committee/BallotAdminPage"
@@ -104,6 +106,8 @@ const App = () => {
                     <Route path="profile/labs/balls" element={<BallsLab />} />
                     <Route path="profile/labs/slots" element={<SlotsLab />} />
                     <Route path="profile/labs/higher-lower" element={<HigherLowerLab />} />
+                    <Route path="profile/settings/patch-notes" element={<PatchNotesPage />} />
+                    <Route path="profile/wrapped" element={<WrappedPage />} />
                     <Route path="profile/labs/trophies" element={<TrophyShelf />} />
                     <Route
                         element={

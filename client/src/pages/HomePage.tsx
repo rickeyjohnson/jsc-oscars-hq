@@ -15,6 +15,7 @@ import { resolveWidgets } from "../ui/logic/homeWidgets"
 import { CustomizeHomeSheet } from "./home/CustomizeHomeSheet"
 import { firstName } from "./home/format"
 import { useHomeData } from "./home/useHomeData"
+import { useStatsData } from "./stats/useStatsData"
 import { useMyocHome } from "./home/useMyocHome"
 import { myocHomeView } from "../lib/myoc"
 import { HomeWidget } from "./home/widgets"
@@ -34,9 +35,14 @@ const GRID = "grid grid-flow-dense grid-cols-2 items-stretch gap-3 lg:grid-cols-
 const HomeBody = ({ userId, isCommittee, name, memberId, imageUrl, hold }: { userId: string; isCommittee: boolean; name: string; memberId?: string; imageUrl?: string | null; hold?: boolean }) => {
     const base = useHomeData(isCommittee, userId || null)
     const myoc = useMyocHome(base.data ? (base.data.season?.id ?? null) : undefined, userId)
-    const state = useMemo(() => ({ ...base, myoc }), [base, myoc])
-    const toast = useToast()
     const [prefs, setPrefs] = useState<HomePrefs>(() => loadHomePrefs(storage(), userId, isCommittee))
+    const baseReleased = base.data ? Boolean(base.data.released) : true
+    const widgets = useMemo(() => resolveWidgets(prefs, { isCommittee, released: baseReleased }), [prefs, isCommittee, baseReleased])
+    // Past-season stats are fetched only while a widget that needs them is on Home.
+    const needStats = widgets.some((w) => w.id === "careerLine" || w.id === "trophyCase" || w.id === "yourStats")
+    const stats = useStatsData(needStats)
+    const state = useMemo(() => ({ ...base, myoc, stats: needStats ? stats.load : undefined }), [base, myoc, stats.load, needStats])
+    const toast = useToast()
     const [customizing, setCustomizing] = useState(false)
     const [guideSeen, setGuideSeen] = useState(() => !userId || hasSeenGuide(storage(), userId))
     const closeGuide = () => {
@@ -45,8 +51,6 @@ const HomeBody = ({ userId, isCommittee, name, memberId, imageUrl, hold }: { use
     }
     const released = Boolean(state.data?.released)
     // Until the first load answers, lay out release-gated widgets as skeletons so nothing pops in (or shifts) afterwards.
-    const layoutReleased = state.data ? released : true
-    const widgets = useMemo(() => resolveWidgets(prefs, { isCommittee, released: layoutReleased }), [prefs, isCommittee, layoutReleased])
     const totalFailure = !state.data && Boolean(state.error)
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const now = useMemo(() => new Date(), [state.data])

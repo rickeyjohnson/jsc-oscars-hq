@@ -7,8 +7,9 @@ import { useShell } from "./ShellContext"
 export function BottomAccessory({ children }: { children: ReactNode }) {
     const shell = useShell()
     // No shell (isolated tests, gallery): keep the old behavior of a bar pinned to the bottom edge.
-    if (!shell) return <div className="fixed inset-x-0 bottom-0 z-40">{children}</div>
+    if (!shell) return <div className="fixed inset-x-0 bottom-0 z-40 bg-bg">{children}</div>
     // First render before the slot mounts: nothing yet, the shell re-renders us once it exists.
     if (!shell.accessorySlot) return null
-    return createPortal(children, shell.accessorySlot)
+    // The strip spans the whole column so the bar never looks like a narrow box; each page keeps its own max-width inside.
+    return createPortal(<div className="w-full bg-bg">{children}</div>, shell.accessorySlot)
 }

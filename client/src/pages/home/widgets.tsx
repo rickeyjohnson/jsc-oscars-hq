@@ -1,6 +1,6 @@
 import { useEffect, useId, useState, type ReactNode } from "react"
 import { Link } from "react-router-dom"
-import { Mail } from "lucide-react"
+import { Mail, Trophy } from "lucide-react"
 import { Avatar } from "../../ui/Avatar"
 import { MemberAvatar } from "../../ui/MemberAvatar"
 import { Countdown } from "../../ui/Countdown"
@@ -17,6 +17,13 @@ import { leaderboard } from "../../lib/leaderboard"
 import { nomineeStats, statsResults } from "../../lib/stats"
 import { myocHomeView } from "../../lib/myoc"
 import { closesShort, countdownParts, urgency } from "../../lib/time"
+import { fetchAwards, type TrophyAward } from "../../api/trophies"
+import { buildShelf } from "../../lib/labs/shelf"
+import { hasLabRecords, readLabRecords } from "../../lib/labs/records"
+import { APPROX_MARK, MIN_RATE_NOMS_ALL, fmtRate, metricValues, placement, totals, type MetricKey } from "../../lib/statsLab"
+import { NomsWinsChart } from "../../ui/charts/StatsCharts"
+import { useMemberPebble } from "../../ui/useMemberPebble"
+import type { StatsLoad } from "../stats/useStatsData"
 import type { Nominee } from "../../types"
 import { PEBBLE_EDGE as EDGE } from "../../ui/logic/pebble"
 import { ceremonyDate, ceremonyTime, mapsUrl } from "./format"
@@ -354,24 +361,114 @@ function BallotCloses({ state, now }: Props) {
 }
 
 function YourStats({ state, memberId }: Props) {
-    const d = state.data
-    let tally = { wins: 0, noms: 0 }
-    if (d?.results && memberId) {
-        const nominees: Record<string, Nominee> = {}
-        for (const c of d.results.categories) for (const n of c.nominees) nominees[n.id] = n
-        tally = nomineeStats(statsResults(Object.values(d.results.results), d.results.categories), nominees).members[memberId] ?? tally
+    const l = state.stats
+    const ready = l?.state === "ready" ? l : null
+    const model = ready?.model
+    const t = model && memberId ? totals(model, memberId) : null
+    const rank = (key: MetricKey) => {
+        const p = model && memberId ? placement(metricValues(model, key), memberId) : null
+        return p ? `${p.tied ? "T-" : ""}#${p.rank} of ${p.n}` : "Not ranked"
     }
-    const rate = tally.noms > 0 ? Math.round((tally.wins / tally.noms) * 100) : 0
+    const tiles = t
+        ? [
+              ["Wins", String(t.wins), rank("wins")],
+              ["Noms", `${t.approx ? APPROX_MARK : ""}${t.noms}`, rank("noms")],
+              ["Win rate", `${t.approx ? APPROX_MARK : ""}${fmtRate(t.rate)}`, t.noms < MIN_RATE_NOMS_ALL ? "Not ranked" : rank("rate")],
+          ]
+        : []
     return (
-        <Widget id="yourStats" status={resultsStatus(state)} retry={state.reload} to="/app/results">
+        <Widget id="yourStats" status={statsStatus(l)} retry={state.reload} to="/app/profile">
             {!memberId ? (
                 <p className="text-callout text-label-2">Claim your name to see your stats.</p>
+            ) : tiles.length === 0 ? null : (
+                <dl className="grid grid-cols-1 gap-1 text-center @[17rem]:grid-cols-3 @[17rem]:gap-2">
+                    {tiles.map(([k, v, r]) => (
+                        <div key={k}>
+                            <dd className="text-stat font-display tabular-nums">{v}</dd>
+                            <dt className="text-footnote text-label-2">{k}</dt>
+                            <dd className="text-caption-2 font-bold text-label-2">{r}</dd>
+                        </div>
+                    ))}
+                </dl>
+            )}
+        </Widget>
+    )
+}
+
+const statsStatus = (l: StatsLoad | undefined): Status => (!l || l.state === "loading" ? "loading" : l.state === "error" ? "error" : "ready")
+const NOTE = "text-callout text-label-2"
+
+function CareerLine({ state, memberId }: Props) {
+    const l = state.stats
+    const pebbleOf = useMemberPebble()
+    const ready = l?.state === "ready" ? l : null
+    const t = ready && memberId ? totals(ready.model, memberId) : null
+    return (
+        <Widget id="careerLine" status={statsStatus(l)} retry={state.reload} to="/app/profile">
+            {!memberId ? (
+                <p className={NOTE}>Claim your name to see your career.</p>
+            ) : !ready || !t || t.noms === 0 ? (
+                <p className={NOTE}>No nominations on file yet. Your seasons will show up here.</p>
+            ) : (
+                <>
+                    <p className="mb-2 text-callout text-label-2">
+                        {t.wins} {t.wins === 1 ? "win" : "wins"} from {t.noms} nominations over {t.sem} {t.sem === 1 ? "season" : "seasons"}
+                    </p>
+                    <NomsWinsChart sems={ready.model.sems} cells={ready.model.cells[memberId]} pebble={pebbleOf(memberId, ready.model.members.find((m) => m.id === memberId)?.name ?? "")} name="You" />
+                </>
+            )}
+        </Widget>
+    )
+}
+
+const CASE_MAX = 5
+
+function TrophyCase({ state, memberId }: Props) {
+    const l = state.stats
+    const [awards, setAwards] = useState<TrophyAward[]>([])
+    useEffect(() => {
+        let live = true
+        fetchAwards().then((a) => live && setAwards(a), () => {})
+        return () => {
+            live = false
+        }
+    }, [])
+    const ready = l?.state === "ready" ? l : null
+    const trophies = ready && memberId ? buildShelf(ready.model, memberId, awards) : []
+    const shown = trophies.slice(0, CASE_MAX)
+    return (
+        <Widget id="trophyCase" status={statsStatus(l)} retry={state.reload} to="/app/profile/labs/trophies">
+            {trophies.length === 0 ? (
+                <p className={NOTE}>No wins on the shelf yet. Tap to add an award.</p>
+            ) : (
+                <>
+                    <ul className="flex items-end justify-around gap-1 border-b-4 border-surface-2 pb-1">
+                        {shown.map((t) => (
+                            <li key={t.key} className="grid min-w-0 justify-items-center">
+                                <Trophy aria-hidden className={`size-9 ${t.award ? "text-pebble-lemon" : "text-pebble-lemon/70"}`} strokeWidth={2} />
+                                <span className="mt-0.5 max-w-full truncate text-caption-2 text-label-2">{t.award ?? t.semester}</span>
+                            </li>
+                        ))}
+                    </ul>
+                    <p className="mt-2 text-footnote text-label-2">{trophies.length > shown.length ? `+${trophies.length - shown.length} more on your shelf` : `${trophies.length} on your shelf`}</p>
+                </>
+            )}
+        </Widget>
+    )
+}
+
+function LabRecords({ state }: Props) {
+    const r = readLabRecords()
+    return (
+        <Widget id="labRecords" status={baseStatus(state)} retry={state.reload} to="/app/profile/labs/higher-lower">
+            {!hasLabRecords(r) ? (
+                <p className={NOTE}>Play a lab to set a record.</p>
             ) : (
                 <dl className="grid grid-cols-1 gap-1 text-center @[17rem]:grid-cols-3 @[17rem]:gap-2">
                     {[
-                        ["Wins", String(tally.wins)],
-                        ["Nominations", String(tally.noms)],
-                        ["Win rate", `${rate}%`],
+                        ["Best streak", String(r.higherLowerBest)],
+                        ["Spins", String(r.spins)],
+                        ["Jackpots", String(r.jackpots)],
                     ].map(([k, v]) => (
                         <div key={k}>
                             <dd className="text-stat font-display tabular-nums">{v}</dd>
@@ -485,6 +582,9 @@ const RENDER: Record<WidgetId, (p: Props) => ReactNode> = {
     progress: (p) => <Progress {...p} />,
     myoc: (p) => <Myoc {...p} />,
     yourStats: (p) => <YourStats {...p} />,
+    careerLine: (p) => <CareerLine {...p} />,
+    trophyCase: (p) => <TrophyCase {...p} />,
+    labRecords: (p) => <LabRecords {...p} />,
     latestWinners: (p) => <LatestWinners {...p} />,
     leaderboardPeek: (p) => <LeaderboardPeek {...p} />,
     notVoted: (p) => <NotVoted {...p} />,

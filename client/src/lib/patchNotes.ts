@@ -1,0 +1,47 @@
+export type PatchNote = { version: string; /** Local ET label with the time, e.g. "Nov 24, 2026, 6:30 PM". */ date: string; title: string; changes: string[] }
+
+/** Newest first. Add an entry here whenever something ships; the newest one is the app's version. */
+export const PATCH_NOTES: readonly PatchNote[] = [
+    {
+        version: "1.3.0",
+        date: "Nov 24, 2026, 6:30 PM",
+        title: "Your seasons",
+        changes: [
+            "Wrapped: swipe through a recap of any past season.",
+            "New Home widgets: Trophy case, Your career and Lab records (turn them on in Customize Home).",
+            "Make Your Own Categories: My ideas now shows only your own ideas.",
+            "The bottom button bar now spans the full width.",
+        ],
+    },
+    {
+        version: "1.2.0",
+        date: "Nov 23, 2026, 4:15 PM",
+        title: "Labs",
+        changes: [
+            "Higher or lower, with a count-up reveal and a share button for your streak.",
+            "Slot machine with a shareable jackpot.",
+            "Trophy shelf: your wins on display, with names for your awards. Only you see it.",
+            "Balls now uses the same ball pit as the opening page.",
+        ],
+    },
+    {
+        version: "1.1.0",
+        date: "Nov 22, 2026, 2:00 PM",
+        title: "Ballots and feedback",
+        changes: [
+            "Draft ballots: your work is saved as you build, with a Drafts tab on Manage ballots.",
+            "Practice ballots that don't count toward stats.",
+            "Per-category group sizes (duos, trios and more).",
+            "Feedback: report a bug or share an idea from Settings.",
+            "Voting shows Saved, Saving or Not saved above Back and Next.",
+        ],
+    },
+    {
+        version: "1.0.0",
+        date: "Nov 21, 2026, 12:00 PM",
+        title: "Launch",
+        changes: ["Voting, results, the leaderboard, My stats and Make Your Own Categories."],
+    },
+]
+
+export const APP_VERSION = PATCH_NOTES[0].version

@@ -3,12 +3,13 @@ import { useAvatarOverrides } from "../../lib/photoOverrides"
 import { fetchMemberAvatars, fetchMembers } from "../../api/members"
 import { useHomeData as useBaseHomeData, type HomeDataState } from "../../ui/useHomeData"
 import type { MyocWindow } from "../../lib/myoc"
+import type { StatsLoad } from "../stats/useStatsData"
 import type { Member } from "../../types"
 
 export type Directory = { members: Member[]; avatars: Record<string, string | null> }
 /** The member's MYOC picture for Home; absent until it has loaded (and for good if MYOC fails or is not set up). */
 export type MyocHome = { window: MyocWindow; sent: number }
-export type HomeState = HomeDataState & { directory: Directory | null; /** undefined = loading (skeleton), null = nothing to show */ myoc?: MyocHome | null }
+export type HomeState = HomeDataState & { directory: Directory | null; /** undefined = loading (skeleton), null = nothing to show */ myoc?: MyocHome | null; /** Past seasons for the career line and trophy case; absent when neither widget is shown. */ stats?: StatsLoad }
 
 /**
  * The Home screen's loader: the shared season/ballots/committee load plus the member directory

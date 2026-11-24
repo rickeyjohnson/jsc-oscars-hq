@@ -66,8 +66,10 @@ describe("widget colors", () => {
             "attention": "cherry",
             "ballotCloses": "cherry",
             "ballotHealth": "strawberry",
+            "careerLine": "sky",
             "ceremony": "lemon",
             "countdown": "grape",
+            "labRecords": "tangerine",
             "latestWinners": "tangerine",
             "leaderboardPeek": "strawberry",
             "myoc": "cherry",
@@ -76,6 +78,7 @@ describe("widget colors", () => {
             "progress": "sky",
             "revealReadiness": "lemon",
             "tiebreak": "lime",
+            "trophyCase": "lemon",
             "yourStats": "grape",
           }
         `)

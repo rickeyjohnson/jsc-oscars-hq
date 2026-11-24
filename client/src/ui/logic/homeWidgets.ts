@@ -2,6 +2,7 @@ import type { PebbleName } from "../tokens"
 
 export type WidgetId =
     | "ceremony" | "countdown" | "pending" | "ballotCloses" | "progress" | "myoc" | "yourStats" | "leaderboardPeek" | "latestWinners"
+    | "careerLine" | "trophyCase" | "labRecords"
     | "notVoted" | "attention" | "ballotHealth" | "tiebreak" | "revealReadiness"
 
 /** The pebble used for the widget's accent edge and its Customize dot. */
@@ -28,7 +29,10 @@ export const WIDGETS: readonly WidgetDef[] = [
     { id: "ballotCloses", title: "Ballot closes", blurb: "When the next ballot closes", adminOnly: false, requiresRelease: false, defaultMember: false, defaultCommittee: false, span: 1, color: "cherry" },
     { id: "progress", title: "Your progress", blurb: "Votes you've cast so far", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: true, span: 1, color: "sky" },
     { id: "myoc", title: "Make Your Own Categories", blurb: "Suggest categories while the window is open", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: false, span: 1, color: "cherry" },
-    { id: "yourStats", title: "Your stats", blurb: "Your picks and win rate", adminOnly: false, requiresRelease: true, defaultMember: false, defaultCommittee: false, span: 1, color: "grape" },
+    { id: "yourStats", title: "Your stats", blurb: "Wins, noms and win rate, all time", adminOnly: false, requiresRelease: true, defaultMember: false, defaultCommittee: false, span: 1, color: "grape" },
+    { id: "trophyCase", title: "Trophy case", blurb: "A few of your wins on display", adminOnly: false, requiresRelease: false, defaultMember: false, defaultCommittee: false, span: 2, color: "lemon" },
+    { id: "careerLine", title: "Your career", blurb: "Nominations and wins, season by season", adminOnly: false, requiresRelease: false, defaultMember: false, defaultCommittee: false, span: 2, color: "sky" },
+    { id: "labRecords", title: "Lab records", blurb: "Your best streak and slot jackpots", adminOnly: false, requiresRelease: false, defaultMember: false, defaultCommittee: false, span: 1, color: "tangerine" },
     { id: "latestWinners", title: "Latest winners", blurb: "Who just won", adminOnly: false, requiresRelease: false, defaultMember: true, defaultCommittee: true, span: 2, color: "tangerine" },
     { id: "leaderboardPeek", title: "Leaderboard", blurb: "Top of the standings", adminOnly: false, requiresRelease: true, defaultMember: true, defaultCommittee: true, span: 2, color: "strawberry" },
     { id: "notVoted", title: "Who hasn't voted", blurb: "Members who haven't voted yet", adminOnly: true, requiresRelease: false, defaultMember: false, defaultCommittee: true, span: 2, color: "grape" },

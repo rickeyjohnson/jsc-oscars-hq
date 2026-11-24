@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Calendar, CircleDot, KeyRound, Laugh, LogOut, Trophy, Dices, ArrowUpDown, Pencil, Plus, Settings, SquareCheckBig, Users } from "lucide-react"
+import { Calendar, CircleDot, KeyRound, Laugh, LogOut, Trophy, Dices, ArrowUpDown, Pencil, Plus, Sparkles, Settings, SquareCheckBig, Users } from "lucide-react"
 import { supabase } from "../supabaseClient"
 import { useUserData } from "../context/UserContenxt"
 import { displayName } from "../lib/displayName"
@@ -55,12 +55,15 @@ const ProfilePage = () => {
                     )}
                 </div>
                 <div className="space-y-6">
+                    <GroupedSection header="Your seasons">
+                        <ListRow title="Wrapped" subtitle="Your recap of any past season" leading={icon(Sparkles)} chevron to="/app/profile/wrapped" />
+                        <ListRow title="Trophy shelf" subtitle="Your wins on display. Only you see it." leading={icon(Trophy)} chevron to="/app/profile/labs/trophies" />
+                    </GroupedSection>
                     <GroupedSection header="Labs">
                         <ListRow title="Joke generator" leading={icon(Laugh)} chevron onClick={() => setJokeOpen(true)} />
                         <ListRow title="Balls" subtitle="Toss everyone around" leading={icon(CircleDot)} chevron to="/app/profile/labs/balls" />
                         <ListRow title="Higher or lower" subtitle="Who has more? Keep your streak" leading={icon(ArrowUpDown)} chevron to="/app/profile/labs/higher-lower" />
                         <ListRow title="Slot machine" subtitle="Match three faces" leading={icon(Dices)} chevron to="/app/profile/labs/slots" />
-                        <ListRow title="Trophy shelf" subtitle="Your wins on display. Only you see it." leading={icon(Trophy)} chevron to="/app/profile/labs/trophies" />
                     </GroupedSection>
                     <GroupedSection>
                         <ListRow
