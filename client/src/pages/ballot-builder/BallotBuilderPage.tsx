@@ -20,6 +20,8 @@ import CategoryModal from "./CategoryModal"
 import BulkImportPanel from "./BulkImportPanel"
 import { failureMessage } from "../../lib/failure"
 import { OFFLINE_REASON, useOnline } from "../../lib/online"
+import { useAuth } from "../../context/AuthContext"
+import { clearAutosave, readAutosave, worthRestoring, writeAutosave, type Autosaved } from "../../lib/builderAutosave"
 
 function StepIndicator({ step }: { step: BuilderStep }) {
     const at = BUILDER_STEPS.findIndex((s) => s.id === step)
@@ -61,6 +63,26 @@ const BallotBuilderPage = () => {
     // The last saved (or loaded) form: leaving with anything different asks the browser to confirm.
     const [saved, setSaved] = useState<BallotFormData>(formData)
     const dirty = isDirty(formData, saved)
+
+    // Local autosave: unsaved work survives closing the page. One slot per draft ("new" for a ballot that was never saved).
+    const { user } = useAuth()
+    const userId = user?.id ?? ""
+    const slot = draftId ?? "new"
+    const [restorable, setRestorable] = useState<Autosaved | null>(null)
+    const [checkedRestore, setCheckedRestore] = useState(false)
+    useEffect(() => {
+        if (loadingDraft || checkedRestore) return
+        setCheckedRestore(true)
+        if (seed.categories.length > 0) return
+        const stored = readAutosave(window.localStorage, userId, slot)
+        if (worthRestoring(stored, saved)) setRestorable(stored)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [loadingDraft, userId])
+    useEffect(() => {
+        if (loadingDraft || !checkedRestore || restorable || !dirty) return
+        const t = setTimeout(() => writeAutosave(window.localStorage, userId, slot, formData), 600)
+        return () => clearTimeout(t)
+    }, [formData, dirty, loadingDraft, checkedRestore, restorable, userId, slot])
 
     useEffect(() => {
         if (!dirty) return
@@ -122,6 +144,7 @@ const BallotBuilderPage = () => {
             const id = await saveBallotDraft(formData, members, ballotId)
             setBallotId(id)
             setSaved(formData)
+            clearAutosave(window.localStorage, userId, slot)
             if (publish) {
                 await setBallotStatus(id, "open")
                 navigate(`/app/profile/ballots/${id}`)
@@ -152,6 +175,20 @@ const BallotBuilderPage = () => {
         <Screen title={draftId ? "Edit draft" : "New ballot"} back={{ to: "/app/profile", label: "You" }}>
             <StepIndicator step={step} />
             {loadingDraft && <p role="status" className="mb-4 text-callout text-label-2">Loading draft…</p>}
+            {restorable && (
+                <div role="status" className="mb-4 rounded-card bg-surface p-4">
+                    <p className="text-callout font-bold">You have unsaved work from {new Date(restorable.savedAt).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}</p>
+                    <p className="mt-1 text-footnote text-label-2">{restorable.form.name.trim() || "Untitled ballot"} · {restorable.form.categories.length} {restorable.form.categories.length === 1 ? "category" : "categories"}</p>
+                    <div className="mt-3 flex gap-2">
+                        <Button variant="primary" size="md" onClick={() => { setFormData(restorable.form); setRestorable(null); toast.show("Restored") }}>
+                            Restore
+                        </Button>
+                        <Button variant="secondary" size="md" onClick={() => { clearAutosave(window.localStorage, userId, slot); setRestorable(null) }}>
+                            Discard
+                        </Button>
+                    </div>
+                </div>
+            )}
 
             {step === "details" && <BallotBasicInfo formData={formData} setFormData={setFormData} seasons={seasons} />}
 

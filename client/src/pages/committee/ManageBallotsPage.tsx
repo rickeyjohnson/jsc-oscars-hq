@@ -31,7 +31,7 @@ const Row = ({ b, hint, child, now }: { b: BallotSummary; hint?: string | null; 
     const p = phaseOf(b, now)
     return (
         <li>
-            <Link to={`/app/profile/ballots/${b.id}`} className={`flex min-h-16 w-full items-center gap-3 py-3 pr-4 hover:bg-fill active:bg-fill ${child ? "bg-fill pl-8" : "pl-4"}`}>
+            <Link to={p === "draft" ? `/app/profile/ballots/create?draft=${b.id}` : `/app/profile/ballots/${b.id}`} className={`flex min-h-16 w-full items-center gap-3 py-3 pr-4 hover:bg-fill active:bg-fill ${child ? "bg-fill pl-8" : "pl-4"}`}>
                 <span className="min-w-0 flex-1">
                     <span className={`block truncate font-bold ${child ? "text-callout" : "text-body"}`}>{b.name}</span>
                     <span className="block truncate text-footnote text-label-2">{subtitle(b, now)}</span>
