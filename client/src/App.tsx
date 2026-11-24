@@ -19,6 +19,7 @@ import MyocPage from "./pages/myoc/MyocPage"
 import BallotBuilderPage from "./pages/ballot-builder/BallotBuilderPage"
 import VotePage from "./pages/VotePage"
 import FeedbackPage from "./pages/FeedbackPage"
+import BallsLab from "./pages/labs/BallsLab"
 import ManageBallotsPage from "./pages/committee/ManageBallotsPage"
 import BallotAdminPage from "./pages/committee/BallotAdminPage"
 import SubmitBallotPage from "./pages/SubmitBallotPage"
@@ -97,6 +98,7 @@ const App = () => {
                     <Route path="profile/settings" element={<SettingsPage />} />
                     <Route path="profile/settings/myoc" element={<MyocPage />} />
                     <Route path="profile/settings/feedback" element={<FeedbackPage />} />
+                    <Route path="profile/labs/balls" element={<BallsLab />} />
                     <Route
                         element={
                             <RequireCommittee>
