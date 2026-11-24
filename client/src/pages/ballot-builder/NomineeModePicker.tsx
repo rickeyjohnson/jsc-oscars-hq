@@ -2,6 +2,7 @@ import { useState } from "react"
 import { X } from "lucide-react"
 import { SegmentedControl } from "../../ui/SegmentedControl"
 import { useConfirm } from "../../ui/ConfirmProvider"
+import { GROUP_SIZE_CHOICES, groupLimits } from "../../lib/voting"
 import type { Category, Member, NomineeMode } from "../../types"
 
 interface Props {
@@ -27,7 +28,7 @@ const NomineeModePicker: React.FC<Props> = ({ category, members, onChange }) => 
         if (nominee_mode === category.nominee_mode) return
         if (category.nominees.length > 0 && !(await confirm({ title: "Switch mode and clear nominees?", message: "Switching mode clears this category's nominees.", confirmLabel: "Switch", destructive: true }))) return
         // Nominee lists do not carry across modes.
-        onChange({ ...category, nominee_mode, nominees: [], allow_member_add: nominee_mode === "preset" ? category.allow_member_add : false })
+        onChange({ ...category, nominee_mode, nominees: [], allow_member_add: nominee_mode === "preset" ? category.allow_member_add : false, group_size: nominee_mode === "group" ? (category.group_size ?? 2) : null })
     }
 
     const selectedIds = new Set(category.nominees.flatMap((n) => n.member_ids))
@@ -79,7 +80,20 @@ const NomineeModePicker: React.FC<Props> = ({ category, members, onChange }) => 
             )}
 
             {category.nominee_mode === "group" && (
-                <p className="text-footnote text-label-2">Voters pick 2+ members.</p>
+                <div>
+                    <p id="group-size-label" className="mb-1.5 text-subhead font-bold text-label-2">People in each group</p>
+                    <div role="radiogroup" aria-labelledby="group-size-label" className="flex flex-wrap gap-2">
+                        {GROUP_SIZE_CHOICES.map((n) => {
+                            const on = groupLimits(category).min === n && groupLimits(category).max === n
+                            return (
+                                <button key={n} type="button" role="radio" aria-checked={on} onClick={() => onChange({ ...category, group_size: n })} className={`min-h-11 min-w-11 cursor-pointer rounded-full px-4 text-subhead font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${on ? "bg-inverse text-on-inverse" : "bg-fill text-label"}`}>
+                                    {n}
+                                </button>
+                            )
+                        })}
+                    </div>
+                    <p className="mt-1.5 text-footnote text-label-2">Voters pick exactly {category.group_size ?? 2} members{category.group_size ? "" : " (or 3)"}. Use 2 for duos, 3 for trios.</p>
+                </div>
             )}
 
             {category.nominee_mode === "subset" && (

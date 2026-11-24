@@ -74,6 +74,15 @@ export const chipStatus = (b: Pick<Ballot, "status" | "closes_at">, now: Date): 
 // Group votes: anyone may make a group of 2 to GROUP_MAX_SIZE other people (client-side cap; the DB only requires 2+).
 export const GROUP_MIN_SIZE = 2
 export const GROUP_MAX_SIZE = 3
+export const GROUP_SIZE_CHOICES = [2, 3, 4, 5, 6] as const
+
+/** How many people a voter must pick for this category: exact when the committee set a size, else the older 2 to 3. */
+export const groupLimits = (c: { group_size?: number | null }): { min: number; max: number } =>
+    c.group_size ? { min: c.group_size, max: c.group_size } : { min: GROUP_MIN_SIZE, max: GROUP_MAX_SIZE }
+
+/** The size a group category is saved with (new group categories default to pairs); other modes store none. */
+export const groupSizeToSave = (c: { nominee_mode: string; group_size?: number | null }): number | null =>
+    c.nominee_mode === "group" ? (c.group_size ?? GROUP_MIN_SIZE) : null
 
 export const isGroupNominee = (n: Nominee): boolean => n.member_ids.length > 1
 

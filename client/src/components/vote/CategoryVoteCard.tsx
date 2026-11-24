@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { Check, Lock } from "lucide-react"
 import type { Category, Member } from "../../types"
-import { groupCandidates, lockedNominees, nomineeKey, nomineePebbles, selectableNominees, type VoteMessage } from "../../lib/voting"
+import { groupCandidates, groupLimits, lockedNominees, nomineeKey, nomineePebbles, selectableNominees, type VoteMessage } from "../../lib/voting"
 import { Avatar } from "../../ui/Avatar"
 import { Button, Spinner } from "../../ui/Button"
 import { SheetActions } from "../../ui/SheetActions"
@@ -194,6 +194,8 @@ const CategoryVoteCard = (p: Props) => {
                     <GroupSheet
                         open={p.groupOpen}
                         candidates={groupCandidates(p.members, p.myMemberId)}
+                        min={groupLimits(category).min}
+                        max={groupLimits(category).max}
                         myName={p.myName}
                         onClose={() => p.onGroupOpenChange(false)}
                         onSubmit={(ids) => {

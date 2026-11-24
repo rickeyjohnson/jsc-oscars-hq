@@ -70,6 +70,7 @@ export type Database = {
           allow_member_add: boolean
           ballot_id: string
           description: string
+          group_size: number | null
           id: string
           name: string
           nominee_mode: Database["public"]["Enums"]["nominee_mode"]
@@ -79,6 +80,7 @@ export type Database = {
           allow_member_add?: boolean
           ballot_id: string
           description?: string
+          group_size?: number | null
           id?: string
           name: string
           nominee_mode?: Database["public"]["Enums"]["nominee_mode"]
@@ -88,6 +90,7 @@ export type Database = {
           allow_member_add?: boolean
           ballot_id?: string
           description?: string
+          group_size?: number | null
           id?: string
           name?: string
           nominee_mode?: Database["public"]["Enums"]["nominee_mode"]

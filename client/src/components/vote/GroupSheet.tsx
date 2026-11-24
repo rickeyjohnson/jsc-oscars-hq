@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Check } from "lucide-react"
 import type { Member } from "../../types"
-import { GROUP_MAX_SIZE, GROUP_MIN_SIZE, joinNames } from "../../lib/voting"
+import { joinNames } from "../../lib/voting"
 import { MemberAvatar } from "../../ui/MemberAvatar"
 import { Button } from "../../ui/Button"
 import { Sheet } from "../../ui/Sheet"
@@ -9,15 +9,15 @@ import { SheetActions } from "../../ui/SheetActions"
 import { avatarFallback } from "../../ui/logic/avatar"
 import { PEBBLE_CLASS } from "../../ui/logic/pebble"
 
-type Props = { open: boolean; candidates: Member[]; myName?: string; onClose: () => void; onSubmit: (memberIds: string[]) => void }
+type Props = { open: boolean; candidates: Member[]; min: number; max: number; myName?: string; onClose: () => void; onSubmit: (memberIds: string[]) => void }
 
-/** Pick 2 to GROUP_MAX_SIZE other people. The button names the group it will vote for. */
-const GroupSheet = ({ open, candidates, myName, onClose, onSubmit }: Props) => {
+/** Pick min to max other people (exactly N when the committee set a size). The button names the group it will vote for. */
+const GroupSheet = ({ open, candidates, min, max, myName, onClose, onSubmit }: Props) => {
     const [picked, setPicked] = useState<string[]>([])
-    const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length < GROUP_MAX_SIZE ? [...p, id] : p))
+    const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length < max ? [...p, id] : p))
     const names = candidates.filter((m) => picked.includes(m.id)).map((m) => m.name)
-    const ready = picked.length >= GROUP_MIN_SIZE
-    const full = picked.length >= GROUP_MAX_SIZE
+    const ready = picked.length >= min
+    const full = picked.length >= max
     const close = () => {
         setPicked([])
         onClose()
@@ -38,13 +38,13 @@ const GroupSheet = ({ open, candidates, myName, onClose, onSubmit }: Props) => {
                             setPicked([])
                         }}
                     >
-                        {ready ? `Vote for ${joinNames(names)}` : `Pick ${GROUP_MIN_SIZE} or ${GROUP_MAX_SIZE} people`}
+                        {ready ? `Vote for ${joinNames(names)}` : `Pick ${min === max ? min : `${min} or ${max}`} people`}
                     </Button>
                 </SheetActions>
             }
         >
             <p className="text-subhead text-label-2">
-                Pick {GROUP_MIN_SIZE} or {GROUP_MAX_SIZE} people. You can't include yourself.
+                Pick {min === max ? min : `${min} or ${max}`} people. You can't include yourself.
             </p>
             {picked.length > 0 && (
                 <div className="mt-3 flex items-center gap-3 rounded-card bg-bg p-3" data-testid="group-preview">
@@ -63,7 +63,7 @@ const GroupSheet = ({ open, candidates, myName, onClose, onSubmit }: Props) => {
                     </span>
                 </div>
             )}
-            {picked.length === 1 && <p className="mt-2 text-footnote text-label-2">Pick one more person</p>}
+            {picked.length > 0 && picked.length < min && <p className="mt-2 text-footnote text-label-2">{min - picked.length === 1 ? "Pick one more person" : `Pick ${min - picked.length} more people`}</p>}
             <div role="group" aria-label="People in this group" className="mt-3 flex flex-wrap gap-2">
                 {candidates.map((m) => {
                     const on = picked.includes(m.id)

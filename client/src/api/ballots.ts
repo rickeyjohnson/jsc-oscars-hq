@@ -1,7 +1,7 @@
 import { supabase } from "../supabaseClient"
 import { buildNomineeRows } from "../lib/ballotForm"
 import { toUtcIso } from "../lib/time"
-import type { BallotSummary } from "../lib/voting"
+import { groupSizeToSave, type BallotSummary } from "../lib/voting"
 import type { Ballot, BallotDetail, BallotFormData, BallotStatus, Category, Member, Nominee, Season } from "../types"
 import type { RoundEntry } from "../lib/rounds"
 import { dedupe } from "../lib/cache/dedup"
@@ -34,6 +34,7 @@ export const saveBallotDraft = async (form: BallotFormData, members: Member[], b
             sort_order: i,
             nominee_mode: c.nominee_mode,
             allow_member_add: c.allow_member_add,
+            group_size: groupSizeToSave(c),
             nominees: buildNomineeRows(c, members),
         })),
     })
@@ -83,6 +84,7 @@ const saveBallotDraftSteps = async (form: BallotFormData, members: Member[], bal
                 sort_order: index,
                 nominee_mode: category.nominee_mode,
                 allow_member_add: category.allow_member_add,
+                group_size: groupSizeToSave(category),
             })
             .select("id")
             .single()
@@ -150,6 +152,7 @@ const fetchBallotDetailRaw = async (ballotId: string): Promise<BallotDetail> => 
             order: c.sort_order,
             nominee_mode: c.nominee_mode as Category["nominee_mode"],
             allow_member_add: c.allow_member_add,
+            group_size: c.group_size ?? null,
             nominees: ((c.nominees ?? []) as Array<{ id: string; display_name: string; secondary_text: string | null; type: Nominee["type"]; member_ids: string[] }>)
                 .filter((n) => !allowed || allowed.has(n.id))
                 .map((n) => ({ id: n.id, display_name: n.display_name, secondary_text: n.secondary_text ?? undefined, type: n.type, member_ids: n.member_ids ?? [] }))
