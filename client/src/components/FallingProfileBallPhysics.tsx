@@ -28,7 +28,8 @@ const measure = (el: HTMLElement) => {
     }
 }
 
-const FallingProfileBallsPhysics: React.FC = () => {
+/** `contained` fills its (positioned) parent instead of the whole screen, for use inside a page like the Balls lab. */
+const FallingProfileBallsPhysics: React.FC<{ contained?: boolean }> = ({ contained = false }) => {
     const sceneRef = useRef<HTMLDivElement | null>(null)
 
     useEffect(() => {
@@ -52,6 +53,7 @@ const FallingProfileBallsPhysics: React.FC = () => {
             } as any,
         })
         render.canvas.setAttribute("aria-hidden", "true")
+        render.canvas.style.touchAction = "none"
 
         /* ---------- Walls ---------- */
         const createWalls = () => [
@@ -100,7 +102,12 @@ const FallingProfileBallsPhysics: React.FC = () => {
 
         /* ---------- Mouse ---------- */
         if (!reduced) {
-            const mouse = Mouse.create(render.canvas)
+            const mouse: any = Mouse.create(render.canvas)
+            if (contained) {
+                // Inside a scrolling page the pit must not swallow the wheel.
+                mouse.element.removeEventListener("mousewheel", mouse.mousewheel)
+                mouse.element.removeEventListener("DOMMouseScroll", mouse.mousewheel)
+            }
             const mouseConstraint: any = MouseConstraint.create(engine, {
                 mouse,
                 constraint: {
@@ -210,7 +217,7 @@ const FallingProfileBallsPhysics: React.FC = () => {
         }
     }, [])
 
-    return <div ref={sceneRef} className="pointer-events-auto fixed inset-0 z-0" />
+    return <div ref={sceneRef} className={contained ? "absolute inset-0 z-0" : "pointer-events-auto fixed inset-0 z-0"} />
 }
 
 export default FallingProfileBallsPhysics

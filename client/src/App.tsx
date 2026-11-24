@@ -20,6 +20,9 @@ import BallotBuilderPage from "./pages/ballot-builder/BallotBuilderPage"
 import VotePage from "./pages/VotePage"
 import FeedbackPage from "./pages/FeedbackPage"
 import BallsLab from "./pages/labs/BallsLab"
+import HigherLowerLab from "./pages/labs/HigherLowerLab"
+import SlotsLab from "./pages/labs/SlotsLab"
+import TrophyShelf from "./pages/labs/TrophyShelf"
 import ManageBallotsPage from "./pages/committee/ManageBallotsPage"
 import BallotAdminPage from "./pages/committee/BallotAdminPage"
 import SubmitBallotPage from "./pages/SubmitBallotPage"
@@ -99,6 +102,9 @@ const App = () => {
                     <Route path="profile/settings/myoc" element={<MyocPage />} />
                     <Route path="profile/settings/feedback" element={<FeedbackPage />} />
                     <Route path="profile/labs/balls" element={<BallsLab />} />
+                    <Route path="profile/labs/slots" element={<SlotsLab />} />
+                    <Route path="profile/labs/higher-lower" element={<HigherLowerLab />} />
+                    <Route path="profile/labs/trophies" element={<TrophyShelf />} />
                     <Route
                         element={
                             <RequireCommittee>
