@@ -5,13 +5,13 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom"
 import MyocPage from "../../pages/myoc/MyocPage"
 import CategoryList from "../../pages/ballot-builder/CategoryList"
 import { ConfirmProvider } from "../ConfirmProvider"
-import { createMyocWindow, editIdea, fetchMyocWindows, fetchIdeas, fetchReviewIdeas, reviewIdea, submitIdea, withdrawIdea, updateMyocWindow } from "../../api/myoc"
+import { createMyocWindow, editIdea, fetchMyocWindows, fetchMyIdeas, fetchReviewIdeas, reviewIdea, submitIdea, withdrawIdea, updateMyocWindow } from "../../api/myoc"
 import { fetchCurrentSeason } from "../../api/ballots"
 import type { MyocIdea, MyocWindow, ReviewIdea } from "../../lib/myoc"
 
 const user = vi.hoisted(() => ({ committee: false }))
 vi.mock("../../api/myoc", () => ({
-    fetchMyocWindows: vi.fn(), fetchIdeas: vi.fn(), fetchReviewIdeas: vi.fn(), submitIdea: vi.fn(), editIdea: vi.fn(), withdrawIdea: vi.fn(), reviewIdea: vi.fn(), createMyocWindow: vi.fn(), updateMyocWindow: vi.fn(),
+    fetchMyocWindows: vi.fn(), fetchMyIdeas: vi.fn(), fetchReviewIdeas: vi.fn(), submitIdea: vi.fn(), editIdea: vi.fn(), withdrawIdea: vi.fn(), reviewIdea: vi.fn(), createMyocWindow: vi.fn(), updateMyocWindow: vi.fn(),
 }))
 vi.mock("../../api/ballots", () => ({ fetchCurrentSeason: vi.fn() }))
 vi.mock("../../api/members", () => ({ fetchMemberDirectory: vi.fn().mockResolvedValue([]), fetchMembers: vi.fn().mockResolvedValue([]) }))
@@ -44,10 +44,10 @@ const renderPage = (path = "/app/profile/settings/myoc") =>
 beforeEach(() => {
     user.committee = false
     vi.spyOn(console, "error").mockImplementation(() => {})
-    for (const f of [fetchMyocWindows, fetchIdeas, fetchReviewIdeas, submitIdea, editIdea, withdrawIdea, reviewIdea, createMyocWindow, updateMyocWindow, fetchCurrentSeason]) vi.mocked(f).mockReset()
+    for (const f of [fetchMyocWindows, fetchMyIdeas, fetchReviewIdeas, submitIdea, editIdea, withdrawIdea, reviewIdea, createMyocWindow, updateMyocWindow, fetchCurrentSeason]) vi.mocked(f).mockReset()
     vi.mocked(fetchCurrentSeason).mockResolvedValue({ id: "S1", name: "Spring 2027", ceremony_at: null, location: null, results_released_at: null } as never)
     vi.mocked(fetchMyocWindows).mockResolvedValue([win(-1, 48)])
-    vi.mocked(fetchIdeas).mockResolvedValue([])
+    vi.mocked(fetchMyIdeas).mockResolvedValue([])
 })
 
 describe("member view", () => {
@@ -89,14 +89,14 @@ describe("member view", () => {
         expect((await screen.findByRole("alert")).textContent).toMatch(/old limit; ask a committee member/)
     })
     it("keeps the form open however many ideas there are", async () => {
-        vi.mocked(fetchIdeas).mockResolvedValue(Array.from({ length: 12 }, (_, i) => idea(`n${i}`)))
+        vi.mocked(fetchMyIdeas).mockResolvedValue(Array.from({ length: 12 }, (_, i) => idea(`n${i}`)))
         renderPage()
         expect(await screen.findByRole("button", { name: "Submit idea" })).toBeTruthy()
         expect(screen.queryByText(/used all/)).toBeNull()
     })
     it("closed: no form and no edit or withdraw", async () => {
         vi.mocked(fetchMyocWindows).mockResolvedValue([win(-48, -1)])
-        vi.mocked(fetchIdeas).mockResolvedValue([idea("a")])
+        vi.mocked(fetchMyIdeas).mockResolvedValue([idea("a")])
         renderPage()
         expect(await screen.findByText("Make Your Own Categories is closed")).toBeTruthy()
         expect(screen.getByText("Idea a")).toBeTruthy()
@@ -111,7 +111,7 @@ describe("member view", () => {
         expect(screen.queryByRole("form", { name: "Suggest a category" })).toBeNull()
     })
     it("only ever labels ideas Submitted or Withdrawn", async () => {
-        vi.mocked(fetchIdeas).mockResolvedValue([idea("a", { status: "accepted" }), idea("b", { status: "rejected" }), idea("c", { status: "merged", merged_into: "a" }), idea("d", { status: "withdrawn" })])
+        vi.mocked(fetchMyIdeas).mockResolvedValue([idea("a", { status: "accepted" }), idea("b", { status: "rejected" }), idea("c", { status: "merged", merged_into: "a" }), idea("d", { status: "withdrawn" })])
         renderPage()
         await screen.findByText("Idea a")
         expect(screen.getAllByText("Submitted")).toHaveLength(3)
@@ -121,7 +121,7 @@ describe("member view", () => {
         expect(screen.queryByRole("button", { name: /^Edit/ })).toBeNull()
     })
     it("edits an idea in a sheet with a single Close", async () => {
-        vi.mocked(fetchIdeas).mockResolvedValue([idea("a")])
+        vi.mocked(fetchMyIdeas).mockResolvedValue([idea("a")])
         vi.mocked(editIdea).mockResolvedValue()
         renderPage()
         fireEvent.click(await screen.findByRole("button", { name: "Edit Idea a" }))
@@ -132,7 +132,7 @@ describe("member view", () => {
         await waitFor(() => expect(editIdea).toHaveBeenCalledWith("a", { name: "Renamed", description: "", hint: null }))
     })
     it("withdraws only after confirming", async () => {
-        vi.mocked(fetchIdeas).mockResolvedValue([idea("a")])
+        vi.mocked(fetchMyIdeas).mockResolvedValue([idea("a")])
         vi.mocked(withdrawIdea).mockResolvedValue()
         renderPage()
         fireEvent.click(await screen.findByRole("button", { name: "Withdraw Idea a" }))
@@ -142,7 +142,7 @@ describe("member view", () => {
         await waitFor(() => expect(withdrawIdea).toHaveBeenCalledWith("a"))
     })
     it("keeping the idea does nothing", async () => {
-        vi.mocked(fetchIdeas).mockResolvedValue([idea("a")])
+        vi.mocked(fetchMyIdeas).mockResolvedValue([idea("a")])
         renderPage()
         fireEvent.click(await screen.findByRole("button", { name: "Withdraw Idea a" }))
         fireEvent.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Keep it" }))

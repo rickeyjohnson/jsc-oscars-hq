@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import { Lightbulb } from "lucide-react"
-import { fetchIdeas, submitIdea, withdrawIdea } from "../../api/myoc"
+import { fetchMyIdeas, submitIdea, withdrawIdea } from "../../api/myoc"
 import {
     canChange, closesLabel, hasErrors, hintLabel, memberStatusLabel, myocErrorKind, myocMessage, MYOC_LOAD_FAILED, MYOC_UNAVAILABLE,
     validateIdea, type IdeaDraft, type IdeaErrors, type MyocIdea, type MyocWindow, type WindowPhase,
@@ -41,7 +41,7 @@ export function SuggestView({ window: w, phase, now }: { window: MyocWindow | nu
     useEffect(() => {
         if (!windowId) return
         let live = true
-        fetchIdeas(windowId)
+        fetchMyIdeas(windowId)
             .then((ideas) => live && setLoad({ status: "ready", ideas }))
             .catch((e) => {
                 console.error(e)

@@ -34,6 +34,16 @@ export const fetchIdeas = async (windowId: string): Promise<MyocIdea[]> => {
     return (data ?? []) as MyocIdea[]
 }
 
+/** Only the signed-in member's own ideas (the committee's RLS also lets them read everyone's, so filter explicitly). */
+export const fetchMyIdeas = async (windowId: string): Promise<MyocIdea[]> => {
+    const { data: auth } = await supabase.auth.getUser()
+    const uid = auth.user?.id
+    if (!uid) return []
+    const { data, error } = await supabase.from("myoc_ideas").select(IDEA_COLS).eq("window_id", windowId).eq("author_id", uid).order("created_at", { ascending: false })
+    if (error) throw error
+    return (data ?? []) as MyocIdea[]
+}
+
 export const fetchReviewIdeas = async (windowId: string): Promise<ReviewIdea[]> => {
     const [ideas, members] = await Promise.all([fetchIdeas(windowId), fetchMembers()])
     return withAuthors(ideas, members)
