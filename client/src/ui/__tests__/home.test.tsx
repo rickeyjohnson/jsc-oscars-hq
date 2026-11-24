@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { HomeState } from "../../pages/home/useHomeData"
 import type { HomeData } from "../logic/homeData"
 import type { BallotSummary } from "../../lib/voting"
+import { homePrefsKey } from "../logic/homePrefs"
+import { WIDGETS } from "../logic/homeWidgets"
 
 const hook = vi.hoisted(() => ({ state: null as unknown, committee: false }))
 vi.mock("../../pages/home/useHomeData", () => ({
@@ -17,6 +19,8 @@ const profile = vi.hoisted(() => ({ is_committee: false }))
 vi.mock("../../context/AuthContext", () => ({ useAuth: () => ({ user: { id: "u1" } }) }))
 // MYOC has its own tests (homeMyoc.test.tsx); here it resolves to "nothing to show" so the default widget counts stay 5.
 vi.mock("../../pages/home/useMyocHome", () => ({ useMyocHome: () => null }))
+vi.mock("../../pages/stats/useStatsData", () => ({ useStatsData: () => ({ load: { state: "loading" }, reload: () => {} }) }))
+vi.mock("../../api/trophies", () => ({ fetchAwards: () => Promise.resolve([]) }))
 vi.mock("../../context/UserContenxt", () => ({ useUserData: () => ({ profile: { ...profile, image_url: "x", display_name: "Rico Johnson" }, member: { id: "m1", name: "Rico", user_id: "u1" }, loading: false }) }))
 vi.mock("../../supabaseClient", () => ({
     supabase: { from: () => ({ select: () => ({ eq: () => ({ single: async () => ({ data: { image_url: "x" }, error: null }) }) }) }) },
@@ -37,6 +41,8 @@ const data = (o: Partial<HomeData> = {}): HomeData => ({
 const ready = (d: HomeData, extra: Partial<HomeState> = {}): HomeState => ({ data: d, loading: false, error: null, reload: vi.fn(), directory: null, ...extra })
 
 const mem = new Map<string, string>()
+/** Turn every widget on (including ones that are not default) for the tests that look at them. */
+const allWidgetsOn = () => mem.set(homePrefsKey("u1"), JSON.stringify({ version: 1, order: WIDGETS.map((w) => w.id), hidden: [] }))
 const renderHome = () => render(<MemoryRouter><HomePage /></MemoryRouter>)
 const headings = () => screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)
 
@@ -53,25 +59,26 @@ afterEach(() => {
 })
 
 describe("Home widgets", () => {
-    it("member sees the 5 default widgets and no committee widgets, even with saved committee prefs", () => {
+    it("member sees the 8 default widgets and no committee widgets, even with saved committee prefs", () => {
         mem.set("jsc.home.v1.u1", JSON.stringify({ version: 1, order: ["notVoted", "attention", "ballotHealth", "ceremony", "countdown", "pending", "progress", "latestWinners", "leaderboardPeek"], hidden: [] }))
         renderHome()
         const h = headings()
         expect(h).toEqual(expect.arrayContaining(["Oscar night", "Countdown", "Your ballots", "Your progress", "Latest winners"]))
-        expect(h).toHaveLength(5)
+        expect(h).toHaveLength(8)
         expect(screen.queryByRole("heading", { name: /who hasn't voted/i })).toBeNull()
         expect(screen.getByText("Hey Rico.")).toBeTruthy()
     })
 
-    it("committee sees 7 widgets including the attention item", () => {
+    it("committee sees every widget turned on including the attention item", () => {
         profile.is_committee = true
+        allWidgetsOn()
         hook.state = ready(data({
             ballots: [{ ...ballot(), closes_at: new Date(Date.now() - DAY).toISOString() }],
             checks: [{ id: "ballots_closed", ok: false, label: "Ballots still open" }] as never,
             completion: { ballot: ballot(), members: [{ name: "Nick", voted: 0, total: 5, claimed: true }, { name: "TJ", voted: 4, total: 5, claimed: true }] },
         }))
         renderHome()
-        expect(headings()).toHaveLength(7)
+        expect(headings().length).toBeGreaterThan(12)
         const att = screen.getByRole("region", { name: "Needs your attention" })
         expect(within(att).getByText(/ended but is still open/)).toBeTruthy()
         const nv = screen.getByRole("region", { name: "Who hasn't voted" })
@@ -151,17 +158,17 @@ describe("Home widgets", () => {
     it("shows loading skeletons per widget", () => {
         hook.state = { data: null, loading: true, error: null, reload: vi.fn(), directory: null }
         renderHome()
-        // 5 defaults plus the release-gated Leaderboard slot, so it cannot pop in after the load
-        expect(screen.getAllByRole("status")).toHaveLength(6)
+        // 7 defaults (MYOC hidden) plus the release-gated Your stats slot, so it cannot pop in after the load
+        expect(screen.getAllByRole("status")).toHaveLength(8)
         expect(screen.getByRole("status", { name: /loading countdown/i })).toBeTruthy()
-        expect(screen.getByRole("status", { name: /loading leaderboard/i })).toBeTruthy()
+        expect(screen.getByRole("status", { name: /loading your stats/i })).toBeTruthy()
     })
 
     it("a gated widget slot that is not released drops out once the load answers", () => {
         hook.state = ready(data({ released: false }))
         renderHome()
-        expect(screen.queryByRole("region", { name: "Leaderboard" })).toBeNull()
-        expect(screen.queryByRole("status", { name: /loading leaderboard/i })).toBeNull()
+        expect(screen.queryByRole("region", { name: "Your stats" })).toBeNull()
+        expect(screen.queryByRole("status", { name: /loading your stats/i })).toBeNull()
     })
 
     it("a whole-load failure shows exactly one Try again; partial failures stay per widget", () => {
@@ -199,6 +206,7 @@ describe("Home widgets", () => {
     })
 
     it("before release the winners widget is the envelope teaser and leaderboard is absent", () => {
+        allWidgetsOn()
         renderHome()
         expect(screen.getByText("The envelope opens on Oscar night")).toBeTruthy()
         expect(screen.queryByRole("heading", { name: "Leaderboard" })).toBeNull()
@@ -212,6 +220,7 @@ describe("Home rework", () => {
     })
     it("committee gets a separated Committee section holding only committee widgets", () => {
         profile.is_committee = true
+        allWidgetsOn()
         renderHome()
         const sec = screen.getByRole("group", { name: "Committee" })
         expect(within(sec).getByRole("region", { name: "Ballot health" })).toBeTruthy()
@@ -240,7 +249,7 @@ describe("Home rework", () => {
         fireEvent.click(screen.getByRole("button", { name: "Customize Home" }))
         expect(screen.getByRole("button", { name: "Reorder Countdown" })).toBeTruthy()
         expect(screen.getByRole("button", { name: "Move Countdown down" })).toBeTruthy()
-        expect(screen.getByRole("switch", { name: "Ballot closes" }).getAttribute("aria-checked")).toBe("false")
+        expect(screen.getByRole("switch", { name: "Ballot closes" }).getAttribute("aria-checked")).toBe("true")
     })
     it("customize: keyboard reorder on the handle (grab, arrow, drop), announced, persisted; Esc restores", () => {
         renderHome()

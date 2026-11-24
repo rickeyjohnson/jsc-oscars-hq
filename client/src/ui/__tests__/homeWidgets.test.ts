@@ -10,12 +10,12 @@ describe("widget blurbs", () => {
 })
 
 describe("resolveWidgets", () => {
-    it("member defaults: 6 before release (incl. MYOC, hidden by Home until a window exists), 7 after", () => {
-        expect(ids(resolveWidgets(null, { isCommittee: false, released: false }))).toEqual(["ceremony", "countdown", "pending", "progress", "myoc", "latestWinners"])
-        expect(resolveWidgets(null, { isCommittee: false, released: true })).toHaveLength(7)
+    it("member defaults: 8 before release (incl. MYOC, hidden by Home until a window exists), 9 after", () => {
+        expect(ids(resolveWidgets(null, { isCommittee: false, released: false }))).toEqual(["ceremony", "countdown", "pending", "ballotCloses", "progress", "myoc", "trophyCase", "careerLine"])
+        expect(resolveWidgets(null, { isCommittee: false, released: true })).toHaveLength(9)
     })
-    it("committee defaults: 7", () => {
-        expect(ids(resolveWidgets(null, { isCommittee: true, released: false }))).toEqual(["ceremony", "pending", "progress", "latestWinners", "notVoted", "attention", "ballotHealth"])
+    it("committee defaults: 9", () => {
+        expect(ids(resolveWidgets(null, { isCommittee: true, released: false }))).toEqual(["ceremony", "countdown", "pending", "ballotCloses", "progress", "myoc", "trophyCase", "careerLine", "notVoted"])
     })
     it("never shows admin-only widgets to non-committee, even if saved", () => {
         const prefs = { version: 1 as const, order: ["notVoted", "attention", "ballotHealth", "ceremony"], hidden: [] }

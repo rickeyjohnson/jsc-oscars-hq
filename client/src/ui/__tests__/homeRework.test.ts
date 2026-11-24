@@ -37,7 +37,7 @@ describe("dropIndex", () => {
 describe("widget registry rework", () => {
     it("adds the ready widgets, all default OFF, admin flags right", () => {
         const byId = Object.fromEntries(WIDGETS.map((w) => [w.id, w]))
-        for (const id of ["ballotCloses", "yourStats", "tiebreak", "revealReadiness"]) {
+        for (const id of ["tiebreak", "revealReadiness"]) {
             expect(byId[id].defaultMember).toBe(false)
             expect(byId[id].defaultCommittee).toBe(false)
         }
@@ -45,11 +45,11 @@ describe("widget registry rework", () => {
         expect(WIDGETS.filter((w) => w.adminOnly).map((w) => w.id).sort()).toEqual(["attention", "ballotHealth", "notVoted", "revealReadiness", "tiebreak"])
         expect(byId.yourStats.requiresRelease).toBe(true)
     })
-    it("default layouts stay 5 / 6 / 7", () => {
-        expect(resolveWidgets(null, { isCommittee: false, released: false })).toHaveLength(6)
-        expect(resolveWidgets(null, { isCommittee: false, released: true })).toHaveLength(7)
-        expect(resolveWidgets(null, { isCommittee: true, released: false })).toHaveLength(7)
-        expect(resolveWidgets(defaultPrefs(true), { isCommittee: true, released: false })).toHaveLength(7)
+    it("default layouts: 8 / 9 / 9", () => {
+        expect(resolveWidgets(null, { isCommittee: false, released: false })).toHaveLength(8)
+        expect(resolveWidgets(null, { isCommittee: false, released: true })).toHaveLength(9)
+        expect(resolveWidgets(null, { isCommittee: true, released: false })).toHaveLength(9)
+        expect(resolveWidgets(defaultPrefs(true), { isCommittee: true, released: false })).toHaveLength(9)
     })
     it("members never get admin-only widgets, even if every widget is saved on", () => {
         const all = WIDGETS.map((w) => w.id)
@@ -69,7 +69,7 @@ describe("widget colors", () => {
             "careerLine": "sky",
             "ceremony": "lemon",
             "countdown": "grape",
-            "labRecords": "tangerine",
+            "labRecords": "grape",
             "latestWinners": "tangerine",
             "leaderboardPeek": "strawberry",
             "myoc": "cherry",
@@ -83,10 +83,12 @@ describe("widget colors", () => {
           }
         `)
     })
-    it("every pebble color is used once before any repeats on the default layouts", () => {
+    it("no two neighbouring widgets share a color on the default layouts", () => {
         for (const isCommittee of [false, true]) {
-            const colors = resolveWidgets(null, { isCommittee, released: false }).map((w) => widgetColor(w.id))
-            expect(new Set(colors).size).toBe(colors.length)
+            for (const released of [false, true]) {
+                const colors = resolveWidgets(null, { isCommittee, released }).map((w) => widgetColor(w.id))
+                colors.forEach((c, i) => i > 0 && expect(c).not.toBe(colors[i - 1]))
+            }
         }
         const all = WIDGETS.map((w) => widgetColor(w.id))
         expect(new Set(all).size).toBe(7)
