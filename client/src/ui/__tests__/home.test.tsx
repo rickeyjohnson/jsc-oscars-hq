@@ -15,6 +15,8 @@ vi.mock("../../pages/home/useHomeData", () => ({
 }))
 const profile = vi.hoisted(() => ({ is_committee: false }))
 vi.mock("../../context/AuthContext", () => ({ useAuth: () => ({ user: { id: "u1" } }) }))
+// MYOC has its own tests (homeMyoc.test.tsx); here it resolves to "nothing to show" so the default widget counts stay 5.
+vi.mock("../../pages/home/useMyocHome", () => ({ useMyocHome: () => null }))
 vi.mock("../../context/UserContenxt", () => ({ useUserData: () => ({ profile: { ...profile, image_url: "x", display_name: "Rico Johnson" }, member: { id: "m1", name: "Rico", user_id: "u1" }, loading: false }) }))
 vi.mock("../../supabaseClient", () => ({
     supabase: { from: () => ({ select: () => ({ eq: () => ({ single: async () => ({ data: { image_url: "x" }, error: null }) }) }) }) },

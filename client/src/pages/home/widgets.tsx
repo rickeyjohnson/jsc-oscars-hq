@@ -458,6 +458,7 @@ function RevealReadiness({ state }: Props) {
 }
 
 function Myoc({ state, now }: Props) {
+    if (state.myoc === undefined) return <Widget id="myoc" status="loading" retry={state.reload} to="/app/profile/settings/myoc">{null}</Widget>
     const view = state.myoc ? myocHomeView(state.myoc.window, state.myoc.sent, now) : null
     if (!view) return null
     return (

@@ -33,7 +33,7 @@ const GRID = "grid grid-flow-dense grid-cols-2 items-stretch gap-3 lg:grid-cols-
 
 const HomeBody = ({ userId, isCommittee, name, memberId, imageUrl, hold }: { userId: string; isCommittee: boolean; name: string; memberId?: string; imageUrl?: string | null; hold?: boolean }) => {
     const base = useHomeData(isCommittee, userId || null)
-    const myoc = useMyocHome(base.data?.season?.id, userId)
+    const myoc = useMyocHome(base.data ? (base.data.season?.id ?? null) : undefined, userId)
     const state = useMemo(() => ({ ...base, myoc }), [base, myoc])
     const toast = useToast()
     const [prefs, setPrefs] = useState<HomePrefs>(() => loadHomePrefs(storage(), userId, isCommittee))
@@ -52,7 +52,8 @@ const HomeBody = ({ userId, isCommittee, name, memberId, imageUrl, hold }: { use
     const now = useMemo(() => new Date(), [state.data])
 
     // The MYOC card only exists while there is a window to show: no placeholder cell otherwise.
-    const showMyoc = myoc !== null && myocHomeView(myoc.window, myoc.sent, now) !== null
+    // undefined = still loading: hold the cell as a skeleton so the card does not pop in and shift the grid.
+    const showMyoc = myoc === undefined || (myoc !== null && myocHomeView(myoc.window, myoc.sent, now) !== null)
     const memberWidgets = widgets.filter((w) => !w.adminOnly && (w.id !== "myoc" || showMyoc))
     const committeeWidgets = isCommittee ? widgets.filter((w) => w.adminOnly) : []
 

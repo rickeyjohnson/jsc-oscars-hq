@@ -76,13 +76,15 @@ describe("Home Make Your Own Categories widget", () => {
         vi.mocked(fetchMyocWindows).mockRejectedValue({ code: "PGRST205" })
         renderHome()
         await waitFor(() => expect(fetchMyocWindows).toHaveBeenCalled())
-        expect(screen.queryByRole("region", { name: "Make Your Own Categories" })).toBeNull()
+        await waitFor(() => expect(screen.queryByRole("region", { name: "Make Your Own Categories" })).toBeNull())
         cleanup()
         vi.mocked(fetchMyocWindows).mockClear()
         hook.state = { ...state, data: null, loading: true }
         renderHome()
         expect(fetchMyocWindows).not.toHaveBeenCalled()
-        expect(screen.queryByRole("region", { name: "Make Your Own Categories" })).toBeNull()
+        // not known yet: the cell is held as a skeleton (no pop-in), never as a real card
+        expect(screen.getByRole("status", { name: /loading make your own categories/i })).toBeTruthy()
+        expect(screen.queryByText(/ideas? sent/i)).toBeNull()
     })
 })
 
