@@ -30,7 +30,7 @@ export function NavBar({
             <div className="relative flex min-h-16 items-center py-2 justify-between gap-2 px-gutter">
                 <div className="flex min-w-0 flex-1 items-center">
                     {back && (
-                        <Link to={back.to} aria-label={`Back to ${back.label}`} className="-ml-2 inline-flex min-h-11 min-w-11 items-center gap-0.5 rounded-control pr-3 text-body font-bold">
+                        <Link to={back.to} state={{ restoreScroll: true }} aria-label={`Back to ${back.label}`} className="-ml-2 inline-flex min-h-11 min-w-11 items-center gap-0.5 rounded-control pr-3 text-body font-bold">
                             <ChevronLeft aria-hidden className="size-6" />
                             <span className="truncate">{back.label}</span>
                         </Link>

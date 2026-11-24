@@ -10,6 +10,7 @@ import { TABS, activeTab, isTextEntry } from "./logic/tabs"
 import { useUserData } from "../context/UserContenxt"
 import { fetchBallotSummaries } from "../api/ballots"
 import { pendingBallots } from "../lib/voting"
+import { canReach, createScrollMemory } from "./logic/scrollMemory"
 import { supabase } from "../supabaseClient"
 import { clearAll } from "../lib/cache/clear"
 
@@ -65,16 +66,72 @@ function useTextFocus(enabled: boolean): boolean {
     return enabled && typing
 }
 
-// New pages open at the top (back/forward keep the browser's own scroll restoration).
+const scrollMemory = createScrollMemory()
+
+// New pages open at the top. Back/forward return to where you were on that page, waiting for late-loading content to make it tall enough.
 function ScrollToTop() {
-    const { pathname } = useLocation()
+    const location = useLocation()
     const type = useNavigationType()
+    const lastY = useRef(0)
+    const prev = useRef<{ key: string; path: string } | null>(null)
+
     useEffect(() => {
-        if (type === "POP") return
-        window.scrollTo(0, 0)
-        const main = document.getElementById("main-content")
-        if (main) main.scrollTop = 0
-    }, [pathname, type])
+        try {
+            window.history.scrollRestoration = "manual"
+        } catch {
+            /* not supported */
+        }
+        const onScroll = () => {
+            lastY.current = window.scrollY
+        }
+        window.addEventListener("scroll", onScroll, { passive: true })
+        return () => window.removeEventListener("scroll", onScroll)
+    }, [])
+
+    useEffect(() => {
+        const before = prev.current
+        if (before) {
+            // the page we just left, as it was: by history entry (Back) and by path (a back link that goes forward to it)
+            scrollMemory.save(before.key, lastY.current)
+            scrollMemory.save(`path:${before.path}`, lastY.current)
+        }
+        prev.current = { key: location.key, path: location.pathname }
+        const goTop = () => {
+            window.scrollTo(0, 0)
+            const main = document.getElementById("main-content")
+            if (main) main.scrollTop = 0
+            lastY.current = 0
+        }
+        const viaBackLink = type !== "POP" && (location.state as { restoreScroll?: boolean } | null)?.restoreScroll === true
+        if (type !== "POP" && !viaBackLink) {
+            if (!before || before.path !== location.pathname) goTop()
+            return
+        }
+        const target = viaBackLink ? scrollMemory.get(`path:${location.pathname}`) : scrollMemory.get(location.key)
+        if (target === undefined || target === 0) {
+            goTop()
+            return
+        }
+        let frame = 0
+        const started = performance.now()
+        const stop = () => cancelAnimationFrame(frame)
+        const step = () => {
+            if (canReach(target, document.documentElement.scrollHeight, window.innerHeight) || performance.now() - started > 2000) {
+                window.scrollTo(0, target)
+                lastY.current = window.scrollY
+                if (Math.abs(window.scrollY - target) <= 1 || performance.now() - started > 2000) return
+            }
+            frame = requestAnimationFrame(step)
+        }
+        frame = requestAnimationFrame(step)
+        // the reader took over: stop fighting them
+        const events = ["wheel", "touchstart", "keydown"] as const
+        events.forEach((e) => window.addEventListener(e, stop, { once: true, passive: true }))
+        return () => {
+            stop()
+            events.forEach((e) => window.removeEventListener(e, stop))
+        }
+    }, [location.key, location.pathname, type])
     return null
 }
 
