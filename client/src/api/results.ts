@@ -153,7 +153,8 @@ const fetchSeasonResultsRaw = async (seasonId: string): Promise<SeasonResults> =
         .order("opens_at")
     if (error) throw error
     const details = await Promise.all((ballots ?? []).map((b) => fetchBallotDetail(b.id as string)))
-    const categories = details.flatMap((d) => d.categories)
+    // Categories of a practice ballot are tagged so stats can skip them; the Results tab still shows them.
+    const categories = details.flatMap((d) => d.categories.map((c) => ({ ...c, in_stats: d.count_in_stats !== false })))
     const rows = await fetchResults(categories.map((c) => c.id))
     const results: Record<string, ResultRow> = {}
     for (const r of rows) results[r.category_id] = r

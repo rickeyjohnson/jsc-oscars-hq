@@ -1,4 +1,5 @@
 import { TextField } from "../../ui/TextField"
+import { Switch } from "../../ui/Switch"
 import type { BallotFormData, Season } from "../../types"
 
 interface BasicInfoProps {
@@ -35,6 +36,13 @@ export const BallotBasicInfo: React.FC<BasicInfoProps> = ({ formData, setFormDat
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <TextField label="Opens" type="datetime-local" value={formData.opens_at} onChange={(e) => handleChange("opens_at", e.target.value)} />
                 <TextField label="Closes" type="datetime-local" value={formData.closes_at} onChange={(e) => handleChange("closes_at", e.target.value)} />
+            </div>
+            <div className="flex items-center justify-between gap-4 rounded-card bg-surface px-4 py-2">
+                <div className="min-w-0">
+                    <p className="text-body font-bold">Count toward stats</p>
+                    <p className="text-footnote text-label-2">{formData.count_in_stats === false ? "Practice ballot: results show, but wins and noms are not counted." : "Wins and noms from this ballot go into the leaderboard and My stats."}</p>
+                </div>
+                <Switch label="Count toward stats" checked={formData.count_in_stats !== false} onChange={(v) => setFormData({ ...formData, count_in_stats: v })} />
             </div>
         </div>
     )

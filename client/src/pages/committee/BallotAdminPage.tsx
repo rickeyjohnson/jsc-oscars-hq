@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { createRoundBallot, deleteBallot, RoundExistsError, setBallotStatus } from "../../api/ballots"
+import { createRoundBallot, deleteBallot, RoundExistsError, setBallotCountInStats, setBallotStatus } from "../../api/ballots"
 import { recordResultsGuarded, updatePlaces, upsertResults } from "../../api/results"
 import ResultsSection, { type CsvEntry } from "../../components/committee/ResultsSection"
 import { ActionSheet, CloseTimeField } from "../../components/committee/ActionSheet"
@@ -28,6 +28,8 @@ import { GroupedSection } from "../../ui/GroupedSection"
 import { ErrorState } from "../../ui/ErrorState"
 import { Skeleton, SkeletonScreen } from "../../ui/Skeleton"
 import { COPY } from "../../ui/copy"
+import { Switch } from "../../ui/Switch"
+import { failureMessage } from "../../lib/failure"
 import { familyBallots, useBallotFamily, type Family } from "./useBallotFamily"
 import { pendingWrites, placeFixes, mainTallies, viewsFor } from "./familyLogic"
 import type { Nominee } from "../../types"
@@ -257,6 +259,19 @@ const BallotAdminPage = () => {
         })
     }
 
+    const toggleStats = async (count: boolean) => {
+        const mainId = family.main.id
+        setActionError(null)
+        try {
+            await setBallotCountInStats(mainId, count)
+            await reload()
+            toast.show(count ? "Counts toward stats" : "Practice ballot: not counted in stats")
+        } catch (e) {
+            console.error(e)
+            setActionError(failureMessage("change this setting", e))
+        }
+    }
+
     const removeBallot = async () => {
         const cats = detail.categories
         const ask = deleteConfirm({
@@ -392,6 +407,18 @@ const BallotAdminPage = () => {
                         <li className="flex min-h-12 items-center justify-between px-4 text-callout"><span className="text-label-2">Opens</span><span>{when(sel.opens_at)}</span></li>
                         <li className="flex min-h-12 items-center justify-between px-4 text-callout"><span className="text-label-2">Closes</span><span>{when(sel.closes_at)}</span></li>
                         <li className="flex min-h-12 items-center justify-between px-4 text-callout"><span className="text-label-2">Categories</span><span>{detail.categories.length}</span></li>
+                    </GroupedSection>
+                </div>
+
+                <div className="lg:col-start-1">
+                    <GroupedSection header="Stats">
+                        <li className="flex items-center justify-between gap-4 px-4 py-2">
+                            <span className="min-w-0">
+                                <span className="block text-body font-bold">Count toward stats</span>
+                                <span className="block text-footnote text-label-2">{mainDetail?.count_in_stats === false ? "Practice ballot: results show, but wins and noms are not counted." : "Wins and noms go into the leaderboard and My stats."}</span>
+                            </span>
+                            <Switch label="Count toward stats" checked={mainDetail?.count_in_stats !== false} onChange={(v) => void toggleStats(v)} />
+                        </li>
                     </GroupedSection>
                 </div>
 

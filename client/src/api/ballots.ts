@@ -27,7 +27,7 @@ export const saveBallotDraft = async (form: BallotFormData, members: Member[], b
     // One transaction when the database function exists; the older step-by-step path otherwise.
     const { data, error } = await supabase.rpc("save_ballot_draft", {
         p_ballot_id: (ballotId ?? null) as string,
-        p_ballot: { season_id: form.season_id, name: form.name.trim(), opens_at: toUtcIso(form.opens_at), closes_at: toUtcIso(form.closes_at) },
+        p_ballot: { season_id: form.season_id, name: form.name.trim(), opens_at: toUtcIso(form.opens_at), closes_at: toUtcIso(form.closes_at), count_in_stats: form.count_in_stats !== false },
         p_categories: form.categories.map((c, i) => ({
             name: c.name,
             description: c.description,
@@ -56,6 +56,7 @@ const saveBallotDraftSteps = async (form: BallotFormData, members: Member[], bal
         name: form.name.trim(),
         opens_at: toUtcIso(form.opens_at),
         closes_at: toUtcIso(form.closes_at),
+        count_in_stats: form.count_in_stats !== false,
         status: "draft" as const,
     }
     let id = ballotId
@@ -281,6 +282,15 @@ export const reopenBallot = async (ballotId: string, closesAtIso: string): Promi
     if (kind === "unavailable") throw new ReopenUnavailableError(REOPEN_UNAVAILABLE)
     if (kind === "refused") throw new ReopenRefusedError(error.message)
     throw error
+}
+
+// Committee only (RLS). Marks a ballot as practice (false) or real (true) for stats.
+export const setBallotCountInStats = async (ballotId: string, count: boolean): Promise<void> => {
+    const { data, error } = await supabase.from("ballots").update({ count_in_stats: count }).eq("id", ballotId).select("id")
+    if (error) throw error
+    if ((data ?? []).length === 0) throw new Error("Couldn't change this ballot. Only the committee can.")
+    invalidateBallots()
+    invalidateResults()
 }
 
 // Delete a ballot for good (committee only, enforced by RLS). Categories, nominees, votes, results and

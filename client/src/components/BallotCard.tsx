@@ -16,9 +16,11 @@ const BallotCard = ({ ballot, now }: { ballot: BallotSummary; now: Date }) => {
             <div className="mb-2 flex flex-wrap items-center gap-2">
                 <StatusPill phase={pillPhase(ballot, now)} />
                 {round && <Chip tone="neutral">{round}</Chip>}
+                {ballot.count_in_stats === false && <Chip tone="neutral">Practice</Chip>}
             </div>
             <h3 className="text-title-3">{ballot.name}</h3>
             <p className="mt-1 text-footnote text-label-2">{ballotSubtitle(ballot, now)}</p>
+            {ballot.count_in_stats === false && <p className="mt-1 text-footnote text-label-2">This ballot does not count towards stats.</p>}
             {p.status === "open" || p.status === "voted" ? (
                 <div aria-hidden className="mt-3 flex gap-0.5">
                     {Array.from({ length: ballot.category_count }, (_, i) => (

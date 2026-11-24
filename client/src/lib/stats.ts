@@ -2,6 +2,12 @@ import type { Nominee, ResultRow } from "../types"
 
 export type Tally = { wins: number; noms: number }
 
+/** Results that count toward stats: everything except categories of a practice ballot (in_stats === false). */
+export const statsResults = (results: ResultRow[], categories: { id: string; in_stats?: boolean }[]): ResultRow[] => {
+  const skip = new Set(categories.filter((c) => c.in_stats === false).map((c) => c.id))
+  return skip.size === 0 ? results : results.filter((r) => !skip.has(r.category_id))
+}
+
 export function nomineeStats(
   results: ResultRow[],
   nominees: Record<string, Nominee>,

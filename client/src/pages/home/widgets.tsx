@@ -14,7 +14,7 @@ import { DEFAULT_CEREMONY_MINUTES, buildIcs, downloadIcs, icsFileName } from "..
 import { WIDGETS, widgetColor, type WidgetId } from "../../ui/logic/homeWidgets"
 import { buildResultCards } from "../../lib/resultsView"
 import { leaderboard } from "../../lib/leaderboard"
-import { nomineeStats } from "../../lib/stats"
+import { nomineeStats, statsResults } from "../../lib/stats"
 import { myocHomeView } from "../../lib/myoc"
 import { closesShort, countdownParts, urgency } from "../../lib/time"
 import type { Nominee } from "../../types"
@@ -225,7 +225,7 @@ function LeaderboardPeek({ state }: Props) {
     if (d?.results && dir) {
         const nominees: Record<string, Nominee> = {}
         for (const c of d.results.categories) for (const n of c.nominees) nominees[n.id] = n
-        rows = leaderboard(nomineeStats(Object.values(d.results.results), nominees).members, dir.members)
+        rows = leaderboard(nomineeStats(statsResults(Object.values(d.results.results), d.results.categories), nominees).members, dir.members)
             .filter((r) => r.wins > 0)
             .slice(0, 3)
     }
@@ -359,7 +359,7 @@ function YourStats({ state, memberId }: Props) {
     if (d?.results && memberId) {
         const nominees: Record<string, Nominee> = {}
         for (const c of d.results.categories) for (const n of c.nominees) nominees[n.id] = n
-        tally = nomineeStats(Object.values(d.results.results), nominees).members[memberId] ?? tally
+        tally = nomineeStats(statsResults(Object.values(d.results.results), d.results.categories), nominees).members[memberId] ?? tally
     }
     const rate = tally.noms > 0 ? Math.round((tally.wins / tally.noms) * 100) : 0
     return (

@@ -7,6 +7,7 @@ export const detailToForm = (d: BallotDetail): BallotFormData => ({
     name: d.name,
     opens_at: toLocalInput(d.opens_at),
     closes_at: toLocalInput(d.closes_at),
+    count_in_stats: d.count_in_stats !== false,
     categories: d.categories.map((c) => ({ ...c, nominees: c.nominees.map((n) => ({ ...n })) })),
 })
 

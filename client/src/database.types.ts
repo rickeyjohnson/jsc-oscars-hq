@@ -17,6 +17,7 @@ export type Database = {
       ballots: {
         Row: {
           closes_at: string
+          count_in_stats: boolean
           created_at: string
           id: string
           name: string
@@ -28,6 +29,7 @@ export type Database = {
         }
         Insert: {
           closes_at: string
+          count_in_stats?: boolean
           created_at?: string
           id?: string
           name: string
@@ -39,6 +41,7 @@ export type Database = {
         }
         Update: {
           closes_at?: string
+          count_in_stats?: boolean
           created_at?: string
           id?: string
           name?: string

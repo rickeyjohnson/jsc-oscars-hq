@@ -325,6 +325,7 @@ const VotePage = () => {
                     </div>
                 </>
             )}
+            {ballot.count_in_stats === false && <p className="mt-3 text-subhead text-label-2">This ballot does not count towards stats.</p>}
             {failedAway >= 0 && (
                 <VoteBanner
                     className="mt-3"

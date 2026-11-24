@@ -3,7 +3,7 @@ import { fetchPastStats } from "../../api/pastStats"
 import { fetchMembers } from "../../api/members"
 import { fetchCurrentSeason } from "../../api/ballots"
 import { fetchSeasonResults } from "../../api/results"
-import { nomineeStats } from "../../lib/stats"
+import { nomineeStats, statsResults } from "../../lib/stats"
 import { buildModel, type StatsModel } from "../../lib/statsLab"
 import type { Nominee } from "../../types"
 
@@ -36,7 +36,7 @@ export function useStatsData(): { load: StatsLoad; reload: () => void } {
                 const { categories, results } = await fetchSeasonResults(season.id)
                 const nominees: Record<string, Nominee> = {}
                 for (const c of categories) for (const n of c.nominees) nominees[n.id] = n
-                current = { label: season.name, tallies: nomineeStats(Object.values(results), nominees).members }
+                current = { label: season.name, tallies: nomineeStats(statsResults(Object.values(results), categories), nominees).members }
             }
             if (mine !== seq.current) return
             const model = buildModel({ rows: past.rows, members, current })
