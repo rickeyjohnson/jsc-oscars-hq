@@ -74,15 +74,7 @@ const CategoryVoteCard = (p: Props) => {
             className={`tab-enter outline-none ${p.current ? "" : "hidden"}`}
         >
             <h2 className="break-words font-display text-title-1">{category.name}</h2>
-            {!readOnly && <p className="mt-1 text-subhead text-label-2">{selectedId && !pending && !message ? "Your vote is saved. Tap another to change it." : hint}</p>}
-            <p className="mt-1 flex min-h-5 items-center gap-2 text-footnote text-label-2" aria-live="polite">
-                {pending && (
-                    <>
-                        <Spinner />
-                        <span>Saving...</span>
-                    </>
-                )}
-            </p>
+            {!readOnly && <p className="mt-1 text-subhead text-label-2">{hint}</p>}
 
             {message && <VoteBanner className="mt-2" tone={message.tone} title={message.title} detail={message.detail} retry={message.retry} retryLabel={message.retryLabel} />}
 

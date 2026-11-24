@@ -13,7 +13,8 @@ import type { BallotDetail, Member } from "../types"
 import { Screen } from "../ui/Screen"
 import { Sheet } from "../ui/Sheet"
 import { ListRow } from "../ui/ListRow"
-import { Button } from "../ui/Button"
+import { Check } from "lucide-react"
+import { Button, Spinner } from "../ui/Button"
 import { SUBMIT_ENABLED } from "../ui/copy"
 import ReviewStep from "../components/vote/ReviewStep"
 import { GroupedSection } from "../ui/GroupedSection"
@@ -384,6 +385,23 @@ const VotePage = () => {
             )}
 
             <BottomAccessory>
+                {!readOnly && !reviewing && (
+                    <p aria-live="polite" className="mx-auto flex w-full max-w-[1040px] items-center justify-center gap-2 bg-bg px-gutter pt-2 text-footnote font-bold text-label-2 lg:justify-end">
+                        {pending[ids[idx]] ? (
+                            <>
+                                <Spinner />
+                                <span>Saving...</span>
+                            </>
+                        ) : myVotes[ids[idx]] && !messages[ids[idx]] ? (
+                            <>
+                                <Check aria-hidden strokeWidth={3} className="size-4 text-success" />
+                                <span>Saved</span>
+                            </>
+                        ) : (
+                            <span>Not saved</span>
+                        )}
+                    </p>
+                )}
                 <div className="mx-auto flex w-full max-w-[1040px] items-center gap-3 bg-bg px-gutter py-3 lg:justify-end">
                     {!readOnly && !reviewing && ballot.categories[idx].nominee_mode === "group" && (
                         <Button size="md" variant="ghost" className="mr-auto hidden lg:inline-flex" onClick={() => setGroupOpenFor(ids[idx])}>
