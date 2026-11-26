@@ -19,6 +19,7 @@ import { ALLOWED_LINKS as SERVER_LINKS } from "../../../../supabase/functions/_s
 const panel = () => render(<MemoryRouter><ChatPanel onClose={() => {}} showHeader /></MemoryRouter>)
 
 beforeEach(() => {
+    localStorage.clear()
     send.mockReset()
     vi.stubGlobal("matchMedia", (q: string) => ({ matches: false, media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} }))
 })
@@ -91,5 +92,32 @@ describe("Ask Larry button", () => {
 describe("link lists", () => {
     it("client and server allowlists match", () => {
         expect(CLIENT_LINKS).toEqual(SERVER_LINKS)
+    })
+})
+
+describe("Ask Larry history", () => {
+    beforeEach(() => {
+        localStorage.clear()
+    })
+    it("keeps the conversation after the panel is closed and reopened, and Clear chat forgets it", async () => {
+        send.mockResolvedValue({ reply: "Sure thing.", left: 9 })
+        panel()
+        fireEvent.click(screen.getByRole("button", { name: "Tell me a joke" }))
+        await screen.findByText("Sure thing.")
+        cleanup()
+        panel()
+        expect(screen.getByText("Sure thing.")).toBeTruthy()
+        expect(screen.getByText("Tell me a joke", { selector: "p, div, span" })).toBeTruthy()
+        fireEvent.click(screen.getByRole("button", { name: "Clear chat" }))
+        cleanup()
+        panel()
+        expect(screen.queryByText("Sure thing.")).toBeNull()
+    })
+    it("sign-out wipes saved chats", async () => {
+        const { saveChat, loadChat, clearAllChats } = await import("../../lib/chat/history")
+        saveChat("m1", [{ id: 1, role: "user", text: "hi" }])
+        expect(loadChat("m1")).toHaveLength(1)
+        clearAllChats()
+        expect(loadChat("m1")).toHaveLength(0)
     })
 })

@@ -30,7 +30,7 @@ Around the app:
 - Home: widgets for the ceremony, countdown, your ballots, your progress, your stats, trophy case and more. Tap the sliders icon at the top to turn widgets on or off and reorder them.
 - You tab: My stats, Wrapped (a swipeable recap of any past season), your Trophy shelf (your wins on display, private to you), Settings, and Labs (Joke generator, Balls, Higher or lower, Slot machine).
 - Settings: edit profile, send yourself a password reset email, add Oscar night to your calendar, Reduce motion, the welcome guide and a switch to show tips again, Feedback for bugs and ideas, and Patch notes with the app version. On a phone, use the browser's share menu and Add to Home Screen to install it.
-- Ask Larry: that's you. Each member gets a limited number of questions per day, and a chat is only remembered while it's open.
+- Ask Larry: that's you. Each member gets a limited number of questions per day, and the chat is kept on this device until you sign out or tap Clear chat.
 
 What you can help with:
 - How to use the app and how things work, from the above.

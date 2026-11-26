@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react"
 import { ArrowUp, X } from "lucide-react"
 import { ChatError, sendChat, type ChatTurn } from "../../api/chat"
 import { useUserData } from "../../context/UserContenxt"
+import { loadChat, saveChat } from "../../lib/chat/history"
 import { Message } from "./Message"
 
 const SUGGESTIONS = ["How do I vote?", "Who has the most wins?", "When does voting close?", "Tell me a joke"]
@@ -13,15 +14,18 @@ type Bubble = { id: number; role: "user" | "assistant"; text: string; error?: bo
 /** The conversation: greeting, suggestion chips, messages and the composer. Lives in a Sheet on phones and a docked panel on desktop. */
 export function ChatPanel({ onClose, showHeader }: { onClose: () => void; showHeader: boolean }) {
     const { member } = useUserData()
-    const [bubbles, setBubbles] = useState<Bubble[]>([])
+    const [bubbles, setBubbles] = useState<Bubble[]>(() => loadChat(member?.id))
     const [text, setText] = useState("")
     const [busy, setBusy] = useState(false)
     const [left, setLeft] = useState<number | null>(null)
     const [limit, setLimit] = useState(false)
-    const next = useRef(1)
+    const next = useRef(Math.max(0, ...bubbles.map((b) => b.id)) + 1)
     const end = useRef<HTMLDivElement | null>(null)
     const first = member?.name?.split(" ")[0] ?? ""
 
+    useEffect(() => {
+        saveChat(member?.id, bubbles)
+    }, [member?.id, bubbles])
     useEffect(() => {
         end.current?.scrollIntoView?.({ block: "end" })
     }, [bubbles, busy])
@@ -98,6 +102,11 @@ export function ChatPanel({ onClose, showHeader }: { onClose: () => void; showHe
                         </button>
                     ))}
                 </div>
+            )}
+            {bubbles.length > 0 && !busy && (
+                <button type="button" onClick={() => setBubbles([])} className="mx-4 mb-1 min-h-9 cursor-pointer self-start text-footnote font-bold text-label-2 underline focus-visible:outline-2 focus-visible:outline-accent">
+                    Clear chat
+                </button>
             )}
             {limit && <p className="px-4 pb-1 text-center text-footnote text-label-2">{LIMIT_COPY}</p>}
             <form onSubmit={submit} className="flex gap-2 px-3 pb-3 pt-1">

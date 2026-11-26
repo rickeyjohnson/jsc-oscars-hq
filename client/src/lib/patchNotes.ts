@@ -3,6 +3,16 @@ export type PatchNote = { version: string; date: string; title: string; changes:
 /** Newest first. Add an entry here whenever something ships; the newest one is the app's version. */
 export const PATCH_NOTES: readonly PatchNote[] = [
     {
+        version: "1.4.0",
+        date: "Nov 26, 2026",
+        title: "Ask Larry",
+        changes: [
+            "Meet Larry, the app's assistant: tap Ask Larry to ask how things work, get stats and deadlines, or just josh around.",
+            "Larry only sees what you can already see, and results stay sealed until the reveal.",
+            "Each member gets a limited number of questions a day.",
+        ],
+    },
+    {
         version: "1.3.0",
         date: "Nov 24, 2026",
         title: "Your seasons",
