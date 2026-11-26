@@ -16,7 +16,8 @@ import { ChatButton } from "../../components/chat/ChatButton"
 import { ALLOWED_LINKS as CLIENT_LINKS } from "../../lib/chat/links"
 import { ALLOWED_LINKS as SERVER_LINKS } from "../../../../supabase/functions/_shared/chat/links"
 
-const panel = () => render(<MemoryRouter><ChatPanel onClose={() => {}} showHeader /></MemoryRouter>)
+const closed = vi.fn()
+const panel = () => render(<MemoryRouter><ChatPanel onClose={closed} showHeader /></MemoryRouter>)
 
 beforeEach(() => {
     localStorage.clear()
@@ -119,5 +120,16 @@ describe("Ask Larry history", () => {
         expect(loadChat("m1")).toHaveLength(1)
         clearAllChats()
         expect(loadChat("m1")).toHaveLength(0)
+    })
+})
+
+describe("Ask Larry links", () => {
+    it("closes the chat when a quick link is tapped", async () => {
+        closed.mockReset()
+        send.mockResolvedValue({ reply: "Go [[go:/app/results|Results]]", left: 5 })
+        panel()
+        fireEvent.click(screen.getByRole("button", { name: "Tell me a joke" }))
+        fireEvent.click(await screen.findByRole("link", { name: /Results/ }))
+        expect(closed).toHaveBeenCalledTimes(1)
     })
 })

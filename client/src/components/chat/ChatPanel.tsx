@@ -77,7 +77,7 @@ export function ChatPanel({ onClose, showHeader }: { onClose: () => void; showHe
                 <Message role="assistant" text={`Hey${first ? ` ${first}` : ""}, Larry here. Ask me how the app works, about stats and winners, or for a joke. I can only read what you can already see.`} />
                 {bubbles.map((b) => (
                     <div key={b.id} className="flex flex-col">
-                        <Message role={b.role} text={b.text} error={b.error} />
+                        <Message role={b.role} text={b.text} error={b.error} onNavigate={onClose} />
                         {b.retry && !busy && (
                             <button type="button" onClick={() => retry(b)} className="mt-1.5 min-h-9 cursor-pointer self-start rounded-full border border-label-3 px-3 text-subhead font-bold focus-visible:outline-2 focus-visible:outline-accent">
                                 Try again

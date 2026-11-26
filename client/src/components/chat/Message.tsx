@@ -2,8 +2,8 @@ import { ArrowRight } from "lucide-react"
 import { Link } from "react-router-dom"
 import { parseSegments } from "../../lib/chat/links"
 
-/** One chat bubble. The assistant's link markers become buttons that open the page. */
-export function Message({ role, text, error = false }: { role: "user" | "assistant"; text: string; error?: boolean }) {
+/** One chat bubble. The assistant's link markers become buttons that open the page (and close the chat via onNavigate). */
+export function Message({ role, text, error = false, onNavigate }: { role: "user" | "assistant"; text: string; error?: boolean; onNavigate?: () => void }) {
     if (role === "user") {
         return <p className="max-w-[86%] self-end whitespace-pre-wrap break-words rounded-card rounded-br-sm bg-surface-2 px-3.5 py-2.5 text-callout">{text}</p>
     }
@@ -17,7 +17,7 @@ export function Message({ role, text, error = false }: { role: "user" | "assista
                 <div className="mt-2 flex flex-wrap gap-2">
                     {segments.map((l, i) =>
                         l.kind === "link" ? (
-                            <Link key={i} to={l.path} className="inline-flex min-h-9 items-center gap-1 rounded-full border border-label-3 px-3 text-subhead font-bold text-label focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+                            <Link key={i} to={l.path} onClick={onNavigate} className="inline-flex min-h-9 items-center gap-1 rounded-full border border-label-3 px-3 text-subhead font-bold text-label focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                                 {l.label}
                                 <ArrowRight aria-hidden className="size-4" />
                             </Link>
