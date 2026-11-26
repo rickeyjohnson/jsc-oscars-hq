@@ -3,3 +3,6 @@ project_id = "fsuczxowirmsxtmzzsys"
 [auth]
 site_url = "http://localhost:5173"
 additional_redirect_urls = ["http://localhost:5173/**"]
+
+[functions.chat]
+verify_jwt = true

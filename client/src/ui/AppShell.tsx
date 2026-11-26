@@ -11,6 +11,7 @@ import { useUserData } from "../context/UserContenxt"
 import { fetchBallotSummaries } from "../api/ballots"
 import { pendingBallots } from "../lib/voting"
 import { supabase } from "../supabaseClient"
+import { ChatButton } from "../components/chat/ChatButton"
 import { clearAll } from "../lib/cache/clear"
 
 const DESKTOP = "(min-width: 1024px)"
@@ -155,6 +156,7 @@ export function AppShell() {
                         </div>
                     )}
                 </div>
+                <ChatButton />
                 <IntroHost />
                 </IntroProvider>
             </ToastProvider>

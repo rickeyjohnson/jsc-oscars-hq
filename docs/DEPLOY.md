@@ -161,3 +161,17 @@ select count(*) from seasons where results_released_at is not null;  -- 0 before
 - 404 on refresh of a deep link: `client/vercel.json` missing from the deployed Root Directory.
 - Fallback if the app is down: collect votes another way and hand-write a CSV in the format oscars.py expects (the exported CSV is the reference).
 - Vercel logs: Project -> Deployments -> build logs. Supabase: Logs & Analytics.
+
+
+## Ask Larry (chatbot)
+
+1. Pick a model provider with an OpenAI-compatible API and make a key: Google AI Studio (Gemini, free tier) is the default; Groq, OpenRouter and others work too. Never paste the key into chat or the repo.
+2. Run `supabase/migrations/20261126000100_chat_usage.sql` in the Supabase SQL Editor.
+3. Set the secrets (CLI, or Supabase dashboard -> Edge Functions -> Secrets):
+   `supabase secrets set LLM_API_KEY=... CHAT_MODEL=<main model> CHAT_FALLBACK_MODEL=<smaller model> CHAT_USER_CAP=15 CHAT_GLOBAL_CAP=150`
+   Only for a provider other than Gemini, also set `LLM_BASE_URL` to its chat completions URL (e.g. `https://api.groq.com/openai/v1/chat/completions`).
+   Gemini free limits are per model and change (Flash-Lite models have the highest daily allowance; bigger Flash models can be as low as ~20 requests a day). Use two Flash-Lite-class models. One question can use 1-3 model calls, so keep `CHAT_GLOBAL_CAP` well under a third of the daily request allowance.
+   Read your free-tier limits in the provider's console and keep `CHAT_GLOBAL_CAP` below the daily request allowance.
+4. Deploy: `supabase functions deploy chat --project-ref fsuczxowirmsxtmzzsys`.
+5. Smoke test with a signed-in member's access token: a how-to question answers; the 21st question in a day returns 429; an empty message returns 400; no token returns 401.
+6. To rotate the key, set `LLM_API_KEY` again; no redeploy needed.

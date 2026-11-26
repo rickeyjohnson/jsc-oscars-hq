@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { CalendarPlus, CircleHelp, MessageSquare, RotateCcw, ScrollText, Lightbulb, Mail, Smartphone, SlidersHorizontal, User, Waves } from "lucide-react"
+import { CalendarPlus, CircleHelp, MessageSquare, MessageCircle, RotateCcw, ScrollText, Lightbulb, Mail, Smartphone, SlidersHorizontal, User, Waves } from "lucide-react"
 import { supabase } from "../supabaseClient"
 import { useAuth } from "../context/AuthContext"
 import { useUserData } from "../context/UserContenxt"
@@ -9,6 +9,7 @@ import { authRedirectUrl } from "../lib/siteUrl"
 import type { Season } from "../types"
 import { GroupedSection } from "../ui/GroupedSection"
 import { APP_VERSION } from "../lib/patchNotes"
+import { openChat } from "../api/chat"
 import { ListRow } from "../ui/ListRow"
 import { Screen } from "../ui/Screen"
 import { Switch } from "../ui/Switch"
@@ -102,6 +103,7 @@ const SettingsPage = () => {
                 <GroupedSection header="Help">
                     <ListRow title="Show all tips again" subtitle="Replays each tip the next time you visit its screen" leading={icon(RotateCcw)} onClick={showAgain} />
                     <ListRow title="Feedback" subtitle="Report a bug or share an idea with the committee" leading={icon(MessageSquare)} chevron to="/app/profile/settings/feedback" />
+                    <ListRow title="Ask Larry" subtitle="Questions about the app, stats and winners" leading={icon(MessageCircle)} chevron onClick={openChat} />
                     <ListRow title="Patch notes" subtitle={`What changed. You have v${APP_VERSION}`} leading={icon(ScrollText)} chevron to="/app/profile/settings/patch-notes" />
                     <ListRow title="Not getting emails?" subtitle="Ask Rickey or Kadin" />
                 </GroupedSection>
