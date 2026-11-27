@@ -267,7 +267,7 @@ const BallotBuilderPage = () => {
                             ))}
                         </ul>
                     )}
-                    {!online && step === "review" && <p className="text-footnote text-label-2">{OFFLINE_REASON}</p>}
+                    {!online && <p className="text-footnote text-label-2">{OFFLINE_REASON}</p>}
                     {errors.length > 0 && (
                         <ul role="alert" className="list-none space-y-0.5 p-0 text-footnote text-danger">
                             {errors.map((e) => (
@@ -282,9 +282,14 @@ const BallotBuilderPage = () => {
                             </Button>
                         )}
                         {step !== "review" ? (
-                            <Button variant="primary" fullWidth disabled={issues.length > 0} onClick={() => setStep(BUILDER_STEPS[at + 1].id)}>
-                                Next
-                            </Button>
+                            <>
+                                <Button variant="secondary" loading={busy} disabled={!online} onClick={() => handleSave(false)}>
+                                    Save draft
+                                </Button>
+                                <Button variant="primary" fullWidth disabled={issues.length > 0} onClick={() => setStep(BUILDER_STEPS[at + 1].id)}>
+                                    Next
+                                </Button>
+                            </>
                         ) : (
                             <>
                                 <Button variant="secondary" disabled={busy || !online} onClick={() => handleSave(false)}>
