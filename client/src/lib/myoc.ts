@@ -218,3 +218,15 @@ export function readBuilderState(state: unknown): BuilderIdea[] {
         return [{ name: o.name, description: typeof o.description === "string" ? o.description : "", hint }]
     })
 }
+
+/** Plain text for pasting elsewhere: one idea per line, "Name (Person) - description [from Author]". Withdrawn ideas are left out. */
+export function ideasToText(ideas: Pick<ReviewIdea, "name" | "description" | "hint" | "status" | "author">[]): string {
+    return ideas
+        .filter((i) => i.status !== "withdrawn")
+        .map((i, n) => {
+            const hint = hintLabel(i.hint)
+            const desc = i.description.trim()
+            return `${n + 1}. ${i.name.trim()}${hint ? ` (${hint})` : ""}${desc ? ` - ${desc}` : ""} [from ${i.author.name}]`
+        })
+        .join("\n")
+}

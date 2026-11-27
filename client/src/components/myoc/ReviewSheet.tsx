@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from "react"
 import { reviewIdea, type ReviewPatch } from "../../api/myoc"
-import { hasErrors, mergeTargets, myocMessage, reviewActions, validateIdea, type IdeaDraft, type IdeaErrors, type MyocStatus, type ReviewIdea } from "../../lib/myoc"
+import { addCategoryToDraft, DuplicateCategoryError, fetchDraftBallots } from "../../api/ballots"
+import { hasErrors, hintToMode, mergeTargets, myocMessage, reviewActions, validateIdea, type IdeaDraft, type IdeaErrors, type MyocStatus, type ReviewIdea } from "../../lib/myoc"
 import { MemberAvatar } from "../../ui/MemberAvatar"
 import { Sheet } from "../../ui/Sheet"
 import { SheetActions } from "../../ui/SheetActions"
@@ -20,6 +21,31 @@ export function ReviewSheet({ idea, all, onClose, onSaved }: { idea: ReviewIdea 
     const [busy, setBusy] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
     const selectId = useId()
+    const ballotSelectId = useId()
+    const [drafts, setDrafts] = useState<{ id: string; name: string }[]>([])
+    const [ballot, setBallot] = useState("")
+    useEffect(() => {
+        if (!idea) return
+        let live = true
+        fetchDraftBallots().then((d) => live && setDrafts(d)).catch((e) => console.error(e))
+        return () => {
+            live = false
+        }
+    }, [idea])
+    const addToBallot = async () => {
+        if (!idea || !ballot) return
+        setBusy("Add")
+        setError(null)
+        try {
+            await addCategoryToDraft(ballot, { name: draft.name, description: draft.description, ...hintToMode(draft.hint) })
+            onSaved(`Added to ${drafts.find((d) => d.id === ballot)?.name ?? "the ballot"}`)
+        } catch (err) {
+            console.error(err)
+            setError(err instanceof DuplicateCategoryError ? err.message : "Couldn't add it to the ballot. Check your connection and try again.")
+        } finally {
+            setBusy(null)
+        }
+    }
     useEffect(() => {
         if (idea) {
             setDraft(toDraft(idea))
@@ -99,6 +125,30 @@ export function ReviewSheet({ idea, all, onClose, onSaved }: { idea: ReviewIdea 
                                 <TextField label="Category label (optional)" value={group} maxLength={80} placeholder="Superlatives" onChange={(e) => setGroup(e.target.value)} />
                                 <p className="mt-1.5 text-footnote text-label-2">Groups accepted ideas when they go to the ballot builder.</p>
                             </div>
+                            {idea.status !== "merged" && (
+                                <div>
+                                    <label htmlFor={ballotSelectId} className="mb-1.5 block text-subhead font-bold text-label-2">
+                                        Add to a draft ballot
+                                    </label>
+                                    {drafts.length === 0 ? (
+                                        <p className="text-callout text-label-2">No draft ballots yet. Start one from Manage ballots.</p>
+                                    ) : (
+                                        <div className="flex gap-2">
+                                            <select id={ballotSelectId} value={ballot} onChange={(e) => setBallot(e.target.value)} className={`${fieldCls} min-w-0 flex-1`}>
+                                                <option value="">Pick a ballot</option>
+                                                {drafts.map((d) => (
+                                                    <option key={d.id} value={d.id}>
+                                                        {d.name || "Untitled ballot"}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <Button variant="secondary" size="md" disabled={!ballot || busy !== null} loading={busy === "Add"} onClick={() => void addToBallot()}>
+                                                Add
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                             {targets.length > 0 && idea.status !== "merged" && (
                                 <div>
                                     <label htmlFor={selectId} className="mb-1.5 block text-subhead font-bold text-label-2">

@@ -6,14 +6,17 @@ import MyocPage from "../../pages/myoc/MyocPage"
 import CategoryList from "../../pages/ballot-builder/CategoryList"
 import { ConfirmProvider } from "../ConfirmProvider"
 import { createMyocWindow, editIdea, fetchMyocWindows, fetchMyIdeas, fetchReviewIdeas, reviewIdea, submitIdea, withdrawIdea, updateMyocWindow } from "../../api/myoc"
-import { fetchCurrentSeason } from "../../api/ballots"
+import { addCategoryToDraft, DuplicateCategoryError, fetchCurrentSeason } from "../../api/ballots"
 import type { MyocIdea, MyocWindow, ReviewIdea } from "../../lib/myoc"
 
 const user = vi.hoisted(() => ({ committee: false }))
 vi.mock("../../api/myoc", () => ({
     fetchMyocWindows: vi.fn(), fetchMyIdeas: vi.fn(), fetchReviewIdeas: vi.fn(), submitIdea: vi.fn(), editIdea: vi.fn(), withdrawIdea: vi.fn(), reviewIdea: vi.fn(), createMyocWindow: vi.fn(), updateMyocWindow: vi.fn(),
 }))
-vi.mock("../../api/ballots", () => ({ fetchCurrentSeason: vi.fn() }))
+vi.mock("../../api/ballots", () => {
+    class DuplicateCategoryError extends Error {}
+    return { fetchCurrentSeason: vi.fn(), fetchDraftBallots: vi.fn().mockResolvedValue([{ id: "B1", name: "Spring Draft" }]), addCategoryToDraft: vi.fn(), DuplicateCategoryError }
+})
 vi.mock("../../api/members", () => ({ fetchMemberDirectory: vi.fn().mockResolvedValue([]), fetchMembers: vi.fn().mockResolvedValue([]) }))
 vi.mock("../../context/UserContenxt", () => ({ useUserData: () => ({ profile: { is_committee: user.committee }, member: null }) }))
 
@@ -196,6 +199,38 @@ describe("committee", () => {
         fireEvent.change(within(dialog).getByLabelText(/Category label/), { target: { value: "Superlatives" } })
         fireEvent.click(within(dialog).getByRole("button", { name: "Accept" }))
         await waitFor(() => expect(reviewIdea).toHaveBeenCalledWith("a", { name: "Better name", description: "", hint: null, assigned_category: "Superlatives", status: "accepted" }))
+    })
+    it("adds an idea to a chosen draft ballot", async () => {
+        vi.mocked(fetchReviewIdeas).mockResolvedValue([review("a", { hint: "group" })])
+        vi.mocked(addCategoryToDraft).mockReset()
+        vi.mocked(addCategoryToDraft).mockResolvedValue()
+        renderPage("/app/profile/settings/myoc?tab=review")
+        fireEvent.click(await screen.findByRole("button", { name: /Review Idea a/ }))
+        const dialog = await screen.findByRole("dialog", { name: "Review idea" })
+        const add = within(dialog).getByRole("button", { name: "Add" })
+        expect((add as HTMLButtonElement).disabled).toBe(true)
+        fireEvent.change(await within(dialog).findByLabelText("Add to a draft ballot"), { target: { value: "B1" } })
+        fireEvent.click(add)
+        await waitFor(() => expect(addCategoryToDraft).toHaveBeenCalledWith("B1", { name: "Idea a", description: "", nominee_mode: "group", allow_member_add: false }))
+    })
+    it("says so when the ballot already has that category", async () => {
+        vi.mocked(fetchReviewIdeas).mockResolvedValue([review("a")])
+        vi.mocked(addCategoryToDraft).mockReset()
+        vi.mocked(addCategoryToDraft).mockRejectedValue(new DuplicateCategoryError("That ballot already has this category."))
+        renderPage("/app/profile/settings/myoc?tab=review")
+        fireEvent.click(await screen.findByRole("button", { name: /Review Idea a/ }))
+        const dialog = await screen.findByRole("dialog", { name: "Review idea" })
+        fireEvent.change(await within(dialog).findByLabelText("Add to a draft ballot"), { target: { value: "B1" } })
+        fireEvent.click(within(dialog).getByRole("button", { name: "Add" }))
+        expect(await within(dialog).findByText("That ballot already has this category.")).toBeTruthy()
+    })
+    it("copies the shown ideas as a numbered list", async () => {
+        const write = vi.fn().mockResolvedValue(undefined)
+        Object.defineProperty(navigator, "clipboard", { value: { writeText: write }, configurable: true })
+        vi.mocked(fetchReviewIdeas).mockResolvedValue([review("a", { hint: "person", description: "Always late" }), review("b")])
+        renderPage("/app/profile/settings/myoc?tab=review")
+        fireEvent.click(await screen.findByRole("button", { name: "Copy list" }))
+        await waitFor(() => expect(write).toHaveBeenCalledWith("1. Idea a (A person) - Always late [from Micah]\n2. Idea b [from Micah]"))
     })
     it("rejects and merges", async () => {
         vi.mocked(fetchReviewIdeas).mockResolvedValue([review("a"), review("b")])

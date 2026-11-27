@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { Inbox, Lightbulb } from "lucide-react"
 import { fetchReviewIdeas } from "../../api/myoc"
 import {
-    acceptedIdeas, FILTERS, filterCounts, filterIdeas, hintLabel, myocErrorKind, MYOC_LOAD_FAILED, MYOC_UNAVAILABLE, sortForBuilder, toBuilderIdeas,
+    acceptedIdeas, FILTERS, filterCounts, filterIdeas, hintLabel, ideasToText, myocErrorKind, MYOC_LOAD_FAILED, MYOC_UNAVAILABLE, sortForBuilder, toBuilderIdeas,
     type BuilderState, type MyocWindow, type ReviewFilter, type ReviewIdea, type WindowPhase,
 } from "../../lib/myoc"
 import { BottomAccessory } from "../../ui/BottomAccessory"
@@ -84,6 +84,16 @@ export function ReviewView({ window: w, phase }: { window: MyocWindow | null; ph
         navigate("/app/profile/ballots/create", { state })
     }
 
+    const copy = async () => {
+        const text = ideasToText(shown)
+        try {
+            await navigator.clipboard.writeText(text)
+            toast.show(text ? "Copied the list" : "Nothing to copy")
+        } catch {
+            toast.show("Couldn't copy. Select and copy the ideas by hand.")
+        }
+    }
+
     return (
         <div className="pb-24">
             <div role="group" aria-label="Filter ideas" className="-mx-1 mb-4 flex gap-2 overflow-x-auto px-1 pb-1">
@@ -103,6 +113,13 @@ export function ReviewView({ window: w, phase }: { window: MyocWindow | null; ph
                 })}
             </div>
 
+            {shown.length > 0 && (
+                <div className="mb-3">
+                    <Button variant="secondary" size="md" onClick={() => void copy()}>
+                        Copy list
+                    </Button>
+                </div>
+            )}
             {shown.length === 0 ? (
                 <EmptyState icon={Inbox} title={ideas.length === 0 ? "No ideas yet" : "Nothing here"} body={ideas.length === 0 ? "Ideas members send in show up here with who sent them." : "Try another filter."} />
             ) : (

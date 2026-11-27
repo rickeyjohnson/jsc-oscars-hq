@@ -312,3 +312,27 @@ export const updateSeason = async (seasonId: string, fields: { name: string; cer
     if (error) throw error
     return (data ?? []).length === 1
 }
+
+/** Draft ballots a MYOC idea can be added to, newest first. */
+export const fetchDraftBallots = async (): Promise<{ id: string; name: string }[]> => {
+    const { data, error } = await supabase.from("ballots").select("id, name").eq("status", "draft").order("created_at", { ascending: false })
+    if (error) throw error
+    return (data ?? []) as { id: string; name: string }[]
+}
+
+export class DuplicateCategoryError extends Error {}
+
+/** Appends one category (no nominees yet) to a draft ballot. Refuses a name the ballot already has. */
+export const addCategoryToDraft = async (ballotId: string, c: { name: string; description: string; nominee_mode: Category["nominee_mode"]; allow_member_add: boolean }): Promise<void> => {
+    const { data: ballot, error: bErr } = await supabase.from("ballots").select("status").eq("id", ballotId).single()
+    if (bErr) throw bErr
+    assertDraft(ballot.status as BallotStatus)
+    const { data: existing, error: eErr } = await supabase.from("categories").select("name, sort_order").eq("ballot_id", ballotId)
+    if (eErr) throw eErr
+    const rows = existing ?? []
+    if (rows.some((r) => r.name.trim().toLowerCase() === c.name.trim().toLowerCase())) throw new DuplicateCategoryError("That ballot already has this category.")
+    const order = rows.reduce((m, r) => Math.max(m, r.sort_order + 1), 0)
+    const { error } = await supabase.from("categories").insert({ ballot_id: ballotId, name: c.name.trim(), description: c.description.trim(), sort_order: order, nominee_mode: c.nominee_mode, allow_member_add: c.allow_member_add })
+    if (error) throw error
+    invalidateBallots()
+}
