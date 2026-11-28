@@ -86,7 +86,7 @@ const BulkImportPanel: React.FC<BulkImportPanelProps> = ({ isOpen, onClose, exis
                 </SheetActions>
             }
         >
-            <p className="text-footnote text-label-2 mb-3">One per line: Name | Description, or a CSV with name,description columns</p>
+            <p className="text-footnote text-label-2 mb-3">One per line: Name, Description (a comma or | splits them). Put a name that has a comma in quotes. A CSV file works too.</p>
             <textarea
                 value={text}
                 onChange={(e) => {
@@ -97,7 +97,7 @@ const BulkImportPanel: React.FC<BulkImportPanelProps> = ({ isOpen, onClose, exis
                 aria-label="Categories to import"
                 data-autofocus
                 className="bg-fill text-label placeholder:text-label-3 text-subhead w-full rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-accent"
-                placeholder={"Best Locs | Who has the best locs\nMegaphone Award | Loudest"}
+                placeholder={"Best Locs, Who has the best locs\nMegaphone Award, Loudest"}
             />
             {duplicates.length > 0 && (
                 <p className="text-footnote text-warn mt-2">

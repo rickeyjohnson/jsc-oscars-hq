@@ -29,4 +29,19 @@ describe("parseCategoryImport", () => {
     it("returns nothing for empty input", () => {
         expect(parseCategoryImport("")).toEqual({ categories: [], duplicates: [] })
     })
+    it("splits name,description lines even without a header", () => {
+        expect(parseCategoryImport("Best Hair,Who wore it best\nBest Locs").categories).toEqual([
+            { name: "Best Hair", description: "Who wore it best" },
+            { name: "Best Locs", description: "" },
+        ])
+    })
+    it("keeps a quoted comma in the name and later commas in the description", () => {
+        expect(parseCategoryImport('"Best Hair, Overall",Top pick\nFunniest,Ha, ha').categories).toEqual([
+            { name: "Best Hair, Overall", description: "Top pick" },
+            { name: "Funniest", description: "Ha, ha" },
+        ])
+    })
+    it("accepts a Category,Description header", () => {
+        expect(parseCategoryImport("Category,Description\nBest Hair,Wow").categories).toEqual([{ name: "Best Hair", description: "Wow" }])
+    })
 })
