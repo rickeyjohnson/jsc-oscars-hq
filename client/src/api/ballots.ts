@@ -181,7 +181,9 @@ export const fetchBallotSummaries = async (includeDrafts = false): Promise<Ballo
     if (!includeDrafts) query = query.neq("status", "draft")
     const { data: ballots, error } = await query.order("closes_at", { ascending: true })
     if (error) throw error
-    const list = (ballots ?? []) as Ballot[]
+    // Members only see a published ballot from its opening time (the database enforces it too); the committee sees all.
+    const nowMs = Date.now()
+    const list = ((ballots ?? []) as Ballot[]).filter((b) => includeDrafts || new Date(b.opens_at).getTime() <= nowMs)
     if (list.length === 0) return []
     const ids = list.map((b) => b.id)
     const sourceIds = list.filter((b) => !(b.round !== "main" && b.parent_ballot_id)).map((b) => b.id)
