@@ -16,13 +16,18 @@ export const hasEnded = (b: Ballot, now: Date): boolean =>
     b.status === "closed" || b.status === "released" || (b.status === "open" && new Date(b.closes_at).getTime() <= now.getTime() - CLOCK_SKEW_MS)
 
 // Drafts are ignored everywhere.
-export function releaseChecks(s: Omit<ReleaseStatus, "season">, now: Date): { checks: ReleaseCheck[]; ready: boolean } {
+// A category left as a tie: recorded with no single winner but with tied first places stored.
+export const isRecordedTie = (r: ResultRow | undefined): boolean => r != null && r.winner_nominee_id == null && (r.places ?? []).some((p) => p.place === 1 && p.tied)
+
+// `allowTies`: a recorded tie counts as settled (the committee chose to reveal it as a tie).
+export function releaseChecks(s: Omit<ReleaseStatus, "season">, now: Date, allowTies = false): { checks: ReleaseCheck[]; ready: boolean; ties: number } {
     const live = s.ballots.filter((b) => b.status !== "draft")
     const main = live.filter((b) => b.round === "main")
     const ended = main.filter((b) => hasEnded(b, now)).length
     const openRounds = live.filter((b) => b.round !== "main" && !hasEnded(b, now)).length
     const n = s.mainCategoryIds.length
     const w = s.mainCategoryIds.filter((id) => s.results[id]?.winner_nominee_id != null).length
+    const ties = s.mainCategoryIds.filter((id) => isRecordedTie(s.results[id])).length
     const checks: ReleaseCheck[] = [
         { id: "ballots_closed", ok: main.length > 0 && ended === main.length, label: `${ended} of ${main.length} ballots closed` },
         {
@@ -30,17 +35,21 @@ export function releaseChecks(s: Omit<ReleaseStatus, "season">, now: Date): { ch
             ok: openRounds === 0,
             label: openRounds === 0 ? "No tiebreak or committee round open" : `${openRounds} tiebreak/committee round(s) still open`,
         },
-        { id: "winners", ok: n > 0 && w === n, label: `${w} of ${n} categories have a winner` },
+        {
+            id: "winners",
+            ok: n > 0 && (w === n || (allowTies && w + ties === n)),
+            label: `${w} of ${n} categories have a winner${ties > 0 ? (allowTies ? `, ${ties} left as a tie` : ` (${ties} still tied)`) : ""}`,
+        },
     ]
-    return { checks, ready: checks.every((c) => c.ok) }
+    return { checks, ready: checks.every((c) => c.ok), ties }
 }
 
 // Ballots are marked released FIRST; the season's results_released_at (what members see) LAST.
 // Nothing is written when a check fails or the season is already released.
-export async function runRelease(io: ReleaseIO, seasonId: string, now: Date): Promise<void> {
+export async function runRelease(io: ReleaseIO, seasonId: string, now: Date, allowTies = false): Promise<void> {
     const status = await io.load(seasonId)
     if (status.season.results_released_at) throw new Error("Results are already released")
-    const { checks, ready } = releaseChecks(status, now)
+    const { checks, ready } = releaseChecks(status, now, allowTies)
     if (!ready) {
         const failing = checks.filter((c) => !c.ok).map((c) => c.label)
         throw new Error(`Not ready to release: ${failing.join("; ")}`)

@@ -17,6 +17,7 @@ describe("releaseChecks", () => {
   it("reports open rounds and missing winners, ignoring drafts", () => {
     expect(releaseChecks({ ballots: [M, D, T], mainCategoryIds: ["c1", "c2"], results: { c1: res("c1", "A"), c2: res("c2", null) } }, now)).toEqual({
       ready: false,
+      ties: 0,
       checks: [
         { id: "ballots_closed", ok: true, label: "1 of 1 ballots closed" },
         { id: "no_round_open", ok: false, label: "1 tiebreak/committee round(s) still open" },

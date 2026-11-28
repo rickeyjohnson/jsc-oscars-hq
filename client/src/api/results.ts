@@ -116,9 +116,9 @@ const realReleaseIO: ReleaseIO = {
 
 // Committee only. Checks first (no writes if any fail), marks finished ballots released,
 // then reveals the season's results to members last.
-export const releaseSeasonResults = async (seasonId: string): Promise<void> => {
+export const releaseSeasonResults = async (seasonId: string, allowTies = false): Promise<void> => {
     try {
-        await runRelease(realReleaseIO, seasonId, new Date())
+        await runRelease(realReleaseIO, seasonId, new Date(), allowTies)
     } finally {
         invalidateBallots()
         invalidateResults()

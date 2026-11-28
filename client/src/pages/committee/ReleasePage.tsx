@@ -15,7 +15,7 @@ const CHECK_REFRESH_MS = 30_000
 // `done` is terminal in holdReducer, so a failed release needs an explicit reset to retry.
 const pageReducer = (s: HoldState, e: HoldEvent | { type: "reset" }): HoldState => (e.type === "reset" ? HOLD_IDLE : holdReducer(s, e))
 
-type Load = { state: "loading" } | { state: "error"; message: string } | { state: "ready"; seasonId: string; released: boolean; checks: ReleaseCheck[]; ready: boolean; failingId: string | null; winners: number }
+type Load = { state: "loading" } | { state: "error"; message: string } | { state: "ready"; seasonId: string; released: boolean; checks: ReleaseCheck[]; ready: boolean; ties: number; tiesReady: boolean; failingId: string | null; winners: number }
 
 const RELEASE_FAILED = "Couldn't open the envelope. Check your connection and hold again."
 
@@ -49,6 +49,7 @@ const ReleasePage = () => {
     const [busy, setBusy] = useState(false)
     const [releaseError, setReleaseError] = useState<string | null>(null)
     const [opened, setOpened] = useState(false)
+    const [withTies, setWithTies] = useState(false)
     const fired = useRef(false)
 
     const refresh = useCallback(async (initial: boolean) => {
@@ -56,8 +57,9 @@ const ReleasePage = () => {
             const season = await fetchCurrentSeason()
             if (!season) throw new Error("No current season")
             const status = await fetchReleaseStatus(season.id)
-            const { checks, ready } = releaseChecks(status, new Date())
-            setLoad({ state: "ready", seasonId: season.id, released: status.season.results_released_at != null, checks, ready, failingId: ready ? null : firstFailingBallotId(status, checks, new Date()), winners: winnerCount(status) })
+            const { checks, ready, ties } = releaseChecks(status, new Date())
+            const tiesReady = ties > 0 && releaseChecks(status, new Date(), true).ready
+            setLoad({ state: "ready", seasonId: season.id, released: status.season.results_released_at != null, checks, ready, ties, tiesReady, failingId: ready ? null : firstFailingBallotId(status, checks, new Date()), winners: winnerCount(status) })
         } catch (e) {
             // a failed background refresh keeps the last good checks
             if (initial) setLoad({ state: "error", message: e instanceof Error ? e.message : "Could not load release status" })
@@ -97,7 +99,7 @@ const ReleasePage = () => {
     }, [])
 
     // a check turning red mid-hold cancels the hold
-    const isReady = load.state === "ready" && load.ready
+    const isReady = load.state === "ready" && (load.ready || (withTies && load.tiesReady))
     useIntroGate(load.state === "ready" && !load.released && !opened ? "ready" : null)
     useEffect(() => {
         if (!isReady) dispatch({ type: "cancel" })
@@ -110,7 +112,7 @@ const ReleasePage = () => {
         fired.current = true
         setBusy(true)
         setReleaseError(null)
-        releaseSeasonResults(seasonId)
+        releaseSeasonResults(seasonId, withTies)
             .then(() => {
                 vibrate("release")
                 setOpened(true)
@@ -122,7 +124,7 @@ const ReleasePage = () => {
                 dispatch({ type: "reset" })
             })
             .finally(() => setBusy(false))
-    }, [hold.phase, seasonId])
+    }, [hold.phase, seasonId]) // eslint-disable-line react-hooks/exhaustive-deps
 
     if (load.state === "loading") return <Page><div className="my-auto text-center text-body">Loading…</div></Page>
     if (load.state === "error")
@@ -154,10 +156,10 @@ const ReleasePage = () => {
         )
     }
 
-    const ready = load.ready
+    const ready = load.ready || (withTies && load.tiesReady)
     const progress = holdProgress(hold, now)
     const holding = hold.phase === "holding"
-    const failing = load.checks.filter((c) => !c.ok)
+    const failing = load.checks.filter((c) => !c.ok).filter((c) => !(withTies && load.tiesReady && c.id === "winners"))
 
     const down = (pointerId: number, x: number, y: number) => ready && !busy && dispatch({ type: "down", t: performance.now(), pointerId, x, y })
     const hint = holding
@@ -175,6 +177,12 @@ const ReleasePage = () => {
                     {load.checks.map((c) => <Row key={c.id} tone={c.ok ? "ok" : "bad"}>{c.label}</Row>)}
                     <Row tone="info">Members never see vote counts</Row>
                 </ul>
+                {load.tiesReady && !load.ready && (
+                    <label className="flex min-h-11 cursor-pointer items-start gap-3 text-callout">
+                        <input type="checkbox" checked={withTies} onChange={(e) => setWithTies(e.target.checked)} className="mt-1 size-5 shrink-0" />
+                        <span>Reveal {load.ties === 1 ? "the tie" : `all ${load.ties} ties`} as {load.ties === 1 ? "a tie" : "ties"}, without a tiebreak. Members see the tied nominees as co-winners.</span>
+                    </label>
+                )}
                 {failing.length > 0 && (
                     <Link to={load.failingId ? `/app/profile/ballots/${load.failingId}` : "/app/profile/ballots"} className="inline-flex min-h-11 items-center text-subhead font-bold underline underline-offset-4">
                         Go to tally

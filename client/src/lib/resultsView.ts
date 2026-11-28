@@ -1,5 +1,6 @@
 import { displayPlaces } from "./places"
-import type { Category, DecidedBy, ResultRow } from "../types"
+import { isRecordedTie } from "./release"
+import type { Category, DecidedBy, Place, ResultRow } from "../types"
 
 export function ordinal(n: number): string {
   const mod100 = n % 100
@@ -35,9 +36,16 @@ export function buildResultCards(categories: Category[], results: Record<string,
   return categories.map((category, i) => {
     const base = { category_id: category.id, number: i + 1, name: category.name }
     const row = results[category.id]
-    if (!row || row.winner_nominee_id == null) return { ...base, podium: [], also: [], note: null, pending: true }
     const byId = new Map(category.nominees.map(n => [n.id, n]))
     const nameOf = (id: string) => byId.get(id)?.display_name ?? "Unknown nominee"
+    if (row && row.winner_nominee_id == null && isRecordedTie(row)) {
+      // Left as a tie: every first-place nominee shows as tied for 1st.
+      const placed = (row.places ?? []).filter(p => p.slot != null) as (Place & { slot: 1 | 2 | 3 })[]
+      const podium: PodiumEntry[] = placed.map(p => ({ nominee_id: p.nominee_id, name: nameOf(p.nominee_id), slot: p.slot, tieLabel: p.tied ? `tied ${ordinal(p.place)}` : null, memberIds: byId.get(p.nominee_id)?.member_ids ?? [] }))
+      const also = (row.places ?? []).filter(p => p.slot == null).map(p => ({ nominee_id: p.nominee_id, name: nameOf(p.nominee_id), placeLabel: p.tied ? `tied ${ordinal(p.place)}` : ordinal(p.place) }))
+      return { ...base, podium, also, note: "Ended in a tie", pending: false }
+    }
+    if (!row || row.winner_nominee_id == null) return { ...base, podium: [], also: [], note: null, pending: true }
     const stored = displayPlaces(row)
     // stored places that disagree with the recorded winner fall back to winner-first order
     const places = stored.find(p => p.slot === 1)?.nominee_id === row.winner_nominee_id ? stored : displayPlaces({ ...row, places: null })
