@@ -5,6 +5,8 @@ import { Button } from "../../ui/Button"
 import { TextField } from "../../ui/TextField"
 import type { Category, Member } from "../../types"
 import NomineeModePicker from "./NomineeModePicker"
+import { fetchMyocWindows, fetchReviewIdeas } from "../../api/myoc"
+import type { ReviewIdea } from "../../lib/myoc"
 
 interface CategoryModalProps {
     isOpen: boolean
@@ -13,20 +15,37 @@ interface CategoryModalProps {
     initialData?: Category
     existingCategoriesCount: number
     members: Member[]
+    seasonId?: string
 }
 
 /** The category editor: a Sheet (bottom on phones, centered on desktop). */
-export const CategoryModal: React.FC<CategoryModalProps> = ({ isOpen, onClose, onSave, initialData, existingCategoriesCount, members }) => {
+export const CategoryModal: React.FC<CategoryModalProps> = ({ isOpen, onClose, onSave, initialData, existingCategoriesCount, members, seasonId }) => {
     const [name, setName] = useState("")
     const [description, setDescription] = useState("")
     const [nomineeConfig, setNomineeConfig] = useState<Category | null>(null)
     const [dirty, setDirty] = useState(false)
+    const [credit, setCredit] = useState<string[]>([])
+    const [ideas, setIdeas] = useState<ReviewIdea[]>([])
+
+    // Ideas from this season's MYOC windows, so the committee can credit whoever inspired the category.
+    useEffect(() => {
+        if (!isOpen || !seasonId) return
+        let live = true
+        fetchMyocWindows(seasonId)
+            .then((ws) => Promise.all(ws.map((w) => fetchReviewIdeas(w.id))))
+            .then((lists) => live && setIdeas(lists.flat().filter((i) => i.status !== "withdrawn" && i.author.id)))
+            .catch(() => live && setIdeas([]))
+        return () => {
+            live = false
+        }
+    }, [isOpen, seasonId])
 
     useEffect(() => {
         if (isOpen) {
             setDirty(false)
             setName(initialData?.name ?? "")
             setDescription(initialData?.description ?? "")
+            setCredit(initialData?.credit_member_ids ?? [])
             setNomineeConfig(
                 initialData ?? { id: crypto.randomUUID(), name: "", description: "", order: existingCategoriesCount, nominee_mode: "everyone", allow_member_add: false, nominees: [] },
             )
@@ -44,6 +63,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({ isOpen, onClose, o
             nominee_mode: nomineeConfig?.nominee_mode ?? "everyone",
             allow_member_add: nomineeConfig?.allow_member_add ?? false,
             nominees: nomineeConfig?.nominees ?? [],
+            ...(credit.length > 0 ? { credit_member_ids: credit } : {}),
             ...(initialData?.source ? { source: initialData.source } : {}),
         })
         setDirty(false)
@@ -91,6 +111,47 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({ isOpen, onClose, o
                         rows={2}
                         className="w-full resize-none rounded-control bg-surface-2 px-4 py-3 text-body text-label outline-none placeholder:text-label-3 focus-visible:ring-2 focus-visible:ring-accent"
                     />
+                </div>
+                <div>
+                    <p className="mb-1.5 text-subhead font-bold text-label-2">Credit (optional)</p>
+                    {credit.length > 0 && (
+                        <ul aria-label="Credited" className="mb-2 flex list-none flex-wrap gap-2 p-0">
+                            {credit.map((id) => (
+                                <li key={id}>
+                                    <button
+                                        type="button"
+                                        aria-label={`Remove credit for ${members.find((m) => m.id === id)?.name ?? "member"}`}
+                                        onClick={() => {
+                                            setDirty(true)
+                                            setCredit(credit.filter((c) => c !== id))
+                                        }}
+                                        className="min-h-11 cursor-pointer rounded-full bg-fill px-4 text-subhead font-bold text-label"
+                                    >
+                                        {members.find((m) => m.id === id)?.name ?? "Member"} ×
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                    <select
+                        aria-label="Credit a MYOC idea"
+                        value=""
+                        onChange={(e) => {
+                            const idea = ideas.find((i) => i.id === e.target.value)
+                            if (!idea?.author.id || credit.includes(idea.author.id)) return
+                            setDirty(true)
+                            setCredit([...credit, idea.author.id])
+                        }}
+                        className="min-h-11 w-full rounded-control bg-surface-2 px-4 text-body text-label"
+                    >
+                        <option value="">{ideas.length > 0 ? "Pick the idea that inspired this" : "No MYOC ideas to credit"}</option>
+                        {ideas.map((i) => (
+                            <option key={i.id} value={i.id}>
+                                {i.name} ({i.author.name})
+                            </option>
+                        ))}
+                    </select>
+                    <p className="mt-1.5 text-footnote text-label-2">Members see "Idea from ..." on the vote screen. Leave empty for a committee category.</p>
                 </div>
                 {nomineeConfig && (
                     <div>

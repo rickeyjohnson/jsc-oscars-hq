@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { Check, Lock } from "lucide-react"
 import type { Category, Member } from "../../types"
-import { groupCandidates, groupLimits, lockedNominees, nomineeKey, nomineePebbles, selectableNominees, type VoteMessage } from "../../lib/voting"
+import { creditLine, groupCandidates, groupLimits, lockedNominees, nomineeKey, nomineePebbles, selectableNominees, type VoteMessage } from "../../lib/voting"
 import { Avatar } from "../../ui/Avatar"
 import { Button, Spinner } from "../../ui/Button"
 import { SheetActions } from "../../ui/SheetActions"
@@ -75,6 +75,7 @@ const CategoryVoteCard = (p: Props) => {
         >
             <h2 className="break-words font-display text-title-1">{category.name}</h2>
             {!readOnly && <p className="mt-1 text-subhead text-label-2">{hint}</p>}
+            {creditLine(category, p.members) && <p className="mt-1 text-footnote text-label-2">{creditLine(category, p.members)}</p>}
 
             {message && <VoteBanner className="mt-2" tone={message.tone} title={message.title} detail={message.detail} retry={message.retry} retryLabel={message.retryLabel} />}
 

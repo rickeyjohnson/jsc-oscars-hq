@@ -71,6 +71,7 @@ export type Database = {
       categories: {
         Row: {
           allow_member_add: boolean
+          credit_member_ids: string[]
           ballot_id: string
           description: string
           group_size: number | null
@@ -81,6 +82,7 @@ export type Database = {
         }
         Insert: {
           allow_member_add?: boolean
+          credit_member_ids?: string[]
           ballot_id: string
           description?: string
           group_size?: number | null
@@ -91,6 +93,7 @@ export type Database = {
         }
         Update: {
           allow_member_add?: boolean
+          credit_member_ids?: string[]
           ballot_id?: string
           description?: string
           group_size?: number | null

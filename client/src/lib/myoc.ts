@@ -185,8 +185,9 @@ export function sortForBuilder<T extends Pick<MyocIdea, "assigned_category" | "c
     return [...ideas].sort((a, b) => key(a).localeCompare(key(b)) || a.created_at.localeCompare(b.created_at))
 }
 
-export type BuilderIdea = { name: string; description: string; hint: MyocHint | null }
-export const toBuilderIdeas = (ideas: Pick<MyocIdea, "name" | "description" | "hint">[]): BuilderIdea[] => ideas.map((i) => ({ name: i.name.trim(), description: i.description.trim(), hint: i.hint }))
+export type BuilderIdea = { name: string; description: string; hint: MyocHint | null; /** Member who submitted it: credited on the category. */ credit?: string }
+export const toBuilderIdeas = (ideas: (Pick<MyocIdea, "name" | "description" | "hint"> & { author?: { id: string | null } })[]): BuilderIdea[] =>
+    ideas.map((i) => ({ name: i.name.trim(), description: i.description.trim(), hint: i.hint, ...(i.author?.id ? { credit: i.author.id } : {}) }))
 
 /** Draft categories for the builder. Same name dedupe as bulk import (case-insensitive, against `existingNames` and each other). */
 export function toDraftCategories(ideas: BuilderIdea[], existingNames: string[] = []): { categories: Category[]; skipped: string[] } {
@@ -201,7 +202,7 @@ export function toDraftCategories(ideas: BuilderIdea[], existingNames: string[] 
             continue
         }
         seen.add(key)
-        categories.push({ id: crypto.randomUUID(), name: i.name, description: i.description, order: existingNames.length + categories.length, ...hintToMode(i.hint), nominees: [], source: "myoc" })
+        categories.push({ id: crypto.randomUUID(), name: i.name, description: i.description, order: existingNames.length + categories.length, ...hintToMode(i.hint), nominees: [], source: "myoc", ...(i.credit ? { credit_member_ids: [i.credit] } : {}) })
     }
     return { categories, skipped }
 }
@@ -215,7 +216,7 @@ export function readBuilderState(state: unknown): BuilderIdea[] {
         const o = r as Partial<BuilderIdea> | null
         if (!o || typeof o.name !== "string" || !o.name.trim()) return []
         const hint = HINTS.some((h) => h.value === o.hint) ? (o.hint as MyocHint) : null
-        return [{ name: o.name, description: typeof o.description === "string" ? o.description : "", hint }]
+        return [{ name: o.name, description: typeof o.description === "string" ? o.description : "", hint, ...(typeof o.credit === "string" ? { credit: o.credit } : {}) }]
     })
 }
 

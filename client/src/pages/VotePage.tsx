@@ -103,8 +103,8 @@ const VotePage = () => {
                 } catch {
                     /* faces fall back to initials */
                 }
-                // Only group categories need members; if that fetch fails the ballot still opens (the group sheet has no names).
-                if (detail.categories.some((c) => c.nominee_mode === "group")) {
+                // Only group and credited categories need members; if that fetch fails the ballot still opens (the group sheet has no names).
+                if (detail.categories.some((c) => c.nominee_mode === "group" || (c.credit_member_ids?.length ?? 0) > 0)) {
                     try {
                         const m = await fetchMembers()
                         if (!cancelled) setMembers(m)

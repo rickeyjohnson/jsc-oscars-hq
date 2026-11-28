@@ -37,7 +37,7 @@ export function ReviewSheet({ idea, all, onClose, onSaved }: { idea: ReviewIdea 
         setBusy("Add")
         setError(null)
         try {
-            await addCategoryToDraft(ballot, { name: draft.name, description: draft.description, ...hintToMode(draft.hint) })
+            await addCategoryToDraft(ballot, { name: draft.name, description: draft.description, ...hintToMode(draft.hint), credit_member_ids: idea.author.id ? [idea.author.id] : [] })
             onSaved(`Added to ${drafts.find((d) => d.id === ballot)?.name ?? "the ballot"}`)
         } catch (err) {
             console.error(err)

@@ -311,6 +311,7 @@ const BallotBuilderPage = () => {
                 initialData={editIndex === null ? undefined : formData.categories[editIndex]}
                 existingCategoriesCount={formData.categories.length}
                 members={members}
+                seasonId={formData.season_id || undefined}
             />
             <BulkImportPanel
                 isOpen={importOpen}

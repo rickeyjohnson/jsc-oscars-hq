@@ -211,7 +211,7 @@ describe("committee", () => {
         expect((add as HTMLButtonElement).disabled).toBe(true)
         fireEvent.change(await within(dialog).findByLabelText("Add to a draft ballot"), { target: { value: "B1" } })
         fireEvent.click(add)
-        await waitFor(() => expect(addCategoryToDraft).toHaveBeenCalledWith("B1", { name: "Idea a", description: "", nominee_mode: "group", allow_member_add: false }))
+        await waitFor(() => expect(addCategoryToDraft).toHaveBeenCalledWith("B1", { name: "Idea a", description: "", nominee_mode: "group", allow_member_add: false, credit_member_ids: ["m1"] }))
     })
     it("says so when the ballot already has that category", async () => {
         vi.mocked(fetchReviewIdeas).mockResolvedValue([review("a")])
@@ -256,7 +256,7 @@ describe("committee", () => {
         renderPage("/app/profile/settings/myoc?tab=review")
         fireEvent.click(await screen.findByRole("button", { name: "Build ballot from 2 accepted" }))
         const probe = await screen.findByText("builder")
-        expect(JSON.parse(probe.getAttribute("data-state") ?? "null")).toEqual({ myocIdeas: [{ name: "Alpha", description: "d", hint: "group" }, { name: "Zed", description: "", hint: "thing" }] })
+        expect(JSON.parse(probe.getAttribute("data-state") ?? "null")).toEqual({ myocIdeas: [{ name: "Alpha", description: "d", hint: "group", credit: "m1" }, { name: "Zed", description: "", hint: "thing", credit: "m1" }] })
     })
     it("disables the build button with nothing accepted", async () => {
         vi.mocked(fetchReviewIdeas).mockResolvedValue([review("a")])

@@ -9,7 +9,7 @@ import { STAT_MEMBERS, STAT_ROWS } from "../../test/statsFixture"
 const api = vi.hoisted(() => ({ fetchPastStats: vi.fn(), fetchMembers: vi.fn(), fetchMemberDirectory: vi.fn(), fetchCurrentSeason: vi.fn(), fetchSeasonResults: vi.fn() }))
 vi.mock("../../api/pastStats", () => ({ fetchPastStats: api.fetchPastStats, PAST_STATS_UNAVAILABLE: "Previous stats aren't available yet" }))
 vi.mock("../../api/members", () => ({ fetchMembers: api.fetchMembers, fetchMemberDirectory: api.fetchMemberDirectory }))
-vi.mock("../../api/ballots", () => ({ fetchCurrentSeason: api.fetchCurrentSeason }))
+vi.mock("../../api/ballots", () => ({ fetchCurrentSeason: api.fetchCurrentSeason, fetchInspiredCategories: () => Promise.resolve([]) }))
 vi.mock("../../api/results", () => ({ fetchSeasonResults: api.fetchSeasonResults }))
 let who = "m-Rickey"
 vi.mock("../../context/UserContenxt", () => ({ useUserData: () => ({ profile: { is_committee: false }, member: { id: who, name: who.slice(2) }, loading: false }) }))

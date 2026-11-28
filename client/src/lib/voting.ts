@@ -171,3 +171,10 @@ export const openBallotRows = (summaries: BallotSummary[], now: Date): BallotSum
         .filter((b) => b.status !== "draft" && (() => { const s = ballotCardStatus(b, b.category_count, b.my_vote_count, now); return s === "open" || s === "voted" })())
         .sort((a, b) => Number(full(a)) - Number(full(b)) || new Date(a.closes_at).getTime() - new Date(b.closes_at).getTime())
 }
+
+/** "Idea from Sam and Alex" for a category inspired by MYOC ideas. Null for a committee category (no credit, nothing shown). */
+export const creditLine = (c: { credit_member_ids?: string[] }, members: { id: string; name: string }[]): string | null => {
+    const names = (c.credit_member_ids ?? []).flatMap((id) => members.find((m) => m.id === id)?.name ?? [])
+    if (names.length === 0) return null
+    return `Idea from ${names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names[0]}`
+}

@@ -35,6 +35,7 @@ export const saveBallotDraft = async (form: BallotFormData, members: Member[], b
             nominee_mode: c.nominee_mode,
             allow_member_add: c.allow_member_add,
             group_size: groupSizeToSave(c),
+            credit_member_ids: c.credit_member_ids ?? [],
             nominees: buildNomineeRows(c, members),
         })),
     })
@@ -86,6 +87,7 @@ const saveBallotDraftSteps = async (form: BallotFormData, members: Member[], bal
                 nominee_mode: category.nominee_mode,
                 allow_member_add: category.allow_member_add,
                 group_size: groupSizeToSave(category),
+                ...(category.credit_member_ids?.length ? { credit_member_ids: category.credit_member_ids } : {}),
             })
             .select("id")
             .single()
@@ -154,6 +156,7 @@ const fetchBallotDetailRaw = async (ballotId: string): Promise<BallotDetail> => 
             nominee_mode: c.nominee_mode as Category["nominee_mode"],
             allow_member_add: c.allow_member_add,
             group_size: c.group_size ?? null,
+            credit_member_ids: (c.credit_member_ids ?? []),
             nominees: ((c.nominees ?? []) as Array<{ id: string; display_name: string; secondary_text: string | null; type: Nominee["type"]; member_ids: string[] }>)
                 .filter((n) => !allowed || allowed.has(n.id))
                 .map((n) => ({ id: n.id, display_name: n.display_name, secondary_text: n.secondary_text ?? undefined, type: n.type, member_ids: n.member_ids ?? [] }))
@@ -323,7 +326,7 @@ export const fetchDraftBallots = async (): Promise<{ id: string; name: string }[
 export class DuplicateCategoryError extends Error {}
 
 /** Appends one category (no nominees yet) to a draft ballot. Refuses a name the ballot already has. */
-export const addCategoryToDraft = async (ballotId: string, c: { name: string; description: string; nominee_mode: Category["nominee_mode"]; allow_member_add: boolean }): Promise<void> => {
+export const addCategoryToDraft = async (ballotId: string, c: { name: string; description: string; nominee_mode: Category["nominee_mode"]; allow_member_add: boolean; credit_member_ids?: string[] }): Promise<void> => {
     const { data: ballot, error: bErr } = await supabase.from("ballots").select("status").eq("id", ballotId).single()
     if (bErr) throw bErr
     assertDraft(ballot.status as BallotStatus)
@@ -332,7 +335,14 @@ export const addCategoryToDraft = async (ballotId: string, c: { name: string; de
     const rows = existing ?? []
     if (rows.some((r) => r.name.trim().toLowerCase() === c.name.trim().toLowerCase())) throw new DuplicateCategoryError("That ballot already has this category.")
     const order = rows.reduce((m, r) => Math.max(m, r.sort_order + 1), 0)
-    const { error } = await supabase.from("categories").insert({ ballot_id: ballotId, name: c.name.trim(), description: c.description.trim(), sort_order: order, nominee_mode: c.nominee_mode, allow_member_add: c.allow_member_add })
+    const { error } = await supabase.from("categories").insert({ ballot_id: ballotId, name: c.name.trim(), description: c.description.trim(), sort_order: order, nominee_mode: c.nominee_mode, allow_member_add: c.allow_member_add, ...(c.credit_member_ids?.length ? { credit_member_ids: c.credit_member_ids } : {}) })
     if (error) throw error
     invalidateBallots()
+}
+
+/** Categories (on ballots you can see) that a member's MYOC idea inspired. */
+export const fetchInspiredCategories = async (memberId: string): Promise<{ id: string; name: string; ballot: string }[]> => {
+    const { data, error } = await supabase.from("categories").select("id, name, ballots(name)").contains("credit_member_ids", [memberId]).order("name")
+    if (error) throw error
+    return (data ?? []).map((c) => ({ id: c.id as string, name: c.name as string, ballot: ((c.ballots as { name?: string } | null)?.name ?? "") }))
 }
