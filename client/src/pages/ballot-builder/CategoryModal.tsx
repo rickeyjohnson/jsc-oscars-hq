@@ -62,6 +62,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({ isOpen, onClose, o
             order: initialData?.order ?? existingCategoriesCount,
             nominee_mode: nomineeConfig?.nominee_mode ?? "everyone",
             allow_member_add: nomineeConfig?.allow_member_add ?? false,
+            group_size: nomineeConfig?.nominee_mode === "group" ? (nomineeConfig.group_size ?? 2) : null,
             nominees: nomineeConfig?.nominees ?? [],
             ...(credit.length > 0 ? { credit_member_ids: credit } : {}),
             ...(initialData?.source ? { source: initialData.source } : {}),
