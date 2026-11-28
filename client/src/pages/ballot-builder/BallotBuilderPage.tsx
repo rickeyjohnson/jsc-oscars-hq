@@ -1,3 +1,4 @@
+import { optionsLabel } from "../../lib/voting"
 import { useEffect, useState } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { Plus } from "lucide-react"
@@ -241,7 +242,7 @@ const BallotBuilderPage = () => {
                                     {i + 1}
                                 </span>
                                 <span className="min-w-0 flex-1 truncate text-body">{c.name}</span>
-                                <span className="shrink-0 text-footnote text-label-2">{c.nominee_mode === "everyone" ? "Everyone" : `${c.nominees.length} ${c.nominees.length === 1 ? "option" : "options"}`}</span>
+                                <span className="shrink-0 text-footnote text-label-2">{optionsLabel(c)}</span>
                             </li>
                         ))}
                     </GroupedSection>

@@ -178,3 +178,7 @@ export const creditLine = (c: { credit_member_ids?: string[] }, members: { id: s
     if (names.length === 0) return null
     return `Idea from ${names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names[0]}`
 }
+
+/** The short "who can be picked" line for a category in the builder: Everyone, Groups of 4, or N options. */
+export const optionsLabel = (c: { nominee_mode: string; group_size?: number | null; nominees: unknown[] }): string =>
+    c.nominee_mode === "everyone" ? "Everyone" : c.nominee_mode === "group" ? `Groups of ${c.group_size ?? 2}` : `${c.nominees.length} ${c.nominees.length === 1 ? "option" : "options"}`
